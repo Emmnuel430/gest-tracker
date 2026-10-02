@@ -3,7 +3,7 @@
 import React from 'react';
 import { PeriodType } from '@/types/period';
 import { cn } from '@/lib/utils';
-import { Calendar } from 'lucide-react';
+import { Calendar, Search } from 'lucide-react';
 
 interface PeriodSelectorProps {
   currentPeriod: PeriodType;
@@ -11,6 +11,8 @@ interface PeriodSelectorProps {
   customStartDate?: string;
   customEndDate?: string;
   onCustomDateChange?: (start: string, end: string) => void;
+  onApplyCustomRange?: () => void;
+  isLoading?: boolean;
 }
 
 export function PeriodSelector({
@@ -19,6 +21,8 @@ export function PeriodSelector({
   customStartDate = '',
   customEndDate = '',
   onCustomDateChange,
+  onApplyCustomRange,
+  isLoading = false,
 }: PeriodSelectorProps) {
   const periods: { key: PeriodType; label: string }[] = [
     { key: 'today', label: 'Jour' },
@@ -90,6 +94,19 @@ export function PeriodSelector({
                 className="w-full bg-[#EFF6FF] border-2 border-[#111827] rounded-lg p-2 text-xs font-bold text-[#111827] shadow-[2px_2px_0px_0px_#111827] focus:outline-none focus:bg-white"
               />
             </div>
+          </div>
+
+          {/* Bouton pour lancer la requête sur la plage personnalisée */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={onApplyCustomRange}
+              disabled={isLoading}
+              className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-black text-xs uppercase rounded-lg border-2 border-[#111827] shadow-[2px_2px_0px_0px_#111827] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Search className="w-3.5 h-3.5 stroke-3" />
+              <span>{isLoading ? 'Chargement des opérations...' : 'Appliquer la plage personnalisée'}</span>
+            </button>
           </div>
         </div>
       )}

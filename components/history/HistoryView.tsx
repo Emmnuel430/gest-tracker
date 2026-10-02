@@ -24,9 +24,10 @@ import {
   calculateCategoryBreakdown,
   calculatePaymentMethodBreakdown,
 } from "@/lib/statistics";
-import { getDateRangeForPeriod } from "@/lib/dates";
+import { getDateRangeForPeriod, formatDisplayDate } from "@/lib/dates";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 import { PAYMENT_METHODS } from "@/constants/payment-methods";
+import { getTransactionsAction } from "@/actions/transactions";
 
 interface HistoryViewProps {
   initialTransactions: Transaction[];
@@ -39,15 +40,22 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
     useState<Transaction[]>(initialTransactions);
   const [period, setPeriod] = useState<PeriodType>("month");
 
-  // Dates personnalisées
-  const [customStartDate, setCustomStartDate] = useState<string>(() => {
-    const d = new Date();
-    d.setDate(1);
-    return d.toISOString().split("T")[0];
-  });
+  // Dates personnalisées saisies
+  const [customStartDate, setCustomStartDate] = useState<string>("2026-09-01");
   const [customEndDate, setCustomEndDate] = useState<string>(() => {
     return new Date().toISOString().split("T")[0];
   });
+
+  // Plage personnalisée appliquée
+  const [appliedCustomDates, setAppliedCustomDates] = useState<{
+    start: string;
+    end: string;
+  }>({
+    start: "2026-09-01",
+    end: new Date().toISOString().split("T")[0],
+  });
+
+  const [isLoadingCustom, setIsLoadingCustom] = useState<boolean>(false);
 
   const [typeFilter, setTypeFilter] = useState<"all" | "INCOME" | "EXPENSE">(
     "all",
@@ -59,10 +67,16 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("list");
 
   // Filtrage selon la période et les critères sélectionnés
-  const currentRange = useMemo(
-    () => getDateRangeForPeriod(period, customStartDate, customEndDate),
-    [period, customStartDate, customEndDate]
-  );
+  const currentRange = useMemo(() => {
+    if (period === "custom") {
+      return getDateRangeForPeriod(
+        "custom",
+        appliedCustomDates.start,
+        appliedCustomDates.end,
+      );
+    }
+    return getDateRangeForPeriod(period);
+  }, [period, appliedCustomDates]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
@@ -121,6 +135,38 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
     setCustomEndDate(end);
   };
 
+  // Déclenchement de la requête personnalisée au clic sur le bouton
+  const handleApplyCustomRange = async () => {
+    if (!customStartDate || !customEndDate) return;
+
+    setIsLoadingCustom(true);
+    try {
+      const res = await getTransactionsAction({
+        period: "custom",
+        startDate: customStartDate,
+        endDate: customEndDate,
+        limit: 1000,
+      });
+
+      if (res.success && Array.isArray(res.data)) {
+        // Fusion des nouvelles transactions avec celles déjà en mémoire pour éviter les pertes
+        const fetchedMap = new Map<string, Transaction>();
+        transactions.forEach((t) => fetchedMap.set(t.id, t));
+        res.data.forEach((t: Transaction) => fetchedMap.set(t.id, t));
+        setTransactions(Array.from(fetchedMap.values()));
+      }
+
+      setAppliedCustomDates({
+        start: customStartDate,
+        end: customEndDate,
+      });
+    } catch (err) {
+      console.error("Erreur chargement transactions plage perso :", err);
+    } finally {
+      setIsLoadingCustom(false);
+    }
+  };
+
   const allAvailableCategories = [
     ...new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]),
   ];
@@ -175,13 +221,15 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
         </div>
       </div>
 
-      {/* 1. Sélecteur de Période (avec support Personnalisé début/fin) */}
+      {/* 1. Sélecteur de Période avec bouton de requête pour la plage personnalisée */}
       <PeriodSelector
         currentPeriod={period}
         onSelectPeriod={setPeriod}
         customStartDate={customStartDate}
         customEndDate={customEndDate}
         onCustomDateChange={handleCustomDateChange}
+        onApplyCustomRange={handleApplyCustomRange}
+        isLoading={isLoadingCustom}
       />
 
       {/* Filtres avancés dépliables */}
@@ -285,7 +333,15 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
         </div>
       </div>
 
-      {/* 3. Deux onglets uniquement : Opérations et Graphiques (Section 2) */}
+      {/* Indicateur de la plage actuelle couverte */}
+      <div className="text-center">
+        <span className="text-[11px] font-black uppercase px-2.5 py-1 bg-white border border-[#111827] rounded-md shadow-[1px_1px_0px_0px_#111827] text-neutral-600">
+          Du {formatDisplayDate(currentRange.from, "dd MMM yyyy")} au{" "}
+          {formatDisplayDate(currentRange.to, "dd MMM yyyy")}
+        </span>
+      </div>
+
+      {/* 3. Deux onglets : Opérations et Graphiques */}
       <div className="grid grid-cols-2 gap-2 p-1 bg-white border-2 border-[#111827] rounded-xl shadow-[3px_3px_0px_0px_#111827]">
         <button
           type="button"
@@ -321,8 +377,8 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
         <div className="space-y-3">
           {filteredTransactions.length === 0 ? (
             <EmptyState
-              title="Aucune opération sur cette période"
-              description="Modifiez la période ou enregistrez une nouvelle opération."
+              title="Aucune opération sur cette plage"
+              description="Ajustez les dates ou appliquez une plage plus large pour afficher vos opérations."
               actionLabel="＋ Enregistrer une sortie"
               actionHref="/sortant"
             />
@@ -346,8 +402,8 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
         <div className="space-y-5">
           {expenseBreakdown.length === 0 ? (
             <EmptyState
-              title="Aucune dépense sur cette période"
-              description="Les graphiques s'afficheront dès que des dépenses seront enregistrées."
+              title="Aucune dépense sur cette plage"
+              description="Les graphiques s'afficheront dès que des dépenses seront trouvées sur la période."
               actionLabel="＋ Ajouter une dépense"
               actionHref="/sortant"
             />

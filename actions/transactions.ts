@@ -74,7 +74,7 @@ export async function createTransactionAction(
  * Récupère les transactions filtrées avec pagination optionnelle
  */
 export async function getTransactionsAction(options?: {
-  period?: PeriodType;
+  period?: PeriodType | 'all';
   startDate?: string;
   endDate?: string;
   type?: 'INCOME' | 'EXPENSE';
@@ -83,15 +83,29 @@ export async function getTransactionsAction(options?: {
   limit?: number;
 }): Promise<ActionResponse> {
   try {
-    const period = options?.period || 'month';
-    const dateRange = getDateRangeForPeriod(period, options?.startDate, options?.endDate);
+    const where: any = {};
 
-    const where: any = {
-      date: {
+    if (options?.period && options.period !== 'all') {
+      const dateRange = getDateRangeForPeriod(
+        options.period,
+        options.startDate,
+        options.endDate
+      );
+      where.date = {
         gte: dateRange.from,
         lte: dateRange.to,
-      },
-    };
+      };
+    } else if (options?.startDate && options?.endDate) {
+      const dateRange = getDateRangeForPeriod(
+        'custom',
+        options.startDate,
+        options.endDate
+      );
+      where.date = {
+        gte: dateRange.from,
+        lte: dateRange.to,
+      };
+    }
 
     if (options?.type) {
       where.type = options.type;
@@ -106,7 +120,7 @@ export async function getTransactionsAction(options?: {
     const transactions = await prisma.transaction.findMany({
       where,
       orderBy: { date: 'desc' },
-      take: options?.limit ?? 100,
+      take: options?.limit ?? 500,
     });
 
     return {
