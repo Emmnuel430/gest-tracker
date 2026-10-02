@@ -5,9 +5,11 @@ import { Transaction } from '@/types/transaction';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/constants/categories';
 import { PAYMENT_METHODS } from '@/constants/payment-methods';
 import { updateTransactionAction } from '@/actions/transactions';
+import { parseAmountInput, formatAmountInput } from '@/constants/config';
 
 interface EditTransactionModalProps {
   transaction: Transaction | null;
@@ -41,7 +43,7 @@ function EditForm({
   onUpdated: (updated: Transaction) => void;
 }) {
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>(transaction.type);
-  const [amount, setAmount] = useState(transaction.amount.toString());
+  const [amount, setAmount] = useState(() => formatAmountInput(transaction.amount));
   const [category, setCategory] = useState(transaction.category);
   const [payment, setPayment] = useState(transaction.payment);
   const [date, setDate] = useState(
@@ -58,7 +60,7 @@ function EditForm({
     e.preventDefault();
     setError(null);
 
-    const parsedAmount = parseFloat(amount);
+    const parsedAmount = parseAmountInput(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       setError('Veuillez renseigner un montant valide supérieur à 0.');
       return;
@@ -130,19 +132,14 @@ function EditForm({
         </div>
       </div>
 
-      {/* Montant avec suppression du scroll molette */}
-      <div>
-        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Montant (FCFA)</label>
-        <Input
-          type="number"
-          step="any"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          onWheel={(e) => (e.target as HTMLElement).blur()}
-          placeholder="Ex: 5000"
-          required
-        />
-      </div>
+      {/* Montant avec formatage dynamique en points (ex: 5.000.000) */}
+      <CurrencyInput
+        label="Montant (FCFA) *"
+        value={amount}
+        onChange={(val) => setAmount(val)}
+        placeholder="5.000"
+        required
+      />
 
       {/* Catégorie */}
       <div>

@@ -26,3 +26,26 @@ export function formatCurrency(amount: number | string | null | undefined): stri
 
   return `${sign}${formattedNumber} ${APP_CONFIG.currency}`;
 }
+
+/**
+ * Formate les chiffres saisis dans un champ de saisie avec le séparateur de milliers en point (.)
+ * Exemple : "5000000" => "5.000.000", 5000 => "5.000"
+ */
+export function formatAmountInput(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const digitsOnly = value.toString().replace(/\D/g, '');
+  if (!digitsOnly) return '';
+  // Évite les zéros inutiles en début de saisie (ex: "0500" => "500"), sauf si c'est juste "0"
+  const sanitized = digitsOnly.replace(/^0+(?=\d)/, '');
+  return sanitized.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+/**
+ * Extrait le montant numérique entier ou flottant d'une chaîne formatée avec points
+ * Exemple : "5.000.000" => 5000000
+ */
+export function parseAmountInput(value: string | null | undefined): number {
+  if (!value) return 0;
+  const digitsOnly = value.toString().replace(/\D/g, '');
+  return digitsOnly ? parseInt(digitsOnly, 10) : 0;
+}

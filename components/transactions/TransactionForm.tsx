@@ -15,7 +15,8 @@ import {
 } from "@/constants/payment-methods";
 import { createTransactionAction } from "@/actions/transactions";
 import { Button } from "@/components/ui/Button";
-import { APP_CONFIG } from "@/constants/config";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
+import { APP_CONFIG, parseAmountInput } from "@/constants/config";
 import { cn } from "@/lib/utils";
 
 interface TransactionFormProps {
@@ -51,7 +52,7 @@ export function TransactionForm({ type }: TransactionFormProps) {
     setFieldErrors({});
     setSuccessMessage(null);
 
-    const numericAmount = parseFloat(amount.replace(/\s+/g, ""));
+    const numericAmount = parseAmountInput(amount);
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
       setErrorMessage("Veuillez entrer un montant supérieur à 0");
       return;
@@ -110,32 +111,16 @@ export function TransactionForm({ type }: TransactionFormProps) {
       {/* Carte du Formulaire Néobrutaliste */}
       <div className="bg-white border-3 border-[#111827] rounded-2xl p-6 sm:p-7 shadow-[6px_6px_0px_0px_#111827]">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* MONTANT GÉANT AVEC SUPPRESSION DE LA MOLETTE */}
-          <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-[#111827] mb-2">
-              Montant ({APP_CONFIG.currency}) *
-            </label>
-            <div className="relative flex items-center">
-              <input
-                type="number"
-                inputMode="decimal"
-                autoFocus
-                placeholder="5000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                onWheel={(e) => (e.target as HTMLElement).blur()}
-                className="w-full text-2xl sm:text-3xl font-black bg-white border-3 border-[#111827] rounded-xl p-4 pr-20 shadow-[4px_4px_0px_0px_#111827] focus:outline-none focus:bg-[#EFF6FF] focus:shadow-[6px_6px_0px_0px_#111827] transition-all text-[#111827]"
-              />
-              <span className="absolute right-4 font-black text-sm uppercase px-2.5 py-1 bg-[#111827] text-white rounded-md">
-                {APP_CONFIG.currency}
-              </span>
-            </div>
-            {fieldErrors.amount && (
-              <p className="text-xs font-bold text-[#DC2626] mt-1.5">
-                ⚠️ {fieldErrors.amount[0]}
-              </p>
-            )}
-          </div>
+          {/* MONTANT GÉANT AVEC FORMATAGE DYNAMIQUE EN POINTS (EX: 5.000.000) */}
+          <CurrencyInput
+            sizeVariant="giant"
+            label={`Montant (${APP_CONFIG.currency}) *`}
+            placeholder="5.000"
+            value={amount}
+            onChange={(val) => setAmount(val)}
+            autoFocus
+            error={fieldErrors.amount?.[0]}
+          />
 
           {/* SÉLECTEUR DE CATÉGORIE VIA SELECT REQUIS */}
           <div>
