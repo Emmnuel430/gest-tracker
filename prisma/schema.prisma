@@ -1,0 +1,39 @@
+// Schéma Prisma 7 pour Personal GEST TRACKER
+// La configuration des URLs de connexion pour Migrate est déportée dans prisma.config.ts
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Transaction {
+  id        String          @id @default(uuid())
+  type      TransactionType
+  amount    Decimal         @db.Decimal(12, 2)
+  category  String
+  payment   String
+  note      String?
+  date      DateTime        @default(now())
+
+  // Prévu pour l'authentification Supabase (Sprint 8)
+  userId    String?         @map("user_id")
+
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  @@index([date(sort: Desc)])
+  @@index([type])
+  @@index([category])
+  @@index([payment])
+  @@index([date, type])
+  @@index([userId])
+  @@map("transactions")
+}
