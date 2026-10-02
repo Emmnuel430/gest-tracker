@@ -65,8 +65,8 @@ export function HomeActions() {
               </p>
             </div>
           </div>
-          <span className="text-sm font-black text-[#111827] px-3 py-1 bg-white border-2 border-[#111827] rounded-lg shadow-[2px_2px_0px_0px_#111827]">
-            Voir ➔
+          <span className="text-sm font-black text-[#111827] px-3 py-1 bg-white border-2 border-[#111827] rounded-lg shadow-[2px_2px_0px_0px_#111827] flex items-center gap-1">
+            <span className="hidden md:block">Voir</span> ➔
           </span>
         </div>
       </Link>
