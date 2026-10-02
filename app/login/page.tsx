@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -48,10 +48,10 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-sm mx-auto py-8">
       <div className="text-center mb-8">
-        <div className="w-14 h-14 bg-[#FFDE59] border-3 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] flex items-center justify-center mx-auto mb-3">
-          <Lock className="w-7 h-7 text-black stroke-[2.5]" />
+        <div className="w-14 h-14 bg-[#2563EB] border-3 border-[#111827] rounded-2xl shadow-[4px_4px_0px_0px_#111827] flex items-center justify-center mx-auto mb-3">
+          <Lock className="w-7 h-7 text-white stroke-3" />
         </div>
-        <h1 className="text-2xl font-black uppercase tracking-tight text-black">
+        <h1 className="text-2xl font-black uppercase tracking-tight text-[#111827]">
           Accès Privé
         </h1>
         <p className="text-xs font-bold text-neutral-600 mt-1">
@@ -59,7 +59,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="bg-white border-3 border-black rounded-2xl p-6 shadow-[6px_6px_0px_0px_#000]">
+      <div className="bg-white border-3 border-[#111827] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827]">
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
             label="Email"
@@ -80,7 +80,7 @@ export default function LoginPage() {
           />
 
           {errorMessage && (
-            <div className="p-3 bg-[#FFEAEB] border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_#000] text-xs font-bold text-[#FF3847]">
+            <div className="p-3 bg-[#FEF2F2] border-2 border-[#111827] rounded-lg shadow-[2px_2px_0px_0px_#111827] text-xs font-bold text-[#DC2626]">
               ⚠️ {errorMessage}
             </div>
           )}
@@ -98,7 +98,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 pt-4 border-t-2 border-neutral-200 flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-500">
-          <ShieldCheck className="w-4 h-4 text-[#00DF81]" />
+          <ShieldCheck className="w-4 h-4 text-[#16A34A]" />
           <span>Session chiffrée SSL & Supabase Auth</span>
         </div>
       </div>

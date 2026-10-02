@@ -44,7 +44,7 @@ export function HeaderAuth() {
     return (
       <a
         href="/login"
-        className="text-[11px] font-black uppercase px-2 py-1 bg-white border-2 border-black rounded-md shadow-[2px_2px_0px_0px_#000] hover:bg-neutral-100 flex items-center gap-1"
+        className="text-[11px] font-black uppercase px-2 py-1 bg-[#DBEAFE] text-[#111827] border-2 border-[#111827] rounded-md shadow-[2px_2px_0px_0px_#111827] hover:bg-white flex items-center gap-1"
       >
         <User className="w-3.5 h-3.5" />
         <span>Connexion</span>
@@ -57,7 +57,7 @@ export function HeaderAuth() {
       type="button"
       onClick={handleLogout}
       title="Se déconnecter"
-      className="text-[11px] font-black uppercase px-2 py-1 bg-[#FFEAEB] hover:bg-[#FF3847] hover:text-white border-2 border-black rounded-md shadow-[2px_2px_0px_0px_#000] transition-colors flex items-center gap-1 cursor-pointer"
+      className="text-[11px] font-black uppercase px-2 py-1 bg-[#FEF2F2] hover:bg-[#DC2626] hover:text-white text-[#DC2626] border-2 border-[#111827] rounded-md shadow-[2px_2px_0px_0px_#111827] transition-colors flex items-center gap-1 cursor-pointer"
     >
       <LogOut className="w-3.5 h-3.5" />
       <span className="hidden sm:inline">Quitter</span>

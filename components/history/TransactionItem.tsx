@@ -8,6 +8,8 @@ import { formatDisplayDate, formatTime } from '@/lib/dates';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EditTransactionModal } from '@/components/transactions/EditTransactionModal';
 import { deleteTransactionAction } from '@/actions/transactions';
+import { PAYMENT_METHOD_THEMES } from '@/constants/payment-methods';
+import { CATEGORY_COLORS } from '@/constants/categories';
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -21,6 +23,11 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
   const [showEdit, setShowEdit] = useState(false);
 
   const isIncome = transaction.type === 'INCOME';
+  const paymentTheme = PAYMENT_METHOD_THEMES[transaction.payment] || {
+    bg: '#EFF6FF',
+    text: '#111827',
+  };
+  const catColor = CATEGORY_COLORS[transaction.category] || '#2563EB';
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -40,30 +47,47 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
 
   return (
     <>
-      <div className="bg-white border-2 border-black rounded-xl p-3.5 shadow-[3px_3px_0px_0px_#000] flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5">
+      <div className="bg-white border-2 border-[#111827] rounded-xl p-3.5 shadow-[3px_3px_0px_0px_#111827] flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5">
         <div className="flex items-center gap-3">
+          {/* L'icône prend visuellement la couleur officielle du moyen de paiement (Section 3) */}
           <div
-            className={`w-9 h-9 border-2 border-black rounded-lg flex items-center justify-center shadow-[1px_1px_0px_0px_#000] ${
-              isIncome ? 'bg-[#00DF81]' : 'bg-[#FFEAEB]'
-            }`}
+            className="w-10 h-10 border-2 border-[#111827] rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#111827] shrink-0"
+            style={{
+              backgroundColor: paymentTheme.bg,
+              color: paymentTheme.text,
+            }}
+            title={`Moyen de paiement : ${transaction.payment}`}
           >
             {isIncome ? (
-              <ArrowDownLeft className="w-5 h-5 text-black stroke-[3]" />
+              <ArrowDownLeft className="w-5 h-5 stroke-3" />
             ) : (
-              <ArrowUpRight className="w-5 h-5 text-[#FF3847] stroke-[3]" />
+              <ArrowUpRight className="w-5 h-5 stroke-3" />
             )}
           </div>
 
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-black text-sm text-black leading-tight">
+              {/* Badge Catégorie avec pastille couleur */}
+              <span className="inline-flex items-center gap-1.5 font-black text-sm text-[#111827] leading-tight">
+                <span
+                  className="w-2 h-2 rounded-full border border-[#111827] shadow-[1px_1px_0px_0px_#111827]"
+                  style={{ backgroundColor: catColor }}
+                />
                 {transaction.category}
               </span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 bg-neutral-100 border border-black rounded">
+
+              {/* Badge Moyen de paiement aux couleurs PAYMENT_METHOD_THEMES */}
+              <span
+                className="text-[10px] font-black px-1.5 py-0.5 border border-[#111827] rounded shadow-[1px_1px_0px_0px_#111827]"
+                style={{
+                  backgroundColor: paymentTheme.bg,
+                  color: paymentTheme.text,
+                }}
+              >
                 {transaction.payment}
               </span>
             </div>
-            <p className="text-[11px] font-medium text-neutral-500">
+            <p className="text-[11px] font-medium text-neutral-500 mt-0.5">
               {formatDisplayDate(transaction.date, 'dd MMM yyyy')} • {formatTime(transaction.date)}
               {transaction.note ? ` • ${transaction.note}` : ''}
             </p>
@@ -73,7 +97,7 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
         <div className="flex items-center gap-2.5">
           <span
             className={`font-black text-sm sm:text-base ${
-              isIncome ? 'text-[#008A50]' : 'text-[#FF3847]'
+              isIncome ? 'text-[#16A34A]' : 'text-[#DC2626]'
             }`}
           >
             {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
@@ -84,7 +108,7 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
               type="button"
               onClick={() => setShowEdit(true)}
               title="Modifier"
-              className="p-1.5 text-neutral-400 hover:text-black hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-neutral-400 hover:text-[#111827] hover:bg-[#EFF6FF] rounded-lg transition-colors cursor-pointer"
             >
               <Pencil className="w-4 h-4" />
             </button>
@@ -92,7 +116,7 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
               type="button"
               onClick={() => setShowConfirm(true)}
               title="Supprimer"
-              className="p-1.5 text-neutral-400 hover:text-[#FF3847] hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-neutral-400 hover:text-[#DC2626] hover:bg-[#FEF2F2] rounded-lg transition-colors cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
             </button>

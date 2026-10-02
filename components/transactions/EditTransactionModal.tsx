@@ -5,10 +5,9 @@ import { Transaction } from '@/types/transaction';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/constants/categories';
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/constants/categories';
 import { PAYMENT_METHODS } from '@/constants/payment-methods';
 import { updateTransactionAction } from '@/actions/transactions';
-import { formatDisplayDate } from '@/lib/dates';
 
 interface EditTransactionModalProps {
   transaction: Transaction | null;
@@ -53,6 +52,7 @@ function EditForm({
   const [error, setError] = useState<string | null>(null);
 
   const categories = type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const currentCatColor = CATEGORY_COLORS[category] || '#2563EB';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,14 +94,14 @@ function EditForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-[#FFEAEB] border-2 border-black rounded-lg text-xs font-bold text-[#FF3847]">
-          {error}
+        <div className="p-3 bg-[#FEF2F2] border-2 border-[#111827] rounded-lg text-xs font-bold text-[#DC2626]">
+          ⚠️ {error}
         </div>
       )}
 
       {/* Type Toggle */}
       <div>
-        <label className="block text-xs font-black uppercase mb-1">Type d'opération</label>
+        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Type d'opération</label>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -109,8 +109,8 @@ function EditForm({
               setType('INCOME');
               setCategory(INCOME_CATEGORIES[0]);
             }}
-            className={`py-2 px-3 border-2 border-black rounded-lg font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_#000] ${
-              type === 'INCOME' ? 'bg-[#00DF81] text-black' : 'bg-white text-neutral-600'
+            className={`py-2 px-3 border-2 border-[#111827] rounded-lg font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] ${
+              type === 'INCOME' ? 'bg-[#16A34A] text-white' : 'bg-white text-[#111827]'
             }`}
           >
             Entrant (Revenu)
@@ -121,8 +121,8 @@ function EditForm({
               setType('EXPENSE');
               setCategory(EXPENSE_CATEGORIES[0]);
             }}
-            className={`py-2 px-3 border-2 border-black rounded-lg font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_#000] ${
-              type === 'EXPENSE' ? 'bg-[#FF3847] text-white' : 'bg-white text-neutral-600'
+            className={`py-2 px-3 border-2 border-[#111827] rounded-lg font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] ${
+              type === 'EXPENSE' ? 'bg-[#DC2626] text-white' : 'bg-white text-[#111827]'
             }`}
           >
             Sortant (Dépense)
@@ -130,14 +130,15 @@ function EditForm({
         </div>
       </div>
 
-      {/* Montant */}
+      {/* Montant avec suppression du scroll molette */}
       <div>
-        <label className="block text-xs font-black uppercase mb-1">Montant (FCFA)</label>
+        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Montant (FCFA)</label>
         <Input
           type="number"
           step="any"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          onWheel={(e) => (e.target as HTMLElement).blur()}
           placeholder="Ex: 5000"
           required
         />
@@ -145,11 +146,11 @@ function EditForm({
 
       {/* Catégorie */}
       <div>
-        <label className="block text-xs font-black uppercase mb-1">Catégorie</label>
+        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Catégorie</label>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full bg-white border-2 border-black rounded-xl p-3 font-bold text-sm shadow-[3px_3px_0px_0px_#000] focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full bg-white border-2 border-[#111827] rounded-xl p-3 font-bold text-sm text-[#111827] shadow-[3px_3px_0px_0px_#111827] focus:outline-none focus:bg-[#EFF6FF]"
         >
           {categories.map((c) => (
             <option key={c} value={c}>
@@ -157,15 +158,22 @@ function EditForm({
             </option>
           ))}
         </select>
+        <div className="flex items-center gap-2 mt-1.5 px-1">
+          <span
+            className="w-2.5 h-2.5 rounded-full border border-[#111827]"
+            style={{ backgroundColor: currentCatColor }}
+          />
+          <span className="text-[11px] font-bold text-neutral-600">{category}</span>
+        </div>
       </div>
 
       {/* Moyen de paiement */}
       <div>
-        <label className="block text-xs font-black uppercase mb-1">Moyen de paiement</label>
+        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Moyen de paiement</label>
         <select
           value={payment}
           onChange={(e) => setPayment(e.target.value)}
-          className="w-full bg-white border-2 border-black rounded-xl p-3 font-bold text-sm shadow-[3px_3px_0px_0px_#000] focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full bg-white border-2 border-[#111827] rounded-xl p-3 font-bold text-sm text-[#111827] shadow-[3px_3px_0px_0px_#111827] focus:outline-none focus:bg-[#EFF6FF]"
         >
           {PAYMENT_METHODS.map((p) => (
             <option key={p} value={p}>
@@ -177,7 +185,7 @@ function EditForm({
 
       {/* Date */}
       <div>
-        <label className="block text-xs font-black uppercase mb-1">Date</label>
+        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Date</label>
         <Input
           type="date"
           value={date}
@@ -188,7 +196,7 @@ function EditForm({
 
       {/* Note */}
       <div>
-        <label className="block text-xs font-black uppercase mb-1">Note (Optionnelle)</label>
+        <label className="block text-xs font-black uppercase mb-1 text-[#111827]">Note (Optionnelle)</label>
         <Input
           type="text"
           value={note}

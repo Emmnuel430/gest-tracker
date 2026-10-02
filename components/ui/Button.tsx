@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'success' | 'danger' | 'blue' | 'neutral' | 'dark' | 'outline';
+  variant?: 'primary' | 'success' | 'danger' | 'warning' | 'accent' | 'blue' | 'neutral' | 'dark' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   isLoading?: boolean;
@@ -26,29 +26,33 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-black uppercase tracking-wider transition-all duration-150 border-2 border-black rounded-lg cursor-pointer select-none active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
+      'inline-flex items-center justify-center font-black uppercase tracking-wider transition-all duration-150 border-2 border-[#111827] rounded-lg cursor-pointer select-none active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
 
     const variants = {
       primary:
-        'bg-[#FFDE59] text-black shadow-[3px_3px_0px_0px_#000] hover:bg-[#FFE600] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000]',
+        'bg-[#2563EB] text-white shadow-[3px_3px_0px_0px_#111827] hover:bg-[#1D4ED8] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
       success:
-        'bg-[#00DF81] text-black shadow-[3px_3px_0px_0px_#000] hover:bg-[#00F58D] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000]',
+        'bg-[#16A34A] text-white shadow-[3px_3px_0px_0px_#111827] hover:bg-[#15803D] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
       danger:
-        'bg-[#FF5964] text-white shadow-[3px_3px_0px_0px_#000] hover:bg-[#FF3847] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000]',
+        'bg-[#DC2626] text-white shadow-[3px_3px_0px_0px_#111827] hover:bg-[#B91C1C] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
+      warning:
+        'bg-[#F59E0B] text-[#111827] shadow-[3px_3px_0px_0px_#111827] hover:bg-[#D97706] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
+      accent:
+        'bg-[#DBEAFE] text-[#111827] shadow-[3px_3px_0px_0px_#111827] hover:bg-[#BFDBFE] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
       blue:
-        'bg-[#3A86FF] text-white shadow-[3px_3px_0px_0px_#000] hover:bg-[#2575FC] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000]',
+        'bg-[#2563EB] text-white shadow-[3px_3px_0px_0px_#111827] hover:bg-[#1D4ED8] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
       neutral:
-        'bg-white text-black shadow-[3px_3px_0px_0px_#000] hover:bg-neutral-50 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000]',
+        'bg-white text-[#111827] shadow-[3px_3px_0px_0px_#111827] hover:bg-[#EFF6FF] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#111827]',
       dark:
-        'bg-black text-white shadow-[3px_3px_0px_0px_#555] hover:bg-neutral-800 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#555]',
+        'bg-[#111827] text-white shadow-[3px_3px_0px_0px_#2563EB] hover:bg-neutral-800 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#2563EB]',
       outline:
-        'bg-transparent text-black border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:bg-black/5',
+        'bg-transparent text-[#111827] border-2 border-[#111827] shadow-[2px_2px_0px_0px_#111827] hover:bg-[#EFF6FF]',
     };
 
     const sizes = {
-      sm: 'text-xs px-3 py-1.5 gap-1.5 shadow-[2px_2px_0px_0px_#000]',
-      md: 'text-sm px-4 py-2.5 gap-2 shadow-[3px_3px_0px_0px_#000]',
-      lg: 'text-base px-6 py-3.5 gap-2.5 shadow-[4px_4px_0px_0px_#000]',
+      sm: 'text-xs px-3 py-1.5 gap-1.5 shadow-[2px_2px_0px_0px_#111827]',
+      md: 'text-sm px-4 py-2.5 gap-2 shadow-[3px_3px_0px_0px_#111827]',
+      lg: 'text-base px-6 py-3.5 gap-2.5 shadow-[4px_4px_0px_0px_#111827]',
     };
 
     return (
@@ -64,7 +68,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin stroke-[3]" />}
+        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin stroke-3" />}
         {children}
       </button>
     );
