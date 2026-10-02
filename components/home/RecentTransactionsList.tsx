@@ -96,7 +96,7 @@ export function RecentTransactionsList({
                   isIncome ? "text-[#16A34A]" : "text-[#DC2626]"
                 }`}
               >
-                {isIncome ? "+" : "-"} {formatCurrency(tx.amount)}
+                {isIncome ? "+" : "-"} {formatCurrency(Math.abs(Number(tx.amount)))}
               </span>
             </div>
           );

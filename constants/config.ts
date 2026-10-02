@@ -9,7 +9,8 @@ export const APP_CONFIG = {
 } as const;
 
 /**
- * Formate un montant numérique ou Decimal en chaîne néobrutaliste "5 000 FCFA"
+ * Formate un montant numérique ou Decimal en chaîne néobrutaliste avec des points comme séparateurs de milliers
+ * Exemple : 5000000 => "5.000.000 FCFA", 5000 => "5.000 FCFA", -12500 => "-12.500 FCFA"
  */
 export function formatCurrency(amount: number | string | null | undefined): string {
   if (amount === null || amount === undefined || isNaN(Number(amount))) {
@@ -17,12 +18,11 @@ export function formatCurrency(amount: number | string | null | undefined): stri
   }
 
   const numericValue = typeof amount === 'number' ? amount : parseFloat(amount);
-  
-  // Formatage avec séparateur d'espace insécable pour les milliers
-  const formattedNumber = new Intl.NumberFormat('fr-FR', {
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  }).format(numericValue);
+  const sign = numericValue < 0 ? '-' : '';
+  const absValue = Math.abs(Math.round(numericValue));
 
-  return `${formattedNumber} ${APP_CONFIG.currency}`;
+  // Formatage avec séparateur de milliers en point (.) : ex. 5.000.000 FCFA
+  const formattedNumber = absValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  return `${sign}${formattedNumber} ${APP_CONFIG.currency}`;
 }

@@ -100,7 +100,7 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
               isIncome ? 'text-[#16A34A]' : 'text-[#DC2626]'
             }`}
           >
-            {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
+            {isIncome ? '+' : '-'} {formatCurrency(Math.abs(Number(transaction.amount)))}
           </span>
 
           <div className="flex items-center gap-1">

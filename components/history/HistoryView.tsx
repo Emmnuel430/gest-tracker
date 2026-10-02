@@ -310,14 +310,14 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
         <div className="bg-[#F0FDF4] border-2 border-[#111827] rounded-xl p-3 shadow-[3px_3px_0px_0px_#111827] text-center">
           <p className="text-[10px] font-black uppercase text-neutral-600">Total Entrées</p>
           <p className="text-xs sm:text-sm font-black text-[#16A34A] truncate">
-            +{formatCurrency(summary.totalIncome)}
+            +{formatCurrency(Math.abs(Number(summary.totalIncome)))}
           </p>
         </div>
 
         <div className="bg-[#FEF2F2] border-2 border-[#111827] rounded-xl p-3 shadow-[3px_3px_0px_0px_#111827] text-center">
           <p className="text-[10px] font-black uppercase text-neutral-600">Total Sorties</p>
           <p className="text-xs sm:text-sm font-black text-[#DC2626] truncate">
-            -{formatCurrency(summary.totalExpense)}
+            -{formatCurrency(Math.abs(Number(summary.totalExpense)))}
           </p>
         </div>
 

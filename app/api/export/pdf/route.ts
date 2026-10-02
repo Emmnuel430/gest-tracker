@@ -126,11 +126,11 @@ export async function GET(request: NextRequest) {
   <div class="summary-grid">
     <div class="card" style="background: #E1FCEF;">
       <div class="card-label">Total Entrées</div>
-      <div class="card-value income">+${formatCurrency(summary.totalIncome)}</div>
+      <div class="card-value income">+${formatCurrency(Math.abs(Number(summary.totalIncome)))}</div>
     </div>
     <div class="card" style="background: #FFEAEB;">
       <div class="card-label">Total Sorties</div>
-      <div class="card-value expense">-${formatCurrency(summary.totalExpense)}</div>
+      <div class="card-value expense">-${formatCurrency(Math.abs(Number(summary.totalExpense)))}</div>
     </div>
     <div class="card" style="background: #FFF9D2;">
       <div class="card-label">Solde Période</div>
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
           <td>${t.payment}</td>
           <td>${t.note || '-'}</td>
           <td class="text-right ${t.type === 'INCOME' ? 'income' : 'expense'}">
-            ${t.type === 'INCOME' ? '+' : '-'} ${formatCurrency(t.amount)}
+            ${t.type === 'INCOME' ? '+' : '-'} ${formatCurrency(Math.abs(Number(t.amount)))}
           </td>
         </tr>
       `
