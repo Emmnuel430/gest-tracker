@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { TransactionSchema } from '@/lib/validations';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { TransactionSchema } from '../lib/validations';
 
 describe('TransactionSchema (Zod)', () => {
   it('valide une transaction conforme', () => {
@@ -13,7 +14,7 @@ describe('TransactionSchema (Zod)', () => {
     };
 
     const result = TransactionSchema.safeParse(validData);
-    expect(result.success).toBe(true);
+    assert.equal(result.success, true);
   });
 
   it('rejette un montant négatif ou nul', () => {
@@ -25,7 +26,7 @@ describe('TransactionSchema (Zod)', () => {
     };
 
     const resultZero = TransactionSchema.safeParse(invalidDataZero);
-    expect(resultZero.success).toBe(false);
+    assert.equal(resultZero.success, false);
 
     const invalidDataNeg = {
       type: 'EXPENSE',
@@ -35,7 +36,7 @@ describe('TransactionSchema (Zod)', () => {
     };
 
     const resultNeg = TransactionSchema.safeParse(invalidDataNeg);
-    expect(resultNeg.success).toBe(false);
+    assert.equal(resultNeg.success, false);
   });
 
   it('rejette un type de transaction invalide', () => {
@@ -47,7 +48,7 @@ describe('TransactionSchema (Zod)', () => {
     };
 
     const result = TransactionSchema.safeParse(invalidType);
-    expect(result.success).toBe(false);
+    assert.equal(result.success, false);
   });
 
   it('rejette une note dépassant 250 caractères', () => {
@@ -60,6 +61,6 @@ describe('TransactionSchema (Zod)', () => {
     };
 
     const result = TransactionSchema.safeParse(invalidNote);
-    expect(result.success).toBe(false);
+    assert.equal(result.success, false);
   });
 });

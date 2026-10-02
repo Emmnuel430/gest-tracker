@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Link from 'next/link';
+import { HeaderAuth } from '@/components/layout/HeaderAuth';
 
 export const metadata: Metadata = {
   title: 'GEST TRACKER — Suivi des dépenses & revenus',
@@ -30,6 +31,7 @@ export default function RootLayout({
               <span className="text-[11px] font-black uppercase px-2.5 py-1 bg-white border-2 border-black rounded-md shadow-[2px_2px_0px_0px_#000]">
                 FCFA
               </span>
+              <HeaderAuth />
             </div>
           </div>
         </header>

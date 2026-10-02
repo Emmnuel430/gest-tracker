@@ -1,21 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Trash2 } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Pencil, Trash2 } from 'lucide-react';
 import { Transaction } from '@/types/transaction';
 import { formatCurrency } from '@/constants/config';
 import { formatDisplayDate, formatTime } from '@/lib/dates';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EditTransactionModal } from '@/components/transactions/EditTransactionModal';
 import { deleteTransactionAction } from '@/actions/transactions';
 
 interface TransactionItemProps {
   transaction: Transaction;
   onDeleted?: (id: string) => void;
+  onUpdated?: (updated: Transaction) => void;
 }
 
-export function TransactionItem({ transaction, onDeleted }: TransactionItemProps) {
+export function TransactionItem({ transaction, onDeleted, onUpdated }: TransactionItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   const isIncome = transaction.type === 'INCOME';
 
@@ -26,6 +29,12 @@ export function TransactionItem({ transaction, onDeleted }: TransactionItemProps
     setShowConfirm(false);
     if (res.success && onDeleted) {
       onDeleted(transaction.id);
+    }
+  };
+
+  const handleUpdated = (updated: Transaction) => {
+    if (onUpdated) {
+      onUpdated(updated);
     }
   };
 
@@ -70,14 +79,24 @@ export function TransactionItem({ transaction, onDeleted }: TransactionItemProps
             {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
           </span>
 
-          <button
-            type="button"
-            onClick={() => setShowConfirm(true)}
-            title="Supprimer"
-            className="p-1.5 text-neutral-400 hover:text-[#FF3847] hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setShowEdit(true)}
+              title="Modifier"
+              className="p-1.5 text-neutral-400 hover:text-black hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowConfirm(true)}
+              title="Supprimer"
+              className="p-1.5 text-neutral-400 hover:text-[#FF3847] hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -92,6 +111,13 @@ export function TransactionItem({ transaction, onDeleted }: TransactionItemProps
         isLoading={isDeleting}
         onConfirm={handleDelete}
         onCancel={() => setShowConfirm(false)}
+      />
+
+      <EditTransactionModal
+        transaction={transaction}
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        onUpdated={handleUpdated}
       />
     </>
   );
