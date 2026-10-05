@@ -79,7 +79,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
     return (
       <div className="w-full flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-xs font-black uppercase tracking-wider text-[#111827]">
+          <label htmlFor={inputId} className="text-xs font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
             {label}
           </label>
         )}
@@ -97,11 +97,11 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
             required={required}
             disabled={disabled}
             className={cn(
-              'w-full bg-white border-2 border-[#111827] text-[#111827] font-black shadow-[3px_3px_0px_0px_#111827] focus:outline-none focus:bg-[#EFF6FF] transition-all disabled:opacity-50 disabled:bg-neutral-100',
+              'w-full bg-white dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] text-[#111827] dark:text-white font-black shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] focus:outline-none focus:bg-[#EFF6FF] dark:focus:bg-[#1E293B] transition-all disabled:opacity-50 disabled:bg-neutral-100',
               isGiant
-                ? 'text-2xl sm:text-3xl border-3 rounded-xl p-4 pr-20 shadow-[4px_4px_0px_0px_#111827] focus:shadow-[6px_6px_0px_0px_#111827]'
+                ? 'text-2xl sm:text-3xl border-3 rounded-xl p-4 pr-20 shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] focus:shadow-[6px_6px_0px_0px_#111827]'
                 : 'rounded-xl px-4 py-3 text-base font-bold pr-16 focus:shadow-[4px_4px_0px_0px_#111827]',
-              error && 'border-[#DC2626] bg-[#FEF2F2]',
+              error && 'border-[#DC2626] bg-[#FEF2F2] dark:bg-[#2C0B0E]',
               className
             )}
             {...props}
@@ -109,7 +109,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
           {suffix && (
             <span
               className={cn(
-                'absolute right-3 font-black uppercase bg-[#111827] text-white rounded select-none pointer-events-none',
+                'absolute right-3 font-black uppercase bg-[#111827] dark:bg-white text-white dark:text-[#111827] rounded select-none pointer-events-none',
                 isGiant ? 'text-sm right-4 px-2.5 py-1 rounded-md' : 'text-xs px-2 py-1'
               )}
             >

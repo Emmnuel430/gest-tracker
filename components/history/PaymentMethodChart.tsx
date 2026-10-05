@@ -32,14 +32,14 @@ export function PaymentMethodChart({ breakdown }: PaymentMethodChartProps) {
     <Card className="p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-black text-xs uppercase tracking-wider text-[#111827]">
+          <h3 className="font-black text-xs uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
             Moyens de paiement
           </h3>
-          <p className="text-[11px] font-medium text-neutral-500">
+          <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
             Dépenses par canal de paiement
           </p>
         </div>
-        <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#DBEAFE] text-[#111827] border border-[#111827] rounded shadow-[1px_1px_0px_0px_#111827]">
+        <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#111827] dark:text-white border border-[#111827] dark:border-white rounded shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]">
           {breakdown.length} canaux
         </span>
       </div>
@@ -56,28 +56,28 @@ export function PaymentMethodChart({ breakdown }: PaymentMethodChartProps) {
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 font-bold">
                   <span
-                    className="w-6 h-6 border border-[#111827] rounded flex items-center justify-center shadow-[1px_1px_0px_0px_#111827]"
+                    className="w-6 h-6 border border-[#111827] dark:border-white rounded flex items-center justify-center shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]"
                     style={{ backgroundColor: theme.bg, color: theme.text }}
                   >
                     {getMethodIcon(item.method)}
                   </span>
-                  <span className="text-[#111827] font-extrabold">{item.method}</span>
-                  <span className="text-[10px] font-semibold text-neutral-400">
+                  <span className="text-[#111827] dark:text-[#F8FAFC] font-extrabold">{item.method}</span>
+                  <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500">
                     ({item.count} op.)
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="font-black text-[#111827]">{formatCurrency(item.total)}</span>
-                  <span className="text-[10px] font-bold text-neutral-500 ml-1.5">
+                  <span className="font-black text-[#111827] dark:text-[#F8FAFC]">{formatCurrency(item.total)}</span>
+                  <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 ml-1.5">
                     {item.percentage}%
                   </span>
                 </div>
               </div>
 
               {/* Barre de progression avec la couleur du moyen de paiement */}
-              <div className="w-full h-3 bg-neutral-100 border-2 border-[#111827] rounded-full overflow-hidden shadow-[1px_1px_0px_0px_#111827]">
+              <div className="w-full h-3 bg-neutral-100 dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-full overflow-hidden shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]">
                 <div
-                  className="h-full border-r-2 border-[#111827] transition-all duration-300"
+                  className="h-full border-r-2 border-[#111827] dark:border-white transition-all duration-300"
                   style={{
                     width: `${Math.max(item.percentage, 3)}%`,
                     backgroundColor: theme.bg,

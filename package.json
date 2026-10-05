@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "test": "tsx --test tests/*.test.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "supabase:start": "supabase start",
+  "supabase:stop": "supabase stop",
+  "supabase:status": "supabase status"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

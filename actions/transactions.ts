@@ -40,13 +40,18 @@ export async function createTransactionAction(
 
     const { type, amount, category, payment, date, note } = parseResult.data;
 
+    // Logique métier : Vérification si une date précise a été fournie manuellement.
+    // Si la date est omise, nulle ou non spécifiée (création instantanée), le système génère l'horodatage courant exact.
+    const finalDate =
+      date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
+
     const createdTx = await prisma.transaction.create({
       data: {
         type,
         amount,
         category,
         payment,
-        date,
+        date: finalDate,
         note: note ? note.trim() : null,
       },
     });
@@ -137,27 +142,56 @@ export async function getTransactionsAction(options?: {
 }
 
 /**
- * Récupère les données du dashboard d'accueil (Solde, Revenus du mois, Dépenses du mois, dernières transactions)
+ * Récupère les données du dashboard d'accueil (Solde global, Revenus et Dépenses selon période, dernières transactions)
+ * Conforme aux sections 10 et 11 de la roadmap V1.2.
  */
 export async function getDashboardDataAction(): Promise<ActionResponse> {
   try {
+    const todayRange = getDateRangeForPeriod('today');
     const monthRange = getDateRangeForPeriod('month');
+    const yearRange = getDateRangeForPeriod('year');
 
-    // Récupérer toutes les transactions du mois pour les stats
-    const monthTransactions = await prisma.transaction.findMany({
+    // 1. Calcul du Solde Global sur l'ensemble de toutes les transactions (Section 11)
+    const allTxs = await prisma.transaction.findMany({
+      select: { type: true, amount: true },
+    });
+
+    let totalAllIncome = 0;
+    let totalAllExpense = 0;
+    for (const t of allTxs) {
+      const amt = Number(t.amount);
+      if (t.type === 'INCOME') totalAllIncome += amt;
+      else totalAllExpense += amt;
+    }
+    const globalBalance = totalAllIncome - totalAllExpense;
+
+    // 2. Transactions de l'année pour dériver yearSummary, monthSummary, todaySummary
+    const yearTransactions = await prisma.transaction.findMany({
       where: {
         date: {
-          gte: monthRange.from,
-          lte: monthRange.to,
+          gte: yearRange.from,
+          lte: yearRange.to,
         },
       },
       orderBy: { date: 'desc' },
     });
 
-    const serializedMonthTxs = monthTransactions.map(serializeTransaction);
-    const summary = calculateFinancialSummary(serializedMonthTxs);
+    const serializedYearTxs = yearTransactions.map(serializeTransaction);
+    const yearSummary = calculateFinancialSummary(serializedYearTxs);
 
-    // 5 dernières transactions globales
+    const monthTxs = serializedYearTxs.filter((tx) => {
+      const d = new Date(tx.date);
+      return d >= monthRange.from && d <= monthRange.to;
+    });
+    const monthSummary = calculateFinancialSummary(monthTxs);
+
+    const todayTxs = monthTxs.filter((tx) => {
+      const d = new Date(tx.date);
+      return d >= todayRange.from && d <= todayRange.to;
+    });
+    const todaySummary = calculateFinancialSummary(todayTxs);
+
+    // 3. 5 dernières transactions globales
     const recentTransactions = await prisma.transaction.findMany({
       take: 5,
       orderBy: { date: 'desc' },
@@ -166,7 +200,13 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
     return {
       success: true,
       data: {
-        summary,
+        globalBalance,
+        summaries: {
+          today: todaySummary,
+          month: monthSummary,
+          year: yearSummary,
+        },
+        summary: monthSummary, // Rétrocompatibilité
         recentTransactions: recentTransactions.map(serializeTransaction),
       },
     };
@@ -228,7 +268,7 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
         ...(data.amount && { amount: data.amount }),
         ...(data.category && { category: data.category }),
         ...(data.payment && { payment: data.payment }),
-        ...(data.date && { date: data.date }),
+        ...(data.date instanceof Date && !isNaN(data.date.getTime()) && { date: data.date }),
         ...(data.note !== undefined && { note: data.note ? data.note.trim() : null }),
       },
     });

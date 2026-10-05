@@ -8,21 +8,43 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const result = await getDashboardDataAction();
 
-  const summary = result.success
-    ? result.data.summary
-    : { totalIncome: 0, totalExpense: 0, balance: 0, transactionCount: 0 };
+  const emptySummary = { totalIncome: 0, totalExpense: 0, balance: 0, transactionCount: 0 };
+
+  const globalBalance = result.success ? result.data.globalBalance ?? 0 : 0;
+  const summaries = result.success && result.data.summaries
+    ? result.data.summaries
+    : {
+        today: emptySummary,
+        month: result.success ? result.data.summary : emptySummary,
+        year: emptySummary,
+      };
 
   const recentTransactions = result.success ? result.data.recentTransactions : [];
 
   return (
-    <div className="flex flex-col items-center">
-      {/* 1. Résumé du Solde et totaux du mois */}
-      <BalanceSummary summary={summary} />
+    <div className="flex flex-col items-center space-y-4">
+      {/* En-tête mobile épuré avec Titre & Devise */}
+      <div className="w-full flex items-center justify-between pt-1">
+        <div className="flex items-center gap-2">
+          <span className="w-8 h-8 bg-[#111827] dark:bg-white text-white dark:text-[#111827] font-black text-base flex items-center justify-center rounded-lg border-2 border-white dark:border-[#111827] shadow-[2px_2px_0px_0px_#111827]">
+            G
+          </span>
+          <span className="font-black text-lg sm:text-xl uppercase tracking-tighter text-[#111827] dark:text-[#F8FAFC]">
+            GEST TRACKER
+          </span>
+        </div>
+        <span className="text-[11px] font-black uppercase px-2.5 py-1 bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#111827] dark:text-white border-2 border-[#111827] dark:border-[#334155] rounded-md shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]">
+          FCFA
+        </span>
+      </div>
 
-      {/* 2. Les 3 boutons d'actions massifs (Section 2 de la Roadmap) */}
+      {/* 1. Résumé du Solde Global et totaux par période (Sections 10 & 11) */}
+      <BalanceSummary globalBalance={globalBalance} summaries={summaries} />
+
+      {/* 2. Les 3 boutons d'actions massifs */}
       <HomeActions />
 
-      {/* 3. Dernières opérations récentes */}
+      {/* 3. Dernières opérations récentes (Section 9) */}
       <RecentTransactionsList transactions={recentTransactions} />
     </div>
   );

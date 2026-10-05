@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Pencil, Trash2 } from 'lucide-react';
-import { Transaction } from '@/types/transaction';
-import { formatCurrency } from '@/constants/config';
-import { formatDisplayDate, formatTime } from '@/lib/dates';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { EditTransactionModal } from '@/components/transactions/EditTransactionModal';
-import { deleteTransactionAction } from '@/actions/transactions';
-import { PAYMENT_METHOD_THEMES } from '@/constants/payment-methods';
-import { CATEGORY_COLORS } from '@/constants/categories';
+import React, { useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
+import { Transaction } from "@/types/transaction";
+import { formatCurrency } from "@/constants/config";
+import { formatDisplayDate, formatTime } from "@/lib/dates";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { EditTransactionModal } from "@/components/transactions/EditTransactionModal";
+import { deleteTransactionAction } from "@/actions/transactions";
+import { PAYMENT_METHOD_THEMES } from "@/constants/payment-methods";
+import { CATEGORY_COLORS } from "@/constants/categories";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -17,17 +17,21 @@ interface TransactionItemProps {
   onUpdated?: (updated: Transaction) => void;
 }
 
-export function TransactionItem({ transaction, onDeleted, onUpdated }: TransactionItemProps) {
+export function TransactionItem({
+  transaction,
+  onDeleted,
+  onUpdated,
+}: TransactionItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
-  const isIncome = transaction.type === 'INCOME';
+  const isIncome = transaction.type === "INCOME";
   const paymentTheme = PAYMENT_METHOD_THEMES[transaction.payment] || {
-    bg: '#EFF6FF',
-    text: '#111827',
+    bg: "#EFF6FF",
+    text: "#111827",
   };
-  const catColor = CATEGORY_COLORS[transaction.category] || '#2563EB';
+  const catColor = CATEGORY_COLORS[transaction.category] || "#2563EB";
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -47,38 +51,41 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
 
   return (
     <>
-      <div className="bg-white border-2 border-[#111827] rounded-xl p-3.5 shadow-[3px_3px_0px_0px_#111827] flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5">
-        <div className="flex items-center gap-3">
-          {/* L'icône prend visuellement la couleur officielle du moyen de paiement (Section 3) */}
+      {/* Structure de Card Normalisée selon la Section 8 de roadmapv1.2.md */}
+      <div className="bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] rounded-xl p-3.5 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] flex items-center justify-between gap-3 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5">
+        {/* Partie gauche : LOGO / Icône du type ou moyen de paiement */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <div
-            className="w-10 h-10 border-2 border-[#111827] rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#111827] shrink-0"
-            style={{
-              backgroundColor: paymentTheme.bg,
-              color: paymentTheme.text,
-            }}
-            title={`Moyen de paiement : ${transaction.payment}`}
+            className={`w-9 h-9 border-2 border-[#111827] dark:border-white rounded-lg flex items-center justify-center shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000] shrink-0 ${
+              isIncome
+                ? "bg-[#16A34A] text-white"
+                : "bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626]"
+            }`}
+            title={`Moyen : ${transaction.payment}`}
           >
             {isIncome ? (
-              <ArrowDownLeft className="w-5 h-5 stroke-3" />
+              <ArrowDownLeft className="w-5 h-5 stroke-3 text-white" />
             ) : (
-              <ArrowUpRight className="w-5 h-5 stroke-3" />
+              <ArrowUpRight className="w-5 h-5 stroke-3 text-[#DC2626]" />
             )}
           </div>
 
-          <div>
+          {/* Informations : 3 lignes standardisées */}
+          <div className="min-w-0 flex-1">
+            {/* Ligne 1 : Catégorie · Moyen de paiement */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {/* Badge Catégorie avec pastille couleur */}
-              <span className="inline-flex items-center gap-1.5 font-black text-sm text-[#111827] leading-tight">
+              <span className="inline-flex items-center gap-1.5 font-black text-xs sm:text-sm text-[#111827] dark:text-[#F8FAFC]">
                 <span
-                  className="w-2 h-2 rounded-full border border-[#111827] shadow-[1px_1px_0px_0px_#111827]"
+                  className="w-2 h-2 rounded-full border border-[#111827] dark:border-white shadow-[1px_1px_0px_0px_#111827]"
                   style={{ backgroundColor: catColor }}
                 />
                 {transaction.category}
               </span>
-
-              {/* Badge Moyen de paiement aux couleurs PAYMENT_METHOD_THEMES */}
+              <span className="text-neutral-400 dark:text-neutral-500 font-bold">
+                ·
+              </span>
               <span
-                className="text-[10px] font-black px-1.5 py-0.5 border border-[#111827] rounded shadow-[1px_1px_0px_0px_#111827]"
+                className="text-[10px] font-black px-1.5 py-0.5 border border-[#111827] dark:border-[#475569] rounded shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]"
                 style={{
                   backgroundColor: paymentTheme.bg,
                   color: paymentTheme.text,
@@ -87,50 +94,62 @@ export function TransactionItem({ transaction, onDeleted, onUpdated }: Transacti
                 {transaction.payment}
               </span>
             </div>
-            <p className="text-[11px] font-medium text-neutral-500 mt-0.5">
-              {formatDisplayDate(transaction.date, 'dd MMM yyyy')} • {formatTime(transaction.date)}
-              {transaction.note ? ` • ${transaction.note}` : ''}
+
+            {/* Ligne 2 : Date · Heure */}
+            <p className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mt-0.5">
+              {formatDisplayDate(transaction.date, "dd MMM yyyy")} ·{" "}
+              {formatTime(transaction.date)}
             </p>
+
+            {/* Ligne 3 : Note (limitée à une ligne avec line-clamp-1, non affichée si vide) */}
+            {transaction.note && transaction.note.trim().length > 0 && (
+              <p className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 mt-0.5 line-clamp-1 italic">
+                {transaction.note}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* Partie droite : Montant + Boutons empilés verticalement */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Montant coloré */}
           <span
-            className={`font-black text-sm sm:text-base ${
-              isIncome ? 'text-[#16A34A]' : 'text-[#DC2626]'
+            className={`font-black text-sm sm:text-base whitespace-nowrap ${
+              isIncome ? "text-[#16A34A]" : "text-[#DC2626]"
             }`}
           >
-            {isIncome ? '+' : '-'} {formatCurrency(Math.abs(Number(transaction.amount)))}
+            {isIncome ? "+" : "-"}{" "}
+            {formatCurrency(Math.abs(Number(transaction.amount)))}
           </span>
 
-          <div className="flex items-center gap-1">
+          {/* Boutons d'actions empilés verticalement selon Section 8 */}
+          <div className="flex flex-col gap-1 items-center">
             <button
               type="button"
               onClick={() => setShowEdit(true)}
-              title="Modifier"
-              className="p-1.5 text-neutral-400 hover:text-[#111827] hover:bg-[#EFF6FF] rounded-lg transition-colors cursor-pointer"
+              title="Modifier cette opération"
+              className="p-1 text-neutral-500 dark:text-neutral-300 hover:text-[#2563EB] dark:hover:text-[#60A5FA] hover:bg-[#EFF6FF] dark:hover:bg-[#131C31] rounded-md transition-colors cursor-pointer"
             >
-              <Pencil className="w-4 h-4" />
+              <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setShowConfirm(true)}
-              title="Supprimer"
-              className="p-1.5 text-neutral-400 hover:text-[#DC2626] hover:bg-[#FEF2F2] rounded-lg transition-colors cursor-pointer"
+              title="Supprimer cette opération"
+              className="p-1 text-neutral-500 dark:text-neutral-300 hover:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-[#3B1214] rounded-md transition-colors cursor-pointer"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </div>
 
+      {/* Boîte de dialogue de confirmation de suppression (Section 13) */}
       <ConfirmDialog
         isOpen={showConfirm}
-        title="Supprimer la transaction"
-        message={`Êtes-vous sûr de vouloir supprimer cette transaction de ${formatCurrency(
-          transaction.amount
-        )} (${transaction.category}) ? Cette action est irréversible.`}
-        confirmLabel="Oui, supprimer"
+        title="Supprimer cette opération ?"
+        message="Cette action est irréversible. L'opération sera définitivement effacée de vos données."
+        confirmLabel="Supprimer"
         cancelLabel="Annuler"
         isLoading={isDeleting}
         onConfirm={handleDelete}
