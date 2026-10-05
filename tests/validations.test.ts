@@ -63,4 +63,39 @@ describe('TransactionSchema (Zod)', () => {
     const result = TransactionSchema.safeParse(invalidNote);
     assert.equal(result.success, false);
   });
+
+  it('valide une transaction sans date spécifiée (mode instantané par défaut)', () => {
+    const instantData = {
+      type: 'EXPENSE',
+      amount: 2500,
+      category: 'Alimentation',
+      payment: 'Wave',
+      note: 'Achat rapide',
+    };
+
+    const result = TransactionSchema.safeParse(instantData);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.date, undefined);
+    }
+  });
+
+  it('valide une transaction avec date manuelle spécifique (mode rétroactif)', () => {
+    const retroactiveData = {
+      type: 'INCOME',
+      amount: 150000,
+      category: 'Salaire',
+      payment: 'Compte bancaire',
+      date: '2026-09-25T14:30:00',
+    };
+
+    const result = TransactionSchema.safeParse(retroactiveData);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.ok(result.data.date instanceof Date);
+      assert.equal(result.data.date.getFullYear(), 2026);
+      assert.equal(result.data.date.getMonth(), 8); // Septembre (0-indexed)
+      assert.equal(result.data.date.getDate(), 25);
+    }
+  });
 });

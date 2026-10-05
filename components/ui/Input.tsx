@@ -25,7 +25,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-xs font-black uppercase tracking-wider text-[#111827]">
+          <label htmlFor={inputId} className="text-xs font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
             {label}
           </label>
         )}
@@ -36,15 +36,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             onWheel={handleWheel}
             className={cn(
-              'w-full bg-white border-2 border-[#111827] rounded-lg px-4 py-2.5 text-[#111827] font-bold placeholder:text-neutral-400 placeholder:font-normal shadow-[3px_3px_0px_0px_#111827] focus:outline-none focus:bg-[#EFF6FF] focus:shadow-[4px_4px_0px_0px_#111827] transition-all disabled:opacity-50 disabled:bg-neutral-100',
-              error && 'border-[#DC2626] bg-[#FEF2F2]',
+              'w-full bg-white dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-lg px-4 py-2.5 text-[#111827] dark:text-white font-bold placeholder:text-neutral-400 placeholder:font-normal shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] focus:outline-none focus:bg-[#EFF6FF] dark:focus:bg-[#1E293B] focus:shadow-[4px_4px_0px_0px_#111827] dark:focus:shadow-[4px_4px_0px_0px_#000000] transition-all disabled:opacity-50 disabled:bg-neutral-100',
+              error && 'border-[#DC2626] bg-[#FEF2F2] dark:bg-[#2C0B0E]',
               suffix && 'pr-14',
               className
             )}
             {...props}
           />
           {suffix && (
-            <span className="absolute right-3 font-black text-xs uppercase px-2 py-1 bg-[#111827] text-white rounded">
+            <span className="absolute right-3 font-black text-xs uppercase px-2 py-1 bg-[#111827] dark:bg-white text-white dark:text-[#111827] rounded">
               {suffix}
             </span>
           )}

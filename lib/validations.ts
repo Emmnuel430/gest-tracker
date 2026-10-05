@@ -11,7 +11,7 @@ export const TransactionSchema = z.object({
     .positive({ message: 'Le montant doit être strictement supérieur à 0' }),
   category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
   payment: z.string().min(1, { message: 'Veuillez sélectionner un moyen de paiement' }),
-  date: z.coerce.date().default(() => new Date()),
+  date: z.coerce.date().optional().nullable(),
   note: z
     .string()
     .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
