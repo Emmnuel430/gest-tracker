@@ -20,6 +20,8 @@ export type ActionResult<T = unknown> =
   | { success: true; data: T; message?: string }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 
+export type ActionResponse<T = any> = ActionResult<T>;
+
 export interface CreateTransactionInput {
   type: TransactionType;
   amount: number;

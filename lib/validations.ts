@@ -66,3 +66,15 @@ export const LoginSchema = z.object({
 
 export type RegisterFormValues = z.infer<typeof RegisterSchema>;
 export type LoginFormValues = z.infer<typeof LoginSchema>;
+
+export const BudgetSchema = z.object({
+  category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
+  amount: z.coerce
+    .number({ message: 'Le montant doit être un nombre valide' })
+    .positive({ message: 'Le montant doit être strictement supérieur à 0' }),
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, { message: 'Le mois doit être au format YYYY-MM' }),
+});
+
+export type BudgetFormValues = z.infer<typeof BudgetSchema>;

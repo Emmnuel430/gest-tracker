@@ -37,3 +37,18 @@ model Transaction {
   @@index([userId])
   @@map("transactions")
 }
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  category  String
+  amount    Decimal  @db.Decimal(12, 2)
+  month     String   // Format YYYY-MM (ex: "2026-10")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, category, month])
+  @@index([userId, month])
+  @@map("budgets")
+}
+
