@@ -15,6 +15,28 @@ function createPrismaClient(): PrismaClient {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function isPrismaUpToDate(client: any): boolean {
+  return (
+    client &&
+    typeof client.transaction?.findMany === 'function' &&
+    typeof client.budget?.findMany === 'function' &&
+    typeof client.recurringRule?.findMany === 'function' &&
+    typeof client.wallet?.findMany === 'function' &&
+    typeof client.debt?.findMany === 'function'
+  );
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export const prisma = (() => {
+  if (globalForPrisma.prisma && isPrismaUpToDate(globalForPrisma.prisma)) {
+    return globalForPrisma.prisma;
+  }
+  const client = createPrismaClient();
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = client;
+  }
+  return client;
+})();
+
+export default prisma;
+
+
