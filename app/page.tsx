@@ -1,21 +1,25 @@
 import { getDashboardDataAction } from '@/actions/transactions';
 import { getDueRecurringRulesAction } from '@/actions/recurring';
+import { getFinancialInsightsAction } from '@/actions/insights';
 import { BalanceSummary } from '@/components/home/BalanceSummary';
 import { HomeActions } from '@/components/home/HomeActions';
 import { RecentTransactionsList } from '@/components/home/RecentTransactionsList';
 import { RecurringAlertBanner } from '@/components/recurring/RecurringAlertBanner';
+import { FinancialInsightsCard } from '@/components/insights/FinancialInsightsCard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [result, dueRulesRes] = await Promise.all([
+  const [result, dueRulesRes, insightsRes] = await Promise.all([
     getDashboardDataAction(),
     getDueRecurringRulesAction(),
+    getFinancialInsightsAction(),
   ]);
 
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const dueRules = dueRulesRes.success && dueRulesRes.data ? dueRulesRes.data : [];
+  const insights = insightsRes.success && insightsRes.data ? insightsRes.data : [];
 
   const emptySummary = { totalIncome: 0, totalExpense: 0, balance: 0, transactionCount: 0 };
 
@@ -58,7 +62,12 @@ export default async function HomePage() {
       {/* 2. Les 3 boutons d'actions massifs */}
       <HomeActions />
 
-      {/* 3. Dernières opérations récentes (Section 9) */}
+      {/* 3. Bilan & Conseils Financiers (Sprint 17) */}
+      <div className="w-full">
+        <FinancialInsightsCard insights={insights} />
+      </div>
+
+      {/* 4. Dernières opérations récentes (Section 9) */}
       <RecentTransactionsList transactions={recentTransactions} />
     </div>
   );
