@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [email, setEmail] = useState('emmanueldaho859@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -28,12 +29,12 @@ export default function LoginPage() {
       try {
         const supabase = createClient();
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         });
 
         if (error) {
-          setErrorMessage(error.message || 'Identifiants incorrects.');
+          setErrorMessage(error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : error.message);
           return;
         }
 
@@ -52,10 +53,10 @@ export default function LoginPage() {
           <Lock className="w-7 h-7 text-white stroke-3" />
         </div>
         <h1 className="text-2xl font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
-          Accès Privé
+          Connexion
         </h1>
         <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400 mt-1">
-          Personal GEST TRACKER — Inscription fermée
+          Personal GEST TRACKER — Espace Financier Privé
         </p>
       </div>
 
@@ -68,6 +69,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="votre@email.com"
             required
+            autoComplete="email"
           />
 
           <Input
@@ -77,6 +79,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
+            autoComplete="current-password"
           />
 
           {errorMessage && (
@@ -97,7 +100,19 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-6 pt-4 border-t-2 border-neutral-200 dark:border-[#334155] flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
+        <div className="mt-5 pt-4 border-t-2 border-neutral-200 dark:border-[#334155] text-center">
+          <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400">
+            Nouveau sur GEST TRACKER ?{' '}
+            <Link
+              href="/register"
+              className="text-[#2563EB] dark:text-[#60A5FA] hover:underline font-black inline-block mt-1 sm:mt-0"
+            >
+              Créer un compte ➔
+            </Link>
+          </p>
+        </div>
+
+        <div className="mt-4 pt-3 border-t-2 border-dashed border-neutral-200 dark:border-[#334155] flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
           <ShieldCheck className="w-4 h-4 text-[#16A34A]" />
           <span>Session chiffrée SSL & Supabase Auth</span>
         </div>

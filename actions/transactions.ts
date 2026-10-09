@@ -7,7 +7,7 @@ import { serializeTransaction } from '@/lib/utils';
 import { getDateRangeForPeriod } from '@/lib/dates';
 import { calculateFinancialSummary } from '@/lib/statistics';
 import { PeriodType } from '@/types/period';
-import { ActionResult } from '@/types/transaction';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export type ActionResponse<T = any> =
   | { success: true; data: T; message?: string }
@@ -15,12 +15,14 @@ export type ActionResponse<T = any> =
 
 /**
  * Crée une nouvelle transaction (Revenu ou Dépense)
- * Utilisé par les formulaires /entrant et /sortant
+ * Rattachée hermétiquement au compte de l'utilisateur connecté (Sprint 12 V2)
  */
 export async function createTransactionAction(
   rawData: unknown
 ): Promise<ActionResponse> {
   try {
+    const user = await getAuthenticatedUser();
+
     const parseResult = TransactionSchema.safeParse(rawData);
 
     if (!parseResult.success) {
@@ -40,13 +42,13 @@ export async function createTransactionAction(
 
     const { type, amount, category, payment, date, note } = parseResult.data;
 
-    // Logique métier : Vérification si une date précise a été fournie manuellement.
-    // Si la date est omise, nulle ou non spécifiée (création instantanée), le système génère l'horodatage courant exact.
+    // Logique métier : Horodatage exact si non fourni manuellement
     const finalDate =
       date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
 
     const createdTx = await prisma.transaction.create({
       data: {
+        userId: user.id,
         type,
         amount,
         category,
@@ -77,6 +79,7 @@ export async function createTransactionAction(
 
 /**
  * Récupère les transactions filtrées avec pagination optionnelle
+ * Strictement isolées par l'ID de l'utilisateur connecté (Sprint 12 V2)
  */
 export async function getTransactionsAction(options?: {
   period?: PeriodType | 'all';
@@ -88,7 +91,11 @@ export async function getTransactionsAction(options?: {
   limit?: number;
 }): Promise<ActionResponse> {
   try {
-    const where: any = {};
+    const user = await getAuthenticatedUser();
+
+    const where: any = {
+      userId: user.id,
+    };
 
     if (options?.period && options.period !== 'all') {
       const dateRange = getDateRangeForPeriod(
@@ -136,23 +143,26 @@ export async function getTransactionsAction(options?: {
     console.error('Erreur lors de la récupération des transactions :', error);
     return {
       success: false,
-      error: 'Impossible de charger les transactions',
+      error: error?.message || 'Impossible de charger les transactions',
     };
   }
 }
 
 /**
  * Récupère les données du dashboard d'accueil (Solde global, Revenus et Dépenses selon période, dernières transactions)
- * Conforme aux sections 10 et 11 de la roadmap V1.2.
+ * Strictement calculées sur les données de l'utilisateur connecté (Sprint 12 V2)
  */
 export async function getDashboardDataAction(): Promise<ActionResponse> {
   try {
+    const user = await getAuthenticatedUser();
+
     const todayRange = getDateRangeForPeriod('today');
     const monthRange = getDateRangeForPeriod('month');
     const yearRange = getDateRangeForPeriod('year');
 
-    // 1. Calcul du Solde Global sur l'ensemble de toutes les transactions (Section 11)
+    // 1. Calcul du Solde Global uniquement sur l'utilisateur actif
     const allTxs = await prisma.transaction.findMany({
+      where: { userId: user.id },
       select: { type: true, amount: true },
     });
 
@@ -168,6 +178,7 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
     // 2. Transactions de l'année pour dériver yearSummary, monthSummary, todaySummary
     const yearTransactions = await prisma.transaction.findMany({
       where: {
+        userId: user.id,
         date: {
           gte: yearRange.from,
           lte: yearRange.to,
@@ -191,8 +202,9 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
     });
     const todaySummary = calculateFinancialSummary(todayTxs);
 
-    // 3. 5 dernières transactions globales
+    // 3. 5 dernières transactions de l'utilisateur
     const recentTransactions = await prisma.transaction.findMany({
+      where: { userId: user.id },
       take: 5,
       orderBy: { date: 'desc' },
     });
@@ -201,6 +213,7 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
       success: true,
       data: {
         globalBalance,
+        transactionCount: allTxs.length,
         summaries: {
           today: todaySummary,
           month: monthSummary,
@@ -214,19 +227,32 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
     console.error('Erreur getDashboardDataAction :', error);
     return {
       success: false,
-      error: 'Impossible de charger les données du tableau de bord',
+      error: error?.message || 'Impossible de charger les données du tableau de bord',
     };
   }
 }
 
 /**
- * Supprime une transaction par son ID
+ * Supprime une transaction par son ID, avec vérification stricte de possession
  */
 export async function deleteTransactionAction(id: string): Promise<ActionResponse> {
   try {
-    await prisma.transaction.delete({
-      where: { id },
+    const user = await getAuthenticatedUser();
+
+    // Suppression sécurisée uniquement si id ET userId correspondent
+    const deleteResult = await prisma.transaction.deleteMany({
+      where: {
+        id,
+        userId: user.id,
+      },
     });
+
+    if (deleteResult.count === 0) {
+      return {
+        success: false,
+        error: 'Transaction introuvable ou non autorisée',
+      };
+    }
 
     revalidatePath('/');
     revalidatePath('/historique');
@@ -240,16 +266,18 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
     console.error('Erreur suppression transaction :', error);
     return {
       success: false,
-      error: 'Erreur lors de la suppression de la transaction',
+      error: error?.message || 'Erreur lors de la suppression de la transaction',
     };
   }
 }
 
 /**
- * Met à jour une transaction existante
+ * Met à jour une transaction existante, avec vérification stricte de possession
  */
 export async function updateTransactionAction(rawData: unknown): Promise<ActionResponse> {
   try {
+    const user = await getAuthenticatedUser();
+
     const parseResult = UpdateTransactionSchema.safeParse(rawData);
 
     if (!parseResult.success) {
@@ -260,6 +288,21 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
     }
 
     const { id, ...data } = parseResult.data;
+
+    // Vérifier la possession légitime de la transaction
+    const existing = await prisma.transaction.findFirst({
+      where: {
+        id,
+        userId: user.id,
+      },
+    });
+
+    if (!existing) {
+      return {
+        success: false,
+        error: 'Transaction introuvable ou vous ne disposez pas des droits requis',
+      };
+    }
 
     const updated = await prisma.transaction.update({
       where: { id },
@@ -285,7 +328,7 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
     console.error('Erreur mise à jour transaction :', error);
     return {
       success: false,
-      error: 'Impossible de mettre à jour la transaction',
+      error: error?.message || 'Impossible de mettre à jour la transaction',
     };
   }
 }

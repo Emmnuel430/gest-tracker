@@ -3,9 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { getDateRangeForPeriod, formatDisplayDate } from '@/lib/dates';
 import { serializeTransaction } from '@/lib/utils';
 import { PeriodType } from '@/types/period';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getAuthenticatedUser();
+
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get('period') as PeriodType) || 'month';
 
@@ -13,6 +16,7 @@ export async function GET(request: NextRequest) {
 
     const transactions = await prisma.transaction.findMany({
       where: {
+        userId: user.id,
         date: {
           gte: range.from,
           lte: range.to,

@@ -35,8 +35,8 @@ export function HeaderAuth() {
     router.refresh();
   };
 
-  // Ne pas afficher sur la page login
-  if (pathname === '/login') {
+  // Ne pas afficher sur les pages d'authentification
+  if (pathname === '/login' || pathname === '/register') {
     return null;
   }
 

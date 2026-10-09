@@ -35,3 +35,34 @@ export const FilterSchema = z.object({
 export type TransactionFormValues = z.infer<typeof TransactionSchema>;
 export type UpdateTransactionFormValues = z.infer<typeof UpdateTransactionSchema>;
 export type FilterFormValues = z.infer<typeof FilterSchema>;
+
+export const RegisterSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email({ message: 'Veuillez saisir une adresse email valide' }),
+    password: z
+      .string()
+      .min(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+      .regex(/[0-9]/, { message: 'Le mot de passe doit contenir au moins un chiffre' })
+      .regex(/[a-zA-Z]/, { message: 'Le mot de passe doit contenir au moins une lettre' }),
+    confirmPassword: z.string().min(1, { message: 'Veuillez confirmer votre mot de passe' }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  });
+
+export const LoginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({ message: 'Veuillez saisir une adresse email valide' }),
+  password: z.string().min(1, { message: 'Veuillez renseigner votre mot de passe' }),
+});
+
+export type RegisterFormValues = z.infer<typeof RegisterSchema>;
+export type LoginFormValues = z.infer<typeof LoginSchema>;

@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Sparkles } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { formatCurrency } from "@/constants/config";
 import { formatDisplayDate, formatTime } from "@/lib/dates";
@@ -15,7 +15,19 @@ export function RecentTransactionsList({
   transactions,
 }: RecentTransactionsListProps) {
   if (!transactions || transactions.length === 0) {
-    return null;
+    return (
+      <div className="w-full mt-6 bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[5px_5px_0px_0px_#111827] dark:shadow-[5px_5px_0px_0px_#000000] text-center">
+        <div className="w-12 h-12 bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#2563EB] dark:text-[#93C5FD] border-2 border-[#111827] dark:border-[#334155] rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[2px_2px_0px_0px_#111827]">
+          <Sparkles className="w-6 h-6 stroke-3" />
+        </div>
+        <h3 className="text-base font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
+          Bienvenue sur GEST TRACKER !
+        </h3>
+        <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 mt-1.5 max-w-sm mx-auto leading-relaxed">
+          Votre coffre personnel est prêt. Enregistrez votre premier revenu ou votre première dépense pour initialiser votre solde et démarrer votre suivi.
+        </p>
+      </div>
+    );
   }
 
   return (

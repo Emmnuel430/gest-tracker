@@ -34,8 +34,8 @@ export function BottomNav() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Ne pas afficher sur la page de connexion
-  if (pathname === '/login') {
+  // Ne pas afficher sur les pages de connexion et d'inscription
+  if (pathname === '/login' || pathname === '/register') {
     return null;
   }
 
