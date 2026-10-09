@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#2563EB"/>
+  <rect x="64" y="64" width="384" height="384" rx="64" fill="#111827" stroke="#FFFFFF" stroke-width="24"/>
+  <!-- Brutalist 'G' in white with yellow shadow -->
+  <path d="M 330 180 C 300 150 250 150 210 180 C 170 210 160 270 180 320 C 200 360 250 380 300 360 C 330 350 350 325 350 290 L 260 290 L 260 240 L 400 240 L 400 305 C 400 360 360 410 300 425 C 220 445 140 400 115 325 C 90 250 115 165 180 120 C 245 75 330 85 385 135 Z" fill="#FFFFFF"/>
+</svg>

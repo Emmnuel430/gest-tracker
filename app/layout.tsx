@@ -6,6 +6,16 @@ import { BottomNav } from '@/components/layout/BottomNav';
 export const metadata: Metadata = {
   title: 'GEST TRACKER — Suivi des dépenses & revenus',
   description: 'Application personnelle de suivi financier en Néobrutalisme',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'GEST TRACKER',
+  },
 };
 
 export default function RootLayout({
