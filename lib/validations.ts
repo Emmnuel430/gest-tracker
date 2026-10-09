@@ -78,3 +78,30 @@ export const BudgetSchema = z.object({
 });
 
 export type BudgetFormValues = z.infer<typeof BudgetSchema>;
+
+export const RecurringRuleSchema = z.object({
+  id: z.string().optional(),
+  type: z.enum(['INCOME', 'EXPENSE'] as const, {
+    message: 'Le type doit être INCOME ou EXPENSE',
+  }),
+  amount: z.coerce
+    .number({ message: 'Le montant doit être un nombre valide' })
+    .positive({ message: 'Le montant doit être strictement supérieur à 0' }),
+  category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
+  payment: z.string().min(1, { message: 'Veuillez sélectionner un moyen de paiement' }),
+  dayOfMonth: z.coerce
+    .number({ message: 'Le jour doit être un nombre valide' })
+    .int({ message: 'Le jour doit être un entier' })
+    .min(1, { message: 'Le jour doit être compris entre 1 et 31' })
+    .max(31, { message: 'Le jour doit être compris entre 1 et 31' }),
+  frequency: z.enum(['MONTHLY', 'WEEKLY', 'YEARLY'] as const).default('MONTHLY'),
+  note: z
+    .string()
+    .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
+    .optional()
+    .nullable(),
+  isActive: z.boolean().optional().default(true),
+});
+
+export type RecurringRuleFormValues = z.infer<typeof RecurringRuleSchema>;
+

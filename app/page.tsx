@@ -1,12 +1,21 @@
 import { getDashboardDataAction } from '@/actions/transactions';
+import { getDueRecurringRulesAction } from '@/actions/recurring';
 import { BalanceSummary } from '@/components/home/BalanceSummary';
 import { HomeActions } from '@/components/home/HomeActions';
 import { RecentTransactionsList } from '@/components/home/RecentTransactionsList';
+import { RecurringAlertBanner } from '@/components/recurring/RecurringAlertBanner';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const result = await getDashboardDataAction();
+  const [result, dueRulesRes] = await Promise.all([
+    getDashboardDataAction(),
+    getDueRecurringRulesAction(),
+  ]);
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const dueRules = dueRulesRes.success && dueRulesRes.data ? dueRulesRes.data : [];
 
   const emptySummary = { totalIncome: 0, totalExpense: 0, balance: 0, transactionCount: 0 };
 
@@ -36,6 +45,11 @@ export default async function HomePage() {
         <span className="text-[11px] font-black uppercase px-2.5 py-1 bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#111827] dark:text-white border-2 border-[#111827] dark:border-[#334155] rounded-md shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]">
           FCFA
         </span>
+      </div>
+ 
+      {/* Bannière de confirmation rapide pour les échéances récurrentes dues */}
+      <div className="w-full">
+        <RecurringAlertBanner initialDueRules={dueRules} currentMonth={currentMonth} />
       </div>
 
       {/* 1. Résumé du Solde Global et totaux par période (Sections 10 & 11) */}
