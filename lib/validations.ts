@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const TransactionSchema = z.object({
-  type: z.enum(['INCOME', 'EXPENSE'] as const, {
-    message: 'Le type de transaction doit être INCOME ou EXPENSE',
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER'] as const, {
+    message: 'Le type de transaction doit être INCOME, EXPENSE ou TRANSFER',
   }),
   amount: z.coerce
     .number({
@@ -17,6 +17,8 @@ export const TransactionSchema = z.object({
     .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
     .optional()
     .nullable(),
+  walletId: z.string().optional().nullable(),
+  targetWalletId: z.string().optional().nullable(),
 });
 
 export const UpdateTransactionSchema = TransactionSchema.partial().extend({
@@ -104,4 +106,55 @@ export const RecurringRuleSchema = z.object({
 });
 
 export type RecurringRuleFormValues = z.infer<typeof RecurringRuleSchema>;
+
+export const WalletSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, { message: 'Veuillez saisir un nom pour le portefeuille' }),
+  type: z.enum(['CASH', 'MOBILE_MONEY', 'BANK', 'SAVINGS'] as const, {
+    message: 'Type de portefeuille invalide',
+  }),
+  initialBalance: z.coerce.number().default(0),
+  color: z.string().default('#2563EB'),
+  isDefault: z.boolean().default(false),
+});
+
+export type WalletFormValues = z.infer<typeof WalletSchema>;
+
+export const TransferSchema = z
+  .object({
+    sourceWalletId: z.string().min(1, { message: 'Veuillez sélectionner le portefeuille source' }),
+    targetWalletId: z.string().min(1, { message: 'Veuillez sélectionner le portefeuille de destination' }),
+    amount: z.coerce
+      .number({ message: 'Le montant doit être un nombre valide' })
+      .positive({ message: 'Le montant du transfert doit être supérieur à 0' }),
+    note: z
+      .string()
+      .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
+      .optional()
+      .nullable(),
+    date: z.coerce.date().optional().nullable(),
+  })
+  .refine((data) => data.sourceWalletId !== data.targetWalletId, {
+    message: 'Le portefeuille source et le portefeuille de destination doivent être différents',
+    path: ['targetWalletId'],
+  });
+
+export type TransferFormValues = z.infer<typeof TransferSchema>;
+
+export const DebtSchema = z.object({
+  id: z.string().optional(),
+  personName: z.string().min(1, { message: 'Veuillez indiquer le nom de la personne concernée' }),
+  type: z.enum(['LENT', 'BORROWED'] as const, {
+    message: 'Le type doit être LENT (prêté) ou BORROWED (emprunté)',
+  }),
+  initialAmount: z.coerce
+    .number({ message: 'Le montant doit être un nombre valide' })
+    .positive({ message: 'Le montant doit être supérieur à 0' }),
+  remainingAmount: z.coerce.number().min(0).optional(),
+  dueDate: z.coerce.date().optional().nullable(),
+  status: z.enum(['PENDING', 'PARTIAL', 'SETTLED'] as const).default('PENDING'),
+  note: z.string().max(250).optional().nullable(),
+});
+
+export type DebtFormValues = z.infer<typeof DebtSchema>;
 

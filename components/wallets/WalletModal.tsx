@@ -1,0 +1,225 @@
+'use client';
+
+import React, { useState, useTransition } from 'react';
+import { X, Sparkles, Wallet as WalletIcon } from 'lucide-react';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Button } from '@/components/ui/Button';
+import { parseAmountInput } from '@/constants/config';
+import { WalletItem, upsertWalletAction } from '@/actions/wallets';
+
+interface WalletModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  initialData?: WalletItem | null;
+}
+
+const WALLET_TYPES = [
+  { value: 'CASH', label: 'Espèces', color: '#52B788' },
+  { value: 'MOBILE_MONEY', label: 'Mobile Money (Wave, OM)', color: '#1DC4F2' },
+  { value: 'BANK', label: 'Compte bancaire', color: '#B8C0FF' },
+  { value: 'SAVINGS', label: 'Épargne', color: '#FFE600' },
+] as const;
+
+const PRESET_COLORS = [
+  '#2563EB', // Bleu
+  '#1DC4F2', // Cyan Wave
+  '#FF7900', // Orange OM
+  '#16A34A', // Vert
+  '#7C3AED', // Violet
+  '#FF3366', // Rose
+  '#FFE600', // Jaune
+  '#64748B', // Gris ardoise
+];
+
+export function WalletModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialData,
+}: WalletModalProps) {
+  const [isPending, startTransition] = useTransition();
+
+  const [name, setName] = useState<string>(initialData?.name || '');
+  const [type, setType] = useState<'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS'>(
+    initialData?.type || 'CASH'
+  );
+  const [initialBalance, setInitialBalance] = useState<string>(
+    initialData?.initialBalance ? initialData.initialBalance.toString() : '0'
+  );
+  const [color, setColor] = useState<string>(initialData?.color || '#2563EB');
+  const [isDefault, setIsDefault] = useState<boolean>(initialData?.isDefault || false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    if (!name.trim()) {
+      setErrorMessage('Veuillez saisir un nom pour le compte');
+      return;
+    }
+
+    const numericBalance = parseAmountInput(initialBalance);
+
+    startTransition(async () => {
+      const res = await upsertWalletAction({
+        id: initialData?.id,
+        name: name.trim(),
+        type,
+        initialBalance: isNaN(numericBalance) ? 0 : numericBalance,
+        color,
+        isDefault,
+      });
+
+      if (res.success) {
+        onSuccess();
+        onClose();
+      } else {
+        setErrorMessage(res.error);
+      }
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-sm bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-neutral-200 dark:border-[#334155]">
+          <h3 className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
+            {initialData ? 'Modifier le portefeuille' : 'Nouveau portefeuille'}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 hover:bg-neutral-100 dark:hover:bg-[#131C31] border-2 border-transparent hover:border-[#111827] dark:hover:border-white rounded-lg transition-all cursor-pointer"
+          >
+            <X className="w-5 h-5 text-neutral-700 dark:text-neutral-300 stroke-2.5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nom du compte */}
+          <div>
+            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1">
+              Nom du portefeuille
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Mon Wave, Cash Portefeuille, Compte BOA..."
+              className="w-full px-3 py-2 text-xs font-bold border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-white dark:bg-[#0F172A] text-[#111827] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+              autoFocus
+            />
+          </div>
+
+          {/* Type de compte */}
+          <div>
+            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1">
+              Type de compte
+            </label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {WALLET_TYPES.map((wt) => (
+                <button
+                  key={wt.value}
+                  type="button"
+                  onClick={() => {
+                    setType(wt.value);
+                    setColor(wt.color);
+                  }}
+                  className={`p-2 rounded-lg text-left text-xs font-bold border-2 transition-all cursor-pointer ${
+                    type === wt.value
+                      ? 'border-[#111827] dark:border-white bg-[#00DF81] text-[#111827] shadow-[2px_2px_0px_0px_#111827]'
+                      : 'border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A] text-neutral-700 dark:text-neutral-300'
+                  }`}
+                >
+                  <div className="truncate">{wt.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Solde de départ */}
+          <div>
+            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1">
+              Solde initial (FCFA)
+            </label>
+            <CurrencyInput
+              value={initialBalance}
+              onChange={setInitialBalance}
+              placeholder="0"
+            />
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+              Montant déjà présent sur ce compte au moment de la création.
+            </p>
+          </div>
+
+          {/* Couleur */}
+          <div>
+            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1.5">
+              Couleur d’identification
+            </label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {PRESET_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${
+                    color === c ? 'scale-115 border-black dark:border-white ring-2 ring-black' : 'border-neutral-400'
+                  }`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Compte par défaut */}
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="isDefault"
+              checked={isDefault}
+              onChange={(e) => setIsDefault(e.target.checked)}
+              className="w-4 h-4 accent-[#2563EB] cursor-pointer"
+            />
+            <label
+              htmlFor="isDefault"
+              className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC] cursor-pointer select-none"
+            >
+              Définir comme compte principal par défaut
+            </label>
+          </div>
+
+          {errorMessage && (
+            <div className="p-2.5 bg-red-100 dark:bg-red-950/40 border-2 border-red-500 rounded-lg text-xs font-bold text-red-600 dark:text-red-400">
+              {errorMessage}
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isPending}
+              className="flex-1 py-2.5 text-xs font-black uppercase rounded-xl border-2 border-[#111827] dark:border-[#334155] hover:bg-neutral-100 dark:hover:bg-[#131C31] text-[#111827] dark:text-[#F8FAFC] transition-all cursor-pointer"
+            >
+              Annuler
+            </button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isPending}
+              className="flex-1 py-2.5 text-xs uppercase"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1" />
+              {initialData ? 'Mettre à jour' : 'Créer le compte'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

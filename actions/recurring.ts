@@ -8,7 +8,7 @@ import { ActionResponse } from '@/types/transaction';
 
 export interface RecurringRuleItem {
   id: string;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   amount: number;
   category: string;
   payment: string;

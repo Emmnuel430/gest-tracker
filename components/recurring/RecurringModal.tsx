@@ -25,7 +25,7 @@ export function RecurringModal({
   const [isPending, startTransition] = useTransition();
 
   const [type, setType] = useState<'EXPENSE' | 'INCOME'>(
-    initialData?.type || 'EXPENSE'
+    initialData?.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
   const [amount, setAmount] = useState<string>(
     initialData?.amount ? initialData.amount.toString() : ''

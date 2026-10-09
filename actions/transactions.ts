@@ -171,7 +171,7 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
     for (const t of allTxs) {
       const amt = Number(t.amount);
       if (t.type === 'INCOME') totalAllIncome += amt;
-      else totalAllExpense += amt;
+      else if (t.type === 'EXPENSE') totalAllExpense += amt;
     }
     const globalBalance = totalAllIncome - totalAllExpense;
 
