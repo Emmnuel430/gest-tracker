@@ -1,13 +1,13 @@
-import { getDashboardDataAction } from '@/actions/transactions';
-import { getDueRecurringRulesAction } from '@/actions/recurring';
-import { getFinancialInsightsAction } from '@/actions/insights';
-import { BalanceSummary } from '@/components/home/BalanceSummary';
-import { HomeActions } from '@/components/home/HomeActions';
-import { RecentTransactionsList } from '@/components/home/RecentTransactionsList';
-import { RecurringAlertBanner } from '@/components/recurring/RecurringAlertBanner';
-import { FinancialInsightsCard } from '@/components/insights/FinancialInsightsCard';
+import { getDashboardDataAction } from "@/actions/transactions";
+import { getDueRecurringRulesAction } from "@/actions/recurring";
+import { getFinancialInsightsAction } from "@/actions/insights";
+import { BalanceSummary } from "@/components/home/BalanceSummary";
+import { HomeActions } from "@/components/home/HomeActions";
+import { RecentTransactionsList } from "@/components/home/RecentTransactionsList";
+import { RecurringAlertBanner } from "@/components/recurring/RecurringAlertBanner";
+import { FinancialInsightsCard } from "@/components/insights/FinancialInsightsCard";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [result, dueRulesRes, insightsRes] = await Promise.all([
@@ -17,22 +17,32 @@ export default async function HomePage() {
   ]);
 
   const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const dueRules = dueRulesRes.success && dueRulesRes.data ? dueRulesRes.data : [];
-  const insights = insightsRes.success && insightsRes.data ? insightsRes.data : [];
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const dueRules =
+    dueRulesRes.success && dueRulesRes.data ? dueRulesRes.data : [];
+  const insights =
+    insightsRes.success && insightsRes.data ? insightsRes.data : [];
 
-  const emptySummary = { totalIncome: 0, totalExpense: 0, balance: 0, transactionCount: 0 };
+  const emptySummary = {
+    totalIncome: 0,
+    totalExpense: 0,
+    balance: 0,
+    transactionCount: 0,
+  };
 
-  const globalBalance = result.success ? result.data.globalBalance ?? 0 : 0;
-  const summaries = result.success && result.data.summaries
-    ? result.data.summaries
-    : {
-        today: emptySummary,
-        month: result.success ? result.data.summary : emptySummary,
-        year: emptySummary,
-      };
+  const globalBalance = result.success ? (result.data.globalBalance ?? 0) : 0;
+  const summaries =
+    result.success && result.data.summaries
+      ? result.data.summaries
+      : {
+          today: emptySummary,
+          month: result.success ? result.data.summary : emptySummary,
+          year: emptySummary,
+        };
 
-  const recentTransactions = result.success ? result.data.recentTransactions : [];
+  const recentTransactions = result.success
+    ? result.data.recentTransactions
+    : [];
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -50,10 +60,13 @@ export default async function HomePage() {
           FCFA
         </span>
       </div>
- 
+
       {/* Bannière de confirmation rapide pour les échéances récurrentes dues */}
       <div className="w-full">
-        <RecurringAlertBanner initialDueRules={dueRules} currentMonth={currentMonth} />
+        <RecurringAlertBanner
+          initialDueRules={dueRules}
+          currentMonth={currentMonth}
+        />
       </div>
 
       {/* 1. Résumé du Solde Global et totaux par période (Sections 10 & 11) */}
@@ -62,13 +75,12 @@ export default async function HomePage() {
       {/* 2. Les 3 boutons d'actions massifs (Entrant, Sortant, Historique) */}
       <HomeActions />
 
-      {/* 3. Dernières opérations récentes (Section 9) */}
-      <RecentTransactionsList transactions={recentTransactions} />
-
-      {/* 4. Bilan & Conseils Financiers (placé immédiatement après l'historique) */}
+      {/* 3. Bilan & Conseils Financiers (placé immédiatement après l'historique) */}
       <div className="w-full">
         <FinancialInsightsCard insights={insights} />
       </div>
+      {/* 4. Dernières opérations récentes (Section 9) */}
+      <RecentTransactionsList transactions={recentTransactions} />
     </div>
   );
 }
