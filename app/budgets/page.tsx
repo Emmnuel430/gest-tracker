@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useTransition } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   Plus,
@@ -11,19 +11,19 @@ import {
   ShieldAlert,
   Wallet,
   Sparkles,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   getBudgetsWithProgressAction,
   deleteBudgetAction,
   MonthlyBudgetSummary,
   BudgetProgressItem,
-} from '@/actions/budgets';
-import { BudgetCard } from '@/components/budgets/BudgetCard';
-import { BudgetModal } from '@/components/budgets/BudgetModal';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { formatCurrency } from '@/constants/config';
+} from "@/actions/budgets";
+import { BudgetCard } from "@/components/budgets/BudgetCard";
+import { BudgetModal } from "@/components/budgets/BudgetModal";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { formatCurrency } from "@/constants/config";
 
 export default function BudgetsPage() {
   const [isPending, startTransition] = useTransition();
@@ -31,7 +31,7 @@ export default function BudgetsPage() {
   // Mois courant format YYYY-MM
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
 
   const [data, setData] = useState<MonthlyBudgetSummary | null>(null);
@@ -39,7 +39,9 @@ export default function BudgetsPage() {
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<BudgetProgressItem | null>(null);
+  const [editingBudget, setEditingBudget] = useState<BudgetProgressItem | null>(
+    null,
+  );
 
   // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -61,21 +63,25 @@ export default function BudgetsPage() {
 
   // Navigation entre les mois (ex: 2026-10 -> 2026-09 ou 2026-11)
   const handlePrevMonth = () => {
-    const [y, m] = selectedMonth.split('-').map(Number);
+    const [y, m] = selectedMonth.split("-").map(Number);
     const date = new Date(y, m - 2, 1);
-    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    setSelectedMonth(
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+    );
   };
 
   const handleNextMonth = () => {
-    const [y, m] = selectedMonth.split('-').map(Number);
+    const [y, m] = selectedMonth.split("-").map(Number);
     const date = new Date(y, m, 1);
-    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    setSelectedMonth(
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+    );
   };
 
   const formatMonthLabel = (mStr: string) => {
-    const [y, m] = mStr.split('-').map(Number);
+    const [y, m] = mStr.split("-").map(Number);
     const date = new Date(y, m - 1, 1);
-    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   };
 
   const handleDeleteConfirm = () => {
@@ -157,7 +163,7 @@ export default function BudgetsPage() {
 
       {/* 3. Synthèse globale du mois */}
       {data && data.items.length > 0 && (
-        <Card className="p-5 bg-gradient-to-br from-white to-[#F8FAFC] dark:from-[#1E293B] dark:to-[#0F172A]">
+        <Card className="p-5 bg-linear-to-br from-white to-[#F8FAFC] dark:from-[#1E293B] dark:to-[#0F172A]">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-300">
               Consommation Globale du Budget
@@ -165,10 +171,10 @@ export default function BudgetsPage() {
             <span
               className={`text-xs font-black px-2 py-0.5 rounded border-2 border-[#111827] dark:border-white shadow-[1px_1px_0px_0px_#111827] ${
                 data.overallPercentage >= 100
-                  ? 'bg-[#DC2626] text-white'
+                  ? "bg-[#DC2626] text-white"
                   : data.overallPercentage >= 75
-                  ? 'bg-[#F59E0B] text-black'
-                  : 'bg-[#10B981] text-white'
+                    ? "bg-[#F59E0B] text-black"
+                    : "bg-[#10B981] text-white"
               }`}
             >
               {data.overallPercentage}% Consommé
@@ -179,10 +185,10 @@ export default function BudgetsPage() {
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 data.overallPercentage >= 100
-                  ? 'bg-[#DC2626]'
+                  ? "bg-[#DC2626]"
                   : data.overallPercentage >= 75
-                  ? 'bg-[#F59E0B]'
-                  : 'bg-[#10B981]'
+                    ? "bg-[#F59E0B]"
+                    : "bg-[#10B981]"
               }`}
               style={{ width: `${Math.min(data.overallPercentage, 100)}%` }}
             />
@@ -190,28 +196,32 @@ export default function BudgetsPage() {
 
           <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t-2 border-neutral-200 dark:border-[#334155]">
             <div>
-              <span className="block text-[10px] font-bold text-neutral-500 uppercase">Total Budget</span>
+              <span className="block text-[10px] font-bold text-neutral-500 uppercase">
+                Total Budget
+              </span>
               <span className="font-black text-sm text-[#111827] dark:text-[#F8FAFC]">
                 {formatCurrency(data.totalBudget)}
               </span>
             </div>
             <div>
-              <span className="block text-[10px] font-bold text-neutral-500 uppercase">Dépensé</span>
+              <span className="block text-[10px] font-bold text-neutral-500 uppercase">
+                Dépensé
+              </span>
               <span className="font-black text-sm text-[#111827] dark:text-[#F8FAFC]">
                 {formatCurrency(data.totalSpent)}
               </span>
             </div>
             <div>
               <span className="block text-[10px] font-bold text-neutral-500 uppercase">
-                {data.totalRemaining < 0 ? 'Dépassement' : 'Reste'}
+                {data.totalRemaining < 0 ? "Dépassement" : "Reste"}
               </span>
               <span
                 className={`font-black text-sm ${
                   data.totalRemaining < 0
-                    ? 'text-[#DC2626]'
+                    ? "text-[#DC2626]"
                     : data.overallPercentage >= 75
-                    ? 'text-[#D97706]'
-                    : 'text-[#10B981]'
+                      ? "text-[#D97706]"
+                      : "text-[#10B981]"
                 }`}
               >
                 {formatCurrency(Math.abs(data.totalRemaining))}
@@ -250,7 +260,8 @@ export default function BudgetsPage() {
             Aucun budget pour ce mois
           </h3>
           <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 mt-1 max-w-sm mx-auto leading-relaxed">
-            Fixez un premier plafond de dépense (ex: Alimentation à 60 000 FCFA) pour suivre sa consommation en direct.
+            Fixez un premier plafond de dépense (ex: Alimentation à 60 000 FCFA)
+            pour suivre sa consommation en direct.
           </p>
           <div className="mt-4">
             <Button

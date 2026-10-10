@@ -59,16 +59,16 @@ export default async function HomePage() {
       {/* 1. Résumé du Solde Global et totaux par période (Sections 10 & 11) */}
       <BalanceSummary globalBalance={globalBalance} summaries={summaries} />
 
-      {/* 2. Les 3 boutons d'actions massifs */}
+      {/* 2. Les 3 boutons d'actions massifs (Entrant, Sortant, Historique) */}
       <HomeActions />
 
-      {/* 3. Bilan & Conseils Financiers (Sprint 17) */}
+      {/* 3. Dernières opérations récentes (Section 9) */}
+      <RecentTransactionsList transactions={recentTransactions} />
+
+      {/* 4. Bilan & Conseils Financiers (placé immédiatement après l'historique) */}
       <div className="w-full">
         <FinancialInsightsCard insights={insights} />
       </div>
-
-      {/* 4. Dernières opérations récentes (Section 9) */}
-      <RecentTransactionsList transactions={recentTransactions} />
     </div>
   );
 }

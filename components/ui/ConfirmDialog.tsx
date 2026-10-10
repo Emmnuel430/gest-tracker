@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
 
@@ -10,6 +10,7 @@ export interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  requiredConfirmationText?: string;
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -21,11 +22,27 @@ export function ConfirmDialog({
   message,
   confirmLabel = 'Supprimer',
   cancelLabel = 'Annuler',
+  requiredConfirmationText,
   onConfirm,
   onCancel,
   isLoading = false,
 }: ConfirmDialogProps) {
+  const [typedConfirmation, setTypedConfirmation] = useState('');
+
+  // Réinitialiser la saisie quand la modale s'ouvre ou se ferme
+  useEffect(() => {
+    if (!isOpen) {
+      setTypedConfirmation('');
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const isConfirmationMatched = requiredConfirmationText
+    ? typedConfirmation.trim() === requiredConfirmationText.trim()
+    : true;
+
+  const isConfirmDisabled = isLoading || !isConfirmationMatched;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
@@ -39,9 +56,26 @@ export function ConfirmDialog({
           </h3>
         </div>
 
-        <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-6 leading-relaxed">
+        <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4 leading-relaxed">
           {message}
         </p>
+
+        {/* Champ de confirmation textuelle obligatoire si configuré */}
+        {requiredConfirmationText && (
+          <div className="mb-5 p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-xl">
+            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
+              Entrez : <span className="font-black text-[#DC2626] select-all">"{requiredConfirmationText}"</span> pour valider
+            </label>
+            <input
+              type="text"
+              value={typedConfirmation}
+              onChange={(e) => setTypedConfirmation(e.target.value)}
+              placeholder={requiredConfirmationText}
+              autoFocus
+              className="w-full px-3 py-2 text-xs font-black border-2 border-[#111827] dark:border-white rounded-lg bg-white dark:bg-[#0F172A] text-[#111827] dark:text-[#F8FAFC] placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#DC2626]"
+            />
+          </div>
+        )}
 
         <div className="flex gap-3 justify-end">
           <Button
@@ -56,8 +90,8 @@ export function ConfirmDialog({
             variant="danger"
             size="sm"
             onClick={onConfirm}
-            disabled={isLoading}
-            className="bg-[#DC2626] hover:bg-[#B91C1C] text-white border-2 border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
+            disabled={isConfirmDisabled}
+            className="bg-[#DC2626] hover:bg-[#B91C1C] disabled:opacity-50 disabled:cursor-not-allowed text-white border-2 border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
           >
             {isLoading ? 'Suppression...' : confirmLabel}
           </Button>

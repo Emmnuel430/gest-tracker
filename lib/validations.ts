@@ -69,6 +69,27 @@ export const LoginSchema = z.object({
 export type RegisterFormValues = z.infer<typeof RegisterSchema>;
 export type LoginFormValues = z.infer<typeof LoginSchema>;
 
+export const ChangePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, { message: 'Veuillez saisir votre mot de passe actuel' }),
+    newPassword: z
+      .string()
+      .min(8, { message: 'Le nouveau mot de passe doit contenir au moins 8 caractères' })
+      .regex(/[0-9]/, { message: 'Le nouveau mot de passe doit contenir au moins un chiffre' })
+      .regex(/[a-zA-Z]/, { message: 'Le nouveau mot de passe doit contenir au moins une lettre' }),
+    confirmPassword: z.string().min(1, { message: 'Veuillez confirmer le nouveau mot de passe' }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Les nouveaux mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  })
+  .refine((data) => data.oldPassword !== data.newPassword, {
+    message: 'Le nouveau mot de passe doit être différent de l’ancien mot de passe',
+    path: ['newPassword'],
+  });
+
+export type ChangePasswordFormValues = z.infer<typeof ChangePasswordSchema>;
+
 export const BudgetSchema = z.object({
   category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
   amount: z.coerce
