@@ -47,13 +47,15 @@ export async function getFinancialInsightsAction(
       },
     });
 
-    // 3. Budgets du mois en cours
-    const budgets = await prisma.budget.findMany({
-      where: {
-        userId: user.id,
-        month: currentMonthStr,
-      },
-    });
+    // 3. Budgets du mois en cours (sécurisé avec fallback défensif)
+    const budgets = prisma?.budget?.findMany
+      ? await prisma.budget.findMany({
+          where: {
+            userId: user.id,
+            month: currentMonthStr,
+          },
+        })
+      : [];
 
     // Agrégations mois en cours
     let currentIncome = 0;

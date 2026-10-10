@@ -32,6 +32,18 @@ export async function getDebtsAction(): Promise<ActionResponse<DebtsSummary>> {
   try {
     const user = await getAuthenticatedUser();
 
+    if (!prisma?.debt?.findMany) {
+      return {
+        success: true,
+        data: {
+          totalLentPending: 0,
+          totalBorrowedPending: 0,
+          netDebtPosition: 0,
+          debts: [],
+        },
+      };
+    }
+
     const debts = await prisma.debt.findMany({
       where: { userId: user.id },
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],

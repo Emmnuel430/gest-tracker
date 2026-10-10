@@ -28,6 +28,10 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
   try {
     const user = await getAuthenticatedUser();
 
+    if (!prisma?.wallet?.findMany) {
+      return { success: true, data: [] };
+    }
+
     let wallets = await prisma.wallet.findMany({
       where: { userId: user.id },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],

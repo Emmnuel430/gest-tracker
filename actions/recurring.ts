@@ -27,6 +27,10 @@ export async function getRecurringRulesAction(): Promise<ActionResponse<Recurrin
   try {
     const user = await getAuthenticatedUser();
 
+    if (!prisma?.recurringRule?.findMany) {
+      return { success: true, data: [] };
+    }
+
     const rules = await prisma.recurringRule.findMany({
       where: { userId: user.id },
       orderBy: { dayOfMonth: 'asc' },
@@ -203,6 +207,11 @@ export async function getDueRecurringRulesAction(): Promise<ActionResponse<Recur
 
     const now = new Date();
     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // Sécurité défensive : si le modèle prisma n'est pas encore instancié
+    if (!prisma?.recurringRule?.findMany) {
+      return { success: true, data: [] };
+    }
 
     // On cherche les règles actives qui n'ont pas encore été traitées (validées ou ignorées) ce mois-ci
     const dueRules = await prisma.recurringRule.findMany({

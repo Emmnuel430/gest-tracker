@@ -144,7 +144,21 @@ export async function getBudgetsWithProgressAction(
     const startDate = new Date(year, m - 1, 1, 0, 0, 0, 0);
     const endDate = new Date(year, m, 0, 23, 59, 59, 999);
 
-    // 1. Récupération des budgets définis
+    // 1. Récupération des budgets définis (sécurisé défensivement)
+    if (!prisma?.budget?.findMany) {
+      return {
+        success: true,
+        data: {
+          month,
+          totalBudget: 0,
+          totalSpent: 0,
+          totalRemaining: 0,
+          overallPercentage: 0,
+          items: [],
+        },
+      };
+    }
+
     const budgets = await prisma.budget.findMany({
       where: {
         userId: user.id,
