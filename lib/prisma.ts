@@ -5,14 +5,15 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function isPrismaUpToDate(client: any): boolean {
+function isPrismaUpToDate(client: unknown): boolean {
+  if (!client || typeof client !== 'object') return false;
+  const c = client as Record<string, unknown>;
   return (
-    Boolean(client) &&
-    typeof client.transaction?.findMany === 'function' &&
-    typeof client.budget?.findMany === 'function' &&
-    typeof client.recurringRule?.findMany === 'function' &&
-    typeof client.wallet?.findMany === 'function' &&
-    typeof client.debt?.findMany === 'function'
+    typeof (c.transaction as Record<string, unknown> | undefined)?.findMany === 'function' &&
+    typeof (c.budget as Record<string, unknown> | undefined)?.findMany === 'function' &&
+    typeof (c.recurringRule as Record<string, unknown> | undefined)?.findMany === 'function' &&
+    typeof (c.wallet as Record<string, unknown> | undefined)?.findMany === 'function' &&
+    typeof (c.debt as Record<string, unknown> | undefined)?.findMany === 'function'
   );
 }
 
@@ -67,9 +68,9 @@ function getOrInitPrisma(): PrismaClient {
 export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
   get(_target, prop) {
     const client = getOrInitPrisma();
-    const value = (client as any)[prop];
+    const value = Reflect.get(client, prop);
     if (typeof value === 'function') {
-      return value.bind(client);
+      return (value as (...args: unknown[]) => unknown).bind(client);
     }
     return value;
   },

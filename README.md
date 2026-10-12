@@ -1,10 +1,10 @@
-# ⚡ GEST TRACKER — Documentation Complète (V2)
+# GEST TRACKER — Documentation Complète (V2)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
 ---
 
-## 📑 Table des Matières
+## Table des Matières
 
 1. [Vue d'ensemble & Philosophie](#1-vue-densemble--philosophie)
 2. [Stack Technique](#2-stack-technique)
@@ -164,9 +164,9 @@ Accessible directement depuis l'onglet central de la barre de navigation. Il reg
 
 - Définition d'un montant plafond par catégorie pour un mois donné (ex: _Alimentation : 60 000 FCFA pour 2026-10_).
 - Jauge visuelle dynamique tricolore :
-  - 🟢 **Vert :** Moins de 75 % consommé.
-  - 🟠 **Orange :** Entre 75 % et 99 % consommé (Attention).
-  - 🔴 **Rouge :** 100 % ou plus (Dépassement de budget).
+  - **Vert :** Moins de 75 % consommé.
+  - **Orange :** Entre 75 % et 99 % consommé (Attention).
+  - **Rouge :** 100 % ou plus (Dépassement de budget).
 - Navigation mois par mois pour comparer sa consommation dans le temps.
 
 ### 4.6 Règles Récurrentes & Charges Fixes (`/recurrences`)

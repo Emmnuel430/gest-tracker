@@ -2,11 +2,12 @@
 
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, ShieldCheck } from 'lucide-react';
+import { Lock, ShieldCheck, AlertTriangle, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { getErrorMessage } from '@/lib/utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,8 +41,8 @@ export default function LoginPage() {
 
         router.push('/');
         router.refresh();
-      } catch (err: any) {
-        setErrorMessage(err.message || 'Erreur de connexion');
+      } catch (err: unknown) {
+        setErrorMessage(getErrorMessage(err));
       }
     });
   };
@@ -83,8 +84,9 @@ export default function LoginPage() {
           />
 
           {errorMessage && (
-            <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626]">
-              ⚠️ {errorMessage}
+            <div className="flex items-center gap-2 p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626]">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -96,7 +98,14 @@ export default function LoginPage() {
             disabled={isPending}
             className="mt-2"
           >
-            {isPending ? 'Connexion en cours...' : 'Se Connecter ➔'}
+            {isPending ? (
+              'Connexion en cours...'
+            ) : (
+              <span className="inline-flex items-center justify-center gap-1.5">
+                Se Connecter
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            )}
           </Button>
         </form>
 
@@ -105,9 +114,10 @@ export default function LoginPage() {
             Nouveau sur GEST TRACKER ?{' '}
             <Link
               href="/register"
-              className="text-[#2563EB] dark:text-[#60A5FA] hover:underline font-black inline-block mt-1 sm:mt-0"
+              className="text-[#2563EB] dark:text-[#60A5FA] hover:underline font-black inline-flex items-center gap-1 mt-1 sm:mt-0"
             >
-              Créer un compte ➔
+              <span>Créer un compte</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </p>
         </div>

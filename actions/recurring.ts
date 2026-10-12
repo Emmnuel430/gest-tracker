@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { RecurringRuleSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
+import { getErrorMessage } from '@/lib/utils';
 
 export interface RecurringRuleItem {
   id: string;
@@ -52,11 +53,11 @@ export async function getRecurringRulesAction(): Promise<ActionResponse<Recurrin
         createdAt: r.createdAt.toISOString(),
       })),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getRecurringRulesAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de récupérer les règles récurrentes',
+      error: getErrorMessage(error) || 'Impossible de récupérer les règles récurrentes',
     };
   }
 }
@@ -120,11 +121,11 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       data: { id: savedRule.id },
       message: `Règle récurrente pour ${category} enregistrée`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur upsertRecurringRuleAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible d’enregistrer la règle',
+      error: getErrorMessage(error) || 'Impossible d’enregistrer la règle',
     };
   }
 }
@@ -157,11 +158,11 @@ export async function toggleRecurringRuleStatusAction(id: string): Promise<Actio
       data: { id: updated.id, isActive: updated.isActive },
       message: updated.isActive ? 'Règle activée' : 'Règle mise en pause',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur toggleRecurringRuleStatusAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de modifier le statut',
+      error: getErrorMessage(error) || 'Impossible de modifier le statut',
     };
   }
 }
@@ -189,11 +190,11 @@ export async function deleteRecurringRuleAction(id: string): Promise<ActionRespo
       data: { id },
       message: 'Règle récurrente supprimée',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur deleteRecurringRuleAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de la suppression',
+      error: getErrorMessage(error) || 'Erreur lors de la suppression',
     };
   }
 }
@@ -242,11 +243,11 @@ export async function getDueRecurringRulesAction(): Promise<ActionResponse<Recur
         createdAt: r.createdAt.toISOString(),
       })),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getDueRecurringRulesAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de récupérer les échéances dues',
+      error: getErrorMessage(error) || 'Impossible de récupérer les échéances dues',
     };
   }
 }
@@ -311,11 +312,11 @@ export async function processRecurringRuleAction(
           ? `Échéance "${rule.category}" confirmée et ajoutée aux transactions !`
           : `Échéance "${rule.category}" ignorée pour ce mois.`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur processRecurringRuleAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors du traitement de l’échéance',
+      error: getErrorMessage(error) || 'Erreur lors du traitement de l’échéance',
     };
   }
 }

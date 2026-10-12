@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { serializeTransaction } from '@/lib/utils';
+import { serializeTransaction, getErrorMessage } from '@/lib/utils';
 import { calculateFinancialSummary } from '@/lib/statistics';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { APP_CONFIG } from '@/constants/config';
@@ -43,10 +43,10 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="gest-tracker-backup-${new Date().toISOString().split('T')[0]}.json"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur export JSON :', error);
     return NextResponse.json(
-      { error: error?.message || "Impossible de générer l'export JSON" },
+      { error: getErrorMessage(error) || "Impossible de générer l'export JSON" },
       { status: 401 }
     );
   }

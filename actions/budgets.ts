@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { BudgetSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
+import { getErrorMessage } from '@/lib/utils';
 
 export interface BudgetProgressItem {
   id: string;
@@ -29,7 +30,7 @@ export interface MonthlyBudgetSummary {
 /**
  * Crée ou met à jour le budget mensuel d'une catégorie
  */
-export async function upsertBudgetAction(rawData: unknown): Promise<ActionResponse> {
+export async function upsertBudgetAction(rawData: unknown): Promise<ActionResponse<{ id: string; category: string; amount: number; month: string }>> {
   try {
     const user = await getAuthenticatedUser();
     const parseResult = BudgetSchema.safeParse(rawData);
@@ -76,11 +77,11 @@ export async function upsertBudgetAction(rawData: unknown): Promise<ActionRespon
       },
       message: `Budget pour ${category} enregistré (${amount.toLocaleString('fr-FR')} FCFA)`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur upsertBudgetAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible d’enregistrer le budget',
+      error: getErrorMessage(error) || 'Impossible d’enregistrer le budget',
     };
   }
 }
@@ -88,7 +89,7 @@ export async function upsertBudgetAction(rawData: unknown): Promise<ActionRespon
 /**
  * Supprime un budget
  */
-export async function deleteBudgetAction(id: string): Promise<ActionResponse> {
+export async function deleteBudgetAction(id: string): Promise<ActionResponse<{ id: string }>> {
   try {
     const user = await getAuthenticatedUser();
 
@@ -114,11 +115,11 @@ export async function deleteBudgetAction(id: string): Promise<ActionResponse> {
       data: { id },
       message: 'Budget supprimé avec succès',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur deleteBudgetAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de la suppression du budget',
+      error: getErrorMessage(error) || 'Erreur lors de la suppression du budget',
     };
   }
 }
@@ -236,11 +237,11 @@ export async function getBudgetsWithProgressAction(
         items,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getBudgetsWithProgressAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de calculer la progression budgétaire',
+      error: getErrorMessage(error) || 'Impossible de calculer la progression budgétaire',
     };
   }
 }

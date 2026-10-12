@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Wallet,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import {
   getBudgetsWithProgressAction,
@@ -147,8 +148,9 @@ export default function BudgetsPage() {
           <ChevronLeft className="w-5 h-5 text-[#111827] dark:text-[#F8FAFC] stroke-3" />
         </button>
 
-        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
-          📅 {formatMonthLabel(selectedMonth)}
+        <span className="inline-flex items-center text-xs sm:text-sm font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
+          <Calendar className="w-4 h-4 mr-1.5" />
+          {formatMonthLabel(selectedMonth)}
         </span>
 
         <button

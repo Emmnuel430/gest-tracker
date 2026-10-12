@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="gest-tracker-${period}-${Date.now()}.csv"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur export CSV :', error);
     return NextResponse.json({ error: "Impossible de générer l'export CSV" }, { status: 500 });
   }

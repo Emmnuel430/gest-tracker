@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -50,8 +51,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <span className="text-xs font-bold text-[#DC2626] mt-0.5 flex items-center gap-1">
-            ⚠️ {error}
+          <span className="text-xs font-bold text-[#DC2626] mt-0.5 flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>{error}</span>
           </span>
         )}
       </div>

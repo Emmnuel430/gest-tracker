@@ -2,12 +2,13 @@
 
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { UserPlus, ShieldCheck, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { RegisterSchema } from '@/lib/validations';
+import { getErrorMessage } from '@/lib/utils';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -76,8 +77,8 @@ export default function RegisterPage() {
             'Votre compte a été créé avec succès ! Si la confirmation par email est activée, veuillez consulter votre boîte de réception pour valider votre compte.'
           );
         }
-      } catch (err: any) {
-        setErrorMessage(err.message || 'Une erreur inattendue est survenue.');
+      } catch (err: unknown) {
+        setErrorMessage(getErrorMessage(err));
       }
     });
   };
@@ -111,8 +112,9 @@ export default function RegisterPage() {
             </p>
             <div className="pt-2">
               <Link href="/login">
-                <Button variant="primary" size="md" fullWidth>
-                  Se Connecter ➔
+                <Button variant="primary" size="md" fullWidth className="inline-flex items-center justify-center gap-1.5">
+                  <span>Se Connecter</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
             </div>
@@ -174,8 +176,9 @@ export default function RegisterPage() {
             </div>
 
             {errorMessage && (
-              <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626]">
-                ⚠️ {errorMessage}
+              <div className="flex items-center gap-2 p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626]">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{errorMessage}</span>
               </div>
             )}
 
@@ -187,7 +190,14 @@ export default function RegisterPage() {
               disabled={isPending}
               className="mt-2 bg-[#10B981] hover:bg-[#059669] text-white"
             >
-              {isPending ? 'Création en cours...' : 'Créer mon compte ➔'}
+              {isPending ? (
+                'Création en cours...'
+              ) : (
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  Créer mon compte
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
             </Button>
           </form>
         )}
@@ -198,9 +208,10 @@ export default function RegisterPage() {
               Vous avez déjà un compte ?{' '}
               <Link
                 href="/login"
-                className="text-[#2563EB] dark:text-[#60A5FA] hover:underline font-black inline-block mt-1 sm:mt-0"
+                className="text-[#2563EB] dark:text-[#60A5FA] hover:underline font-black inline-flex items-center gap-1 mt-1 sm:mt-0"
               >
-                Se connecter ➔
+                <span>Se connecter</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </p>
           </div>

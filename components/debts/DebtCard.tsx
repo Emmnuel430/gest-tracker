@@ -136,7 +136,7 @@ export function DebtCard({ debt, onRepay, onRefresh }: DebtCardProps) {
               : 'bg-[#FEF3C7] text-[#92400E]'
           }`}
         >
-          {isSettled ? 'Soldé ✓' : debt.status === 'PARTIAL' ? 'Partiel' : 'En attente'}
+          {isSettled ? 'Soldé' : debt.status === 'PARTIAL' ? 'Partiel' : 'En attente'}
         </span>
       </div>
 

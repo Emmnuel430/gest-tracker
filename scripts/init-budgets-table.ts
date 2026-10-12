@@ -24,7 +24,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('📦 Création de la table budgets dans PostgreSQL...');
+  console.log('[INFO] Création de la table budgets dans PostgreSQL...');
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "budgets" (
@@ -49,12 +49,12 @@ async function main() {
     ON "budgets"("user_id", "month");
   `);
 
-  console.log('✅ Table budgets et index créés avec succès !');
+  console.log('[SUCCESS] Table budgets et index créés avec succès !');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erreur création table budgets :', e);
+    console.error('[ERROR] Erreur création table budgets :', e);
     process.exit(1);
   })
   .finally(async () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { X, Sparkles, Check } from 'lucide-react';
+import { X, Sparkles, Check, AlertTriangle, ArrowRight } from 'lucide-react';
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/constants/categories';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -128,8 +128,9 @@ export function BudgetModal({
           </div>
 
           {errorMessage && (
-            <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] text-xs font-bold text-[#DC2626]">
-              ⚠️ {errorMessage}
+            <div className="flex items-center gap-2 p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] text-xs font-bold text-[#DC2626]">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -151,7 +152,16 @@ export function BudgetModal({
               fullWidth
               disabled={isPending}
             >
-              {isPending ? 'Enregistrement...' : initialData ? 'Mettre à jour' : 'Créer le budget ➔'}
+              {isPending ? (
+                'Enregistrement...'
+              ) : initialData ? (
+                'Mettre à jour'
+              ) : (
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <span>Créer le budget</span>
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
             </Button>
           </div>
         </form>

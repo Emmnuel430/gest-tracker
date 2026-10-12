@@ -37,6 +37,7 @@ interface HistoryViewProps {
 }
 
 type ActiveTab = 'list' | 'analytics' | 'comparison';
+type TransactionTypeFilter = 'all' | 'INCOME' | 'EXPENSE';
 
 export function HistoryView({ initialTransactions }: HistoryViewProps) {
   const router = useRouter();
@@ -44,7 +45,7 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
 
   // Initialisation à partir des query params ou valeurs par défaut
   const initialPeriod = (searchParams.get('period') as PeriodType) || 'month';
-  const initialType = (searchParams.get('type') as 'all' | 'INCOME' | 'EXPENSE') || 'all';
+  const initialType = (searchParams.get('type') as TransactionTypeFilter) || 'all';
   const initialCategory = searchParams.get('category') || 'all';
   const initialPayment = searchParams.get('payment') || 'all';
   const initialTab = (searchParams.get('tab') as ActiveTab) || 'list';
@@ -70,7 +71,7 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
 
   const [isLoadingCustom, setIsLoadingCustom] = useState<boolean>(false);
 
-  const [typeFilter, setTypeFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>(initialType);
+  const [typeFilter, setTypeFilter] = useState<TransactionTypeFilter>(initialType);
   const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory);
   const [paymentFilter, setPaymentFilter] = useState<string>(initialPayment);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(
@@ -272,7 +273,7 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
               </label>
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
+                onChange={(e) => setTypeFilter(e.target.value as TransactionTypeFilter)}
                 className="w-full bg-[#EFF6FF] dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-lg p-2 text-xs font-bold text-[#111827] dark:text-white shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
               >
                 <option value="all">Tous les types</option>

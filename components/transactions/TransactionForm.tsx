@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Calendar, Clock, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Calendar, Clock, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import {
   INCOME_CATEGORIES,
@@ -240,9 +240,10 @@ export function TransactionForm({ type }: TransactionFormProps) {
                   <button
                     type="button"
                     onClick={() => setShowCustomDate(false)}
-                    className="text-[11px] font-bold text-[#DC2626] hover:underline cursor-pointer"
+                    className="text-[11px] font-bold text-[#DC2626] hover:underline cursor-pointer inline-flex items-center gap-1"
                   >
-                    ✕ Revenir à maintenant
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Revenir à maintenant</span>
                   </button>
                 </div>
 
@@ -278,8 +279,9 @@ export function TransactionForm({ type }: TransactionFormProps) {
 
           {/* RETOURS D'ERREUR OU SUCCÈS */}
           {errorMessage && (
-            <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626]">
-              ⚠️ {errorMessage}
+            <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626] flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
             </div>
           )}
 

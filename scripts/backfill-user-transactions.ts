@@ -24,8 +24,8 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🔍 Recherche des utilisateurs existants dans Supabase auth.users...');
-  console.log(`🔌 Connexion DB: ${process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@')}`);
+  console.log('[INFO] Recherche des utilisateurs existants dans Supabase auth.users...');
+  console.log(`[INFO] Connexion DB: ${process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@')}`);
 
   // Requête directe PostgreSQL dans le schéma auth
   const users = await prisma.$queryRaw<Array<{ id: string; email: string; created_at: Date }>>`
@@ -33,15 +33,15 @@ async function main() {
   `;
 
   if (!users || users.length === 0) {
-    console.error('❌ Aucun utilisateur trouvé dans la table auth.users de Supabase !');
+    console.error('[ERROR] Aucun utilisateur trouvé dans la table auth.users de Supabase !');
     process.exit(1);
   }
 
-  console.log(`👤 Utilisateur(s) trouvé(s) (${users.length}) :`);
+  console.log(`[INFO] Utilisateur(s) trouvé(s) (${users.length}) :`);
   users.forEach((u, i) => console.log(`   [${i + 1}] Email: ${u.email} | ID: ${u.id}`));
 
   const targetUser = users[0];
-  console.log(`\n🎯 Compte sélectionné pour le rattachement : ${targetUser.email} (${targetUser.id})`);
+  console.log(`\n[INFO] Compte sélectionné pour le rattachement : ${targetUser.email} (${targetUser.id})`);
 
   // Compter les transactions orphelines (userId IS NULL)
   const orphanCount = await prisma.transaction.count({
@@ -50,12 +50,12 @@ async function main() {
 
   const totalCount = await prisma.transaction.count();
 
-  console.log(`\n📊 Statistiques actuelles :`);
+  console.log(`\n[INFO] Statistiques actuelles :`);
   console.log(`   - Total des transactions en base : ${totalCount}`);
   console.log(`   - Transactions orphelines (sans userId) : ${orphanCount}`);
 
   if (orphanCount === 0) {
-    console.log('✨ Aucune transaction orpheline à migrer ! Toutes les transactions ont déjà un userId.');
+    console.log('[INFO] Aucune transaction orpheline à migrer ! Toutes les transactions ont déjà un userId.');
     return;
   }
 
@@ -65,12 +65,12 @@ async function main() {
     data: { userId: targetUser.id },
   });
 
-  console.log(`\n✅ SUCCÈS : ${updateResult.count} transaction(s) rattachée(s) avec succès à ${targetUser.email} !`);
+  console.log(`\n[SUCCESS] ${updateResult.count} transaction(s) rattachée(s) avec succès à ${targetUser.email} !`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erreur lors du backfill :', e);
+    console.error('[ERROR] Erreur lors du backfill :', e);
     process.exit(1);
   })
   .finally(async () => {

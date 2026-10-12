@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 import { Transaction } from '@/types/transaction';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -93,8 +95,8 @@ function EditForm({
 
       onUpdated(res.data as Transaction);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Erreur inconnue');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -103,8 +105,9 @@ function EditForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg text-xs font-bold text-[#DC2626]">
-          ⚠️ {error}
+        <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg text-xs font-bold text-[#DC2626] flex items-center gap-1.5">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 

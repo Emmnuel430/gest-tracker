@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'text/html; charset=utf-8',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur export rapport :', error);
     return NextResponse.json(
       { error: "Impossible de générer l'export" },

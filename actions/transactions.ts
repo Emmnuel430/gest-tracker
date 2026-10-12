@@ -1,17 +1,32 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { TransactionSchema, UpdateTransactionSchema } from '@/lib/validations';
-import { serializeTransaction } from '@/lib/utils';
+import { serializeTransaction, getErrorMessage } from '@/lib/utils';
 import { getDateRangeForPeriod } from '@/lib/dates';
 import { calculateFinancialSummary } from '@/lib/statistics';
 import { PeriodType } from '@/types/period';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { Transaction } from '@/types/transaction';
+import { FinancialSummary } from '@/types/statistics';
 
-export type ActionResponse<T = any> =
+export type ActionResponse<T = unknown> =
   | { success: true; data: T; message?: string }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+
+export interface DashboardData {
+  globalBalance: number;
+  transactionCount: number;
+  summaries: {
+    today: FinancialSummary;
+    month: FinancialSummary;
+    year: FinancialSummary;
+  };
+  summary: FinancialSummary;
+  recentTransactions: Transaction[];
+}
 
 /**
  * Crée une nouvelle transaction (Revenu ou Dépense)
@@ -19,7 +34,7 @@ export type ActionResponse<T = any> =
  */
 export async function createTransactionAction(
   rawData: unknown
-): Promise<ActionResponse> {
+): Promise<ActionResponse<Transaction>> {
   try {
     const user = await getAuthenticatedUser();
 
@@ -27,7 +42,7 @@ export async function createTransactionAction(
 
     if (!parseResult.success) {
       const fieldErrors: Record<string, string[]> = {};
-      parseResult.error.issues.forEach((err: any) => {
+      parseResult.error.issues.forEach((err) => {
         const fieldName = err.path.join('.');
         if (!fieldErrors[fieldName]) fieldErrors[fieldName] = [];
         fieldErrors[fieldName].push(err.message);
@@ -68,11 +83,11 @@ export async function createTransactionAction(
       data: serializeTransaction(createdTx),
       message: type === 'INCOME' ? 'Revenu enregistré avec succès !' : 'Sortie enregistrée avec succès !',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la création de la transaction :', error);
     return {
       success: false,
-      error: error?.message || "Une erreur est survenue lors de l'enregistrement",
+      error: getErrorMessage(error) || "Une erreur est survenue lors de l'enregistrement",
     };
   }
 }
@@ -89,11 +104,11 @@ export async function getTransactionsAction(options?: {
   category?: string;
   payment?: string;
   limit?: number;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<Transaction[]>> {
   try {
     const user = await getAuthenticatedUser();
 
-    const where: any = {
+    const where: Prisma.TransactionWhereInput = {
       userId: user.id,
     };
 
@@ -139,11 +154,11 @@ export async function getTransactionsAction(options?: {
       success: true,
       data: transactions.map(serializeTransaction),
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la récupération des transactions :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de charger les transactions',
+      error: getErrorMessage(error) || 'Impossible de charger les transactions',
     };
   }
 }
@@ -152,7 +167,7 @@ export async function getTransactionsAction(options?: {
  * Récupère les données du dashboard d'accueil (Solde global, Revenus et Dépenses selon période, dernières transactions)
  * Strictement calculées sur les données de l'utilisateur connecté (Sprint 12 V2)
  */
-export async function getDashboardDataAction(): Promise<ActionResponse> {
+export async function getDashboardDataAction(): Promise<ActionResponse<DashboardData>> {
   try {
     const user = await getAuthenticatedUser();
 
@@ -223,11 +238,11 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
         recentTransactions: recentTransactions.map(serializeTransaction),
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getDashboardDataAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de charger les données du tableau de bord',
+      error: getErrorMessage(error) || 'Impossible de charger les données du tableau de bord',
     };
   }
 }
@@ -235,7 +250,7 @@ export async function getDashboardDataAction(): Promise<ActionResponse> {
 /**
  * Supprime une transaction par son ID, avec vérification stricte de possession
  */
-export async function deleteTransactionAction(id: string): Promise<ActionResponse> {
+export async function deleteTransactionAction(id: string): Promise<ActionResponse<{ id: string }>> {
   try {
     const user = await getAuthenticatedUser();
 
@@ -262,11 +277,11 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
       data: { id },
       message: 'Transaction supprimée avec succès',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur suppression transaction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de la suppression de la transaction',
+      error: getErrorMessage(error) || 'Erreur lors de la suppression de la transaction',
     };
   }
 }
@@ -274,7 +289,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
 /**
  * Met à jour une transaction existante, avec vérification stricte de possession
  */
-export async function updateTransactionAction(rawData: unknown): Promise<ActionResponse> {
+export async function updateTransactionAction(rawData: unknown): Promise<ActionResponse<Transaction>> {
   try {
     const user = await getAuthenticatedUser();
 
@@ -324,11 +339,11 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
       data: serializeTransaction(updated),
       message: 'Transaction mise à jour',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur mise à jour transaction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de mettre à jour la transaction',
+      error: getErrorMessage(error) || 'Impossible de mettre à jour la transaction',
     };
   }
 }

@@ -22,6 +22,8 @@ import {
   EyeOff,
   ShieldCheck,
   Palette,
+  ArrowRight,
+  X,
 } from 'lucide-react';
 import { getUserProfileAction, deleteAccountAction, changePasswordAction } from '@/actions/user';
 import { createClient } from '@/lib/supabase/client';
@@ -170,8 +172,9 @@ export default function ParametresPage() {
       </div>
 
       {errorMessage && (
-        <div className="p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[3px_3px_0px_0px_#111827] text-xs font-bold text-[#DC2626]">
-          ⚠️ {errorMessage}
+        <div className="flex items-center gap-2 p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[3px_3px_0px_0px_#111827] text-xs font-bold text-[#DC2626]">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -237,7 +240,10 @@ export default function ParametresPage() {
                     <KeyRound className="w-4 h-4 text-[#2563EB]" />
                     <span>Modifier mon mot de passe</span>
                   </div>
-                  <span className="text-[11px] text-[#2563EB] font-bold">Ouvrir ➔</span>
+                  <span className="text-[11px] text-[#2563EB] font-bold inline-flex items-center gap-1">
+                    <span>Ouvrir</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
                 </button>
               ) : (
                 <form onSubmit={handlePasswordSubmit} className="p-3.5 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl space-y-3">
@@ -254,15 +260,17 @@ export default function ParametresPage() {
                         setIsPasswordFormOpen(false);
                         setPwError(null);
                       }}
-                      className="text-[11px] font-bold text-neutral-500 hover:text-black dark:hover:text-white"
+                      className="text-[11px] font-bold text-neutral-500 hover:text-black dark:hover:text-white inline-flex items-center gap-1"
                     >
-                      Fermer ✕
+                      <span>Fermer</span>
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
 
                   {pwError && (
-                    <div className="p-2 bg-[#FEF2F2] dark:bg-[#2C0B0E] border border-[#DC2626] rounded text-[11px] font-bold text-[#DC2626]">
-                      ⚠️ {pwError}
+                    <div className="flex items-center gap-1.5 p-2 bg-[#FEF2F2] dark:bg-[#2C0B0E] border border-[#DC2626] rounded text-[11px] font-bold text-[#DC2626]">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{pwError}</span>
                     </div>
                   )}
 
@@ -497,7 +505,10 @@ export default function ParametresPage() {
                 </span>
               </div>
             </div>
-            <span className="text-xs font-black text-[#D97706]">📄 Imprimer</span>
+            <span className="text-xs font-black text-[#D97706] inline-flex items-center gap-1">
+              <Printer className="w-3.5 h-3.5" />
+              <span>Imprimer</span>
+            </span>
           </a>
         </div>
       </Card>
