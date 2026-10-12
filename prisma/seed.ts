@@ -22,7 +22,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🌱 Démarrage du seed des transactions...');
+  console.log('[INFO] Démarrage du seed des transactions...');
 
   // Nettoyage préalable des transactions existantes dans la base de test
   await prisma.transaction.deleteMany();
@@ -253,12 +253,12 @@ async function main() {
     });
   }
 
-  console.log(`✅ Seed terminé avec succès ! ${transactionsData.length} transactions insérées.`);
+  console.log(`[SUCCESS] Seed terminé avec succès ! ${transactionsData.length} transactions insérées.`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erreur lors du seed :', e);
+    console.error('[ERROR] Erreur lors du seed :', e);
     process.exit(1);
   })
   .finally(async () => {

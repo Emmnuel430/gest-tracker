@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { X, ArrowRight, Zap } from 'lucide-react';
+import { X, ArrowRight, Zap, Info } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput, formatCurrency } from '@/constants/config';
@@ -98,7 +98,7 @@ export function TransferModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Source ➔ Cible */}
+          {/* Source -> Cible */}
           <div className="grid grid-cols-2 gap-2">
             {/* Source */}
             <div>
@@ -165,8 +165,9 @@ export function TransferModal({
           </div>
 
           {/* Récapitulatif pédagogique */}
-          <div className="p-3 bg-neutral-100 dark:bg-[#0F172A] border-2 border-dashed border-neutral-300 dark:border-[#334155] rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-400">
-            ℹ️ Ce mouvement est un <strong>virement interne</strong> : il n&apos;impacte ni vos revenus ni vos dépenses du mois. Votre solde net global reste inchangé.
+          <div className="p-3 bg-neutral-100 dark:bg-[#0F172A] border-2 border-dashed border-neutral-300 dark:border-[#334155] rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-400 flex items-start gap-2">
+            <Info className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA] shrink-0 mt-0.5" />
+            <span>Ce mouvement est un <strong>virement interne</strong> : il n&apos;impacte ni vos revenus ni vos dépenses du mois. Votre solde net global reste inchangé.</span>
           </div>
 
           {errorMessage && (

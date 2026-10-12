@@ -24,7 +24,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('📦 Création de la table recurring_rules dans PostgreSQL...');
+  console.log('[INFO] Création de la table recurring_rules dans PostgreSQL...');
 
   // 1. Création de l'enum RecurrenceFrequency si non existant
   await prisma.$executeRawUnsafe(`
@@ -63,12 +63,12 @@ async function main() {
     ON "recurring_rules"("user_id", "is_active");
   `);
 
-  console.log('✅ Table recurring_rules et index créés avec succès !');
+  console.log('[SUCCESS] Table recurring_rules et index créés avec succès !');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erreur création table recurring_rules :', e);
+    console.error('[ERROR] Erreur création table recurring_rules :', e);
     process.exit(1);
   })
   .finally(async () => {

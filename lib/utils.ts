@@ -12,10 +12,23 @@ export { formatCurrency, formatAmountInput, parseAmountInput } from '@/constants
  * Assainit et sérialise une transaction issue de Prisma (convertit Decimal et Date)
  * pour éviter toute erreur de sérialisation React Server Action / Client Component
  */
-export function serializeTransaction(tx: any): Transaction {
+export interface RawTransactionInput {
+  id: string;
+  type: string;
+  amount: number | { toNumber: () => number } | string;
+  category: string;
+  payment: string;
+  note?: string | null;
+  date: Date | string;
+  userId?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export function serializeTransaction(tx: RawTransactionInput): Transaction {
   return {
     id: tx.id,
-    type: tx.type,
+    type: tx.type as Transaction['type'],
     amount: typeof tx.amount === 'object' && tx.amount !== null && 'toNumber' in tx.amount 
       ? tx.amount.toNumber() 
       : Number(tx.amount),
@@ -24,7 +37,13 @@ export function serializeTransaction(tx: any): Transaction {
     note: tx.note ?? null,
     date: tx.date instanceof Date ? tx.date.toISOString() : String(tx.date),
     userId: tx.userId ?? null,
-    createdAt: tx.createdAt instanceof Date ? tx.createdAt.toISOString() : String(tx.createdAt),
-    updatedAt: tx.updatedAt instanceof Date ? tx.updatedAt.toISOString() : String(tx.updatedAt),
+    createdAt: tx.createdAt instanceof Date ? tx.createdAt.toISOString() : String(tx.createdAt || ''),
+    updatedAt: tx.updatedAt instanceof Date ? tx.updatedAt.toISOString() : String(tx.updatedAt || ''),
   };
+}
+
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Une erreur inattendue est survenue';
 }

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { ActionResponse } from '@/types/transaction';
 import { computeFinancialInsights, FinancialInsight, BudgetInsightData } from '@/lib/insights';
+import { getErrorMessage } from '@/lib/utils';
 
 /**
  * Récupère les insights financiers déterministes de l'utilisateur pour le mois en cours
@@ -113,11 +114,11 @@ export async function getFinancialInsightsAction(
       success: true,
       data: insights,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getFinancialInsightsAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de calculer les analyses financières',
+      error: getErrorMessage(error) || 'Impossible de calculer les analyses financières',
     };
   }
 }

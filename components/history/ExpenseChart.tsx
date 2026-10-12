@@ -37,7 +37,19 @@ export function ExpenseChart({ data }: ExpenseChartProps) {
     color: item.color,
   }));
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{
+      payload: {
+        name: string;
+        total: number;
+        percentage: number;
+        color: string;
+      };
+    }>;
+  }
+
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const d = payload[0].payload;
       return (

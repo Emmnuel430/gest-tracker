@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Sparkles } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { formatCurrency } from "@/constants/config";
 import { formatDisplayDate, formatTime } from "@/lib/dates";
@@ -38,9 +38,10 @@ export function RecentTransactionsList({
         </h3>
         <Link
           href="/historique"
-          className="text-xs font-black uppercase text-[#2563EB] dark:text-[#60A5FA] hover:underline"
+          className="text-xs font-black uppercase text-[#2563EB] dark:text-[#60A5FA] hover:underline inline-flex items-center gap-1"
         >
-          Tout voir ➔
+          Tout voir
+          <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 

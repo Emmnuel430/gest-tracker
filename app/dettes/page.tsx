@@ -119,15 +119,15 @@ export default function DettesPage() {
 
         {/* Filtres par onglets */}
         <div className="flex gap-1.5 p-1 bg-neutral-200 dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl overflow-x-auto">
-          {[
+          {([
             { id: 'ALL', label: 'En cours' },
             { id: 'LENT', label: 'On me doit' },
             { id: 'BORROWED', label: 'Je dois' },
             { id: 'SETTLED', label: 'Soldés' },
-          ].map((tab) => (
+          ] as const).map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setFilter(tab.id as any)}
+              onClick={() => setFilter(tab.id)}
               className={`flex-1 py-1.5 px-2 text-xs font-black uppercase rounded-lg transition-all cursor-pointer truncate ${
                 filter === tab.id
                   ? 'bg-white dark:bg-[#1E293B] text-[#111827] dark:text-[#F8FAFC] border-2 border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827]'

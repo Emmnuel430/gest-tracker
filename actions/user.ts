@@ -6,6 +6,7 @@ import { getAuthenticatedUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { ChangePasswordSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
+import { getErrorMessage } from '@/lib/utils';
 
 export type UserProfileResponse =
   | {
@@ -43,10 +44,10 @@ export async function getUserProfileAction(): Promise<UserProfileResponse> {
         transactionCount,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error?.message || 'Impossible de charger le profil utilisateur',
+      error: getErrorMessage(error) || 'Impossible de charger le profil utilisateur',
     };
   }
 }
@@ -107,11 +108,11 @@ export async function changePasswordAction(rawData: unknown): Promise<ActionResp
       data: null,
       message: 'Votre mot de passe a été modifié avec succès.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur changePasswordAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de la mise à jour du mot de passe',
+      error: getErrorMessage(error) || 'Erreur lors de la mise à jour du mot de passe',
     };
   }
 }
@@ -157,11 +158,11 @@ export async function deleteAccountAction(): Promise<AccountDeleteResponse> {
       success: true,
       message: 'Votre compte et toutes vos données ont été définitivement supprimés.',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur suppression de compte :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de la suppression de votre compte',
+      error: getErrorMessage(error) || 'Erreur lors de la suppression de votre compte',
     };
   }
 }

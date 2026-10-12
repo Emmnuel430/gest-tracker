@@ -143,24 +143,24 @@ export function combineDateAndTime(dateStr: string, timeStr?: string): Date {
 /**
  * Formatage strict de l'affichage de la période selon la Section 2.1 de roadmapv1.2.md :
  * - Aujourd'hui : "03 octobre 2026" (et non "Du 03/10 au 03/10")
- * - Semaine : "29 septembre → 05 octobre"
- * - Mois : "01 octobre → 31 octobre"
- * - Année : "01 janvier → 31 décembre"
- * - Personnalisé : "Date début → Date fin"
+ * - Semaine : "29 septembre au 05 octobre"
+ * - Mois : "01 octobre au 31 octobre"
+ * - Année : "01 janvier au 31 décembre"
+ * - Personnalisé : "Date début au Date fin"
  */
 export function formatPeriodLabel(period: PeriodType, range: DateRange): string {
   switch (period) {
     case 'today':
       return format(range.from, 'dd MMMM yyyy', { locale: fr });
     case 'week':
-      return `${format(range.from, 'dd MMMM', { locale: fr })} → ${format(range.to, 'dd MMMM', { locale: fr })}`;
+      return `${format(range.from, 'dd MMMM', { locale: fr })} au ${format(range.to, 'dd MMMM', { locale: fr })}`;
     case 'month':
-      return `${format(range.from, 'dd MMMM', { locale: fr })} → ${format(range.to, 'dd MMMM', { locale: fr })}`;
+      return `${format(range.from, 'dd MMMM', { locale: fr })} au ${format(range.to, 'dd MMMM', { locale: fr })}`;
     case 'year':
-      return `${format(range.from, 'dd MMMM', { locale: fr })} → ${format(range.to, 'dd MMMM', { locale: fr })}`;
+      return `${format(range.from, 'dd MMMM', { locale: fr })} au ${format(range.to, 'dd MMMM', { locale: fr })}`;
     case 'custom':
-      return `${format(range.from, 'dd MMMM yyyy', { locale: fr })} → ${format(range.to, 'dd MMMM yyyy', { locale: fr })}`;
+      return `${format(range.from, 'dd MMMM yyyy', { locale: fr })} au ${format(range.to, 'dd MMMM yyyy', { locale: fr })}`;
     default:
-      return `${format(range.from, 'dd MMMM yyyy', { locale: fr })} → ${format(range.to, 'dd MMMM yyyy', { locale: fr })}`;
+      return `${format(range.from, 'dd MMMM yyyy', { locale: fr })} au ${format(range.to, 'dd MMMM yyyy', { locale: fr })}`;
   }
 }

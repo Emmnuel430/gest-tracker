@@ -6,7 +6,7 @@ import { PeriodType, DateRange } from '@/types/period';
 import { formatCurrency } from '@/constants/config';
 import { getPreviousDateRange, formatDisplayDate } from '@/lib/dates';
 import { buildPeriodComparison } from '@/lib/comparisons';
-import { TrendingUp, TrendingDown, Minus, ArrowRight, Sparkles } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 
 interface PeriodComparisonProps {
   transactions: Transaction[];
@@ -62,7 +62,7 @@ export function PeriodComparison({
               Comparatif vs Période précédente
             </h3>
             <p className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Réf : {formatDisplayDate(previousRange.from, 'dd MMM')} → {formatDisplayDate(previousRange.to, 'dd MMM yyyy')}
+              Réf : {formatDisplayDate(previousRange.from, 'dd MMM')} au {formatDisplayDate(previousRange.to, 'dd MMM yyyy')}
             </p>
           </div>
 
@@ -120,16 +120,19 @@ export function PeriodComparison({
           {previousTotal === 0 && currentTotal === 0 ? (
             <p>Aucune dépense enregistrée sur les deux périodes.</p>
           ) : previousTotal === 0 ? (
-            <p className="text-[#2563EB] dark:text-[#60A5FA]">
-              ✨ Première activité enregistrée sur cette période : {formatCurrency(currentTotal)}.
+            <p className="text-[#2563EB] dark:text-[#60A5FA] flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>Première activité enregistrée sur cette période : {formatCurrency(currentTotal)}.</span>
             </p>
           ) : isMoreExpensive ? (
-            <p className="text-[#DC2626]">
-              ⚠️ Vos dépenses ont augmenté de <span className="font-black">{formatCurrency(difference)}</span> ({statusText}) par rapport à la période précédente.
+            <p className="text-[#DC2626] flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>Vos dépenses ont augmenté de <span className="font-black">{formatCurrency(difference)}</span> ({statusText}) par rapport à la période précédente.</span>
             </p>
           ) : isLessExpensive ? (
-            <p className="text-[#16A34A]">
-              👏 Vos dépenses ont diminué de <span className="font-black">{formatCurrency(Math.abs(difference))}</span> ({statusText}) par rapport à la période précédente.
+            <p className="text-[#16A34A] flex items-center gap-1.5">
+              <TrendingDown className="w-4 h-4 shrink-0" />
+              <span>Vos dépenses ont diminué de <span className="font-black">{formatCurrency(Math.abs(difference))}</span> ({statusText}) par rapport à la période précédente.</span>
             </p>
           ) : (
             <p>Vos dépenses sont rigoureusement identiques à la période précédente.</p>

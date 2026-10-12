@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { DebtSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
+import { getErrorMessage } from '@/lib/utils';
 
 export interface DebtItem {
   id: string;
@@ -86,11 +87,11 @@ export async function getDebtsAction(): Promise<ActionResponse<DebtsSummary>> {
         debts: items,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getDebtsAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de récupérer les dettes et créances',
+      error: getErrorMessage(error) || 'Impossible de récupérer les dettes et créances',
     };
   }
 }
@@ -134,11 +135,11 @@ export async function createDebtAction(rawData: unknown): Promise<ActionResponse
       data: { id: newDebt.id },
       message: `${label} ${personName} enregistré (${initialAmount.toLocaleString('fr-FR')} FCFA)`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur createDebtAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible d’enregistrer l’opération',
+      error: getErrorMessage(error) || 'Impossible d’enregistrer l’opération',
     };
   }
 }
@@ -191,14 +192,14 @@ export async function recordDebtRepaymentAction(
       data: { debtId, remainingAmount: newRemaining, status: newStatus },
       message:
         newStatus === 'SETTLED'
-          ? `Dette avec ${debt.personName} entièrement soldée ! 🎉`
+          ? `Dette avec ${debt.personName} entièrement soldée !`
           : `Remboursement de ${repaymentAmount.toLocaleString('fr-FR')} FCFA enregistré (reste: ${newRemaining.toLocaleString('fr-FR')} FCFA)`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur recordDebtRepaymentAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors du remboursement',
+      error: getErrorMessage(error) || 'Erreur lors du remboursement',
     };
   }
 }
@@ -225,11 +226,11 @@ export async function deleteDebtAction(id: string): Promise<ActionResponse> {
       data: { id },
       message: 'Dossier supprimé avec succès',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur deleteDebtAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de supprimer',
+      error: getErrorMessage(error) || 'Impossible de supprimer',
     };
   }
 }

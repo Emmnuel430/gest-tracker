@@ -24,7 +24,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('📦 Mise à jour de la base PostgreSQL pour Portefeuilles (Wallets) & Dettes (Debts)...');
+  console.log('[INFO] Mise à jour de la base PostgreSQL pour Portefeuilles (Wallets) & Dettes (Debts)...');
 
   // 1. Ajout de TRANSFER à l'enum TransactionType
   await prisma.$executeRawUnsafe(`
@@ -130,12 +130,12 @@ async function main() {
     CREATE INDEX IF NOT EXISTS "debts_user_id_status_idx" ON "debts"("user_id", "status");
   `);
 
-  console.log('✅ Tables wallets & debts et colonnes associées créées avec succès !');
+  console.log('[SUCCESS] Tables wallets & debts et colonnes associées créées avec succès !');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erreur création tables wallets / debts :', e);
+    console.error('[ERROR] Erreur création tables wallets / debts :', e);
     process.exit(1);
   })
   .finally(async () => {

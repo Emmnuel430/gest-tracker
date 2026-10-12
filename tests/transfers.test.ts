@@ -96,7 +96,7 @@ test('Statistical Neutrality of Transfers (Sprint 19 DoD)', async (t) => {
         type: 'TRANSFER',
         amount: 200000,
         category: 'Virement interne',
-        payment: 'Compte bancaire ➔ Wave',
+        payment: 'Compte bancaire -> Wave',
         walletId: 'bank',
         targetWalletId: 'wave',
         date: '2026-10-08',

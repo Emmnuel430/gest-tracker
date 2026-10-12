@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { ActionResponse } from '@/types/transaction';
 import { TransactionSchema } from '@/lib/validations';
+import { getErrorMessage } from '@/lib/utils';
 
 export interface CsvImportResult {
   importedCount: number;
@@ -129,11 +130,11 @@ export async function importTransactionsFromCsvAction(
       },
       message: `${importedCount} transaction(s) importée(s) avec succès (${duplicateCount} doublon(s) ignoré(s))`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur importTransactionsFromCsvAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de l’importation du fichier CSV',
+      error: getErrorMessage(error) || 'Erreur lors de l’importation du fichier CSV',
     };
   }
 }

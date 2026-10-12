@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowUpRight, History } from 'lucide-react';
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, History } from 'lucide-react';
 
 export function HomeActions() {
   return (
@@ -65,8 +65,9 @@ export function HomeActions() {
               </p>
             </div>
           </div>
-          <span className="shrink-0 text-xs sm:text-sm font-black text-[#111827] dark:text-white px-2.5 sm:px-3 py-1 bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-white rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] flex items-center gap-1">
-            <span className="hidden sm:block">Voir</span> ➔
+          <span className="shrink-0 text-xs sm:text-sm font-black text-[#111827] dark:text-white px-2.5 sm:px-3 py-1 bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-white rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] flex items-center gap-1.5">
+            <span className="hidden sm:block">Voir</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </div>
       </Link>

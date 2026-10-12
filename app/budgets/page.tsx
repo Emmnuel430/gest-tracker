@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Wallet,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import {
   getBudgetsWithProgressAction,
@@ -104,7 +105,7 @@ export default function BudgetsPage() {
           className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] hover:text-[#2563EB] dark:hover:text-[#60A5FA] transition-colors"
         >
           <ArrowLeft className="w-4 h-4 stroke-3" />
-          <span>Tableau de bord</span>
+          <span>Accueil</span>
         </Link>
         <span className="text-[11px] font-black uppercase px-2.5 py-1 bg-[#FEF3C7] dark:bg-[#78350F] text-[#92400E] dark:text-[#FDE68A] border-2 border-[#111827] dark:border-[#334155] rounded-md shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]">
           Maîtrise Financière
@@ -147,8 +148,9 @@ export default function BudgetsPage() {
           <ChevronLeft className="w-5 h-5 text-[#111827] dark:text-[#F8FAFC] stroke-3" />
         </button>
 
-        <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
-          📅 {formatMonthLabel(selectedMonth)}
+        <span className="inline-flex items-center text-xs sm:text-sm font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
+          <Calendar className="w-4 h-4 mr-1.5" />
+          {formatMonthLabel(selectedMonth)}
         </span>
 
         <button

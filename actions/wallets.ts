@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { WalletSchema, TransferSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
+import { getErrorMessage } from '@/lib/utils';
 
 export interface WalletItem {
   id: string;
@@ -126,11 +127,11 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
       success: true,
       data: result,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur getWalletsAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible de charger les portefeuilles',
+      error: getErrorMessage(error) || 'Impossible de charger les portefeuilles',
     };
   }
 }
@@ -193,11 +194,11 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
       data: { id: saved.id },
       message: `Portefeuille "${name}" enregistré`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur upsertWalletAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible d’enregistrer le portefeuille',
+      error: getErrorMessage(error) || 'Impossible d’enregistrer le portefeuille',
     };
   }
 }
@@ -236,11 +237,11 @@ export async function deleteWalletAction(id: string): Promise<ActionResponse> {
       data: { id },
       message: 'Portefeuille supprimé',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur deleteWalletAction :', error);
     return {
       success: false,
-      error: error?.message || 'Erreur lors de la suppression',
+      error: getErrorMessage(error) || 'Erreur lors de la suppression',
     };
   }
 }
@@ -280,7 +281,7 @@ export async function transferBetweenWalletsAction(rawData: unknown): Promise<Ac
         type: 'TRANSFER',
         amount,
         category: 'Virement interne',
-        payment: `${source.name} ➔ ${target.name}`,
+        payment: `${source.name} -> ${target.name}`,
         walletId: sourceWalletId,
         targetWalletId: targetWalletId,
         note: note || `Transfert de ${source.name} vers ${target.name}`,
@@ -297,11 +298,11 @@ export async function transferBetweenWalletsAction(rawData: unknown): Promise<Ac
       data: { id: transferTx.id },
       message: `Virement de ${amount.toLocaleString('fr-FR')} FCFA effectué avec succès`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur transferBetweenWalletsAction :', error);
     return {
       success: false,
-      error: error?.message || 'Impossible d’effectuer le virement',
+      error: getErrorMessage(error) || 'Impossible d’effectuer le virement',
     };
   }
 }
