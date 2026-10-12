@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import React, { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeft,
   User,
   KeyRound,
-  Download,
   FileJson,
   FileSpreadsheet,
   Printer,
@@ -24,15 +23,20 @@ import {
   Palette,
   ArrowRight,
   X,
-} from 'lucide-react';
-import { getUserProfileAction, deleteAccountAction, changePasswordAction } from '@/actions/user';
-import { createClient } from '@/lib/supabase/client';
-import { Theme, getStoredTheme, setStoredTheme, applyTheme } from '@/lib/theme';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { formatDisplayDate } from '@/lib/dates';
-import { cn } from '@/lib/utils';
+  Download,
+} from "lucide-react";
+import {
+  getUserProfileAction,
+  deleteAccountAction,
+  changePasswordAction,
+} from "@/actions/user";
+import { createClient } from "@/lib/supabase/client";
+import { Theme, getStoredTheme, setStoredTheme, applyTheme } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { formatDisplayDate } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 
 export default function ParametresPage() {
   const router = useRouter();
@@ -49,7 +53,7 @@ export default function ParametresPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Thème
-  const [currentTheme, setCurrentTheme] = useState<Theme>('system');
+  const [currentTheme, setCurrentTheme] = useState<Theme>("system");
   const [mounted, setMounted] = useState(false);
 
   // Déconnexion
@@ -58,9 +62,9 @@ export default function ParametresPage() {
 
   // Changement de mot de passe
   const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
@@ -96,10 +100,10 @@ export default function ParametresPage() {
       const supabase = createClient();
       await supabase.auth.signOut();
       setShowLogoutConfirm(false);
-      router.push('/login');
+      router.push("/login");
       router.refresh();
     } catch (err) {
-      console.error('Erreur déconnexion :', err);
+      console.error("Erreur déconnexion :", err);
     } finally {
       setIsLoggingOut(false);
     }
@@ -120,13 +124,13 @@ export default function ParametresPage() {
     setPwLoading(false);
 
     if (res.success) {
-      setPwSuccess(res.message || 'Mot de passe modifié avec succès !');
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setPwSuccess(res.message || "Mot de passe modifié avec succès !");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
       setIsPasswordFormOpen(false);
     } else {
-      setPwError(res.error || 'Erreur lors de la modification du mot de passe');
+      setPwError(res.error || "Erreur lors de la modification du mot de passe");
     }
   };
 
@@ -138,7 +142,7 @@ export default function ParametresPage() {
       setShowDeleteConfirm(false);
 
       if (res.success) {
-        router.push('/login');
+        router.push("/login");
         router.refresh();
       } else {
         setErrorMessage(res.error);
@@ -155,7 +159,7 @@ export default function ParametresPage() {
           className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] hover:text-[#2563EB] dark:hover:text-[#60A5FA] transition-colors"
         >
           <ArrowLeft className="w-4 h-4 stroke-3" />
-          <span>Tableau de bord</span>
+          <span>Accueil</span>
         </Link>
         <span className="text-[11px] font-black uppercase px-2.5 py-1 bg-[#F3F4F6] dark:bg-[#1E293B] text-[#111827] dark:text-[#F8FAFC] border-2 border-[#111827] dark:border-[#334155] rounded-md shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]">
           Paramètres & Compte
@@ -167,7 +171,8 @@ export default function ParametresPage() {
           Paramètres du Compte
         </h1>
         <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400 mt-1">
-          Sécurité, personnalisation de l'affichage et gestion intégrale de vos données
+          Sécurité, personnalisation de l'affichage et gestion intégrale de vos
+          données
         </p>
       </div>
 
@@ -208,23 +213,29 @@ export default function ParametresPage() {
         ) : profile ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs p-2.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#111827] dark:border-[#334155] rounded-lg">
-              <span className="font-bold text-neutral-600 dark:text-neutral-400">Email :</span>
-              <span className="font-black text-[#111827] dark:text-[#F8FAFC] truncate max-w-[220px]">
+              <span className="font-bold text-neutral-600 dark:text-neutral-400">
+                Email :
+              </span>
+              <span className="font-black text-[#111827] dark:text-[#F8FAFC] truncate max-w-55">
                 {profile.email}
               </span>
             </div>
 
             <div className="flex items-center justify-between text-xs p-2.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#111827] dark:border-[#334155] rounded-lg">
-              <span className="font-bold text-neutral-600 dark:text-neutral-400">Opérations enregistrées :</span>
+              <span className="font-bold text-neutral-600 dark:text-neutral-400">
+                Opérations enregistrées :
+              </span>
               <span className="font-black px-2 py-0.5 bg-[#DCFCE7] dark:bg-[#064E3B] text-[#16A34A] dark:text-[#86EFAC] rounded border border-[#111827] dark:border-transparent text-[11px]">
                 {profile.transactionCount} transactions
               </span>
             </div>
 
             <div className="flex items-center justify-between text-xs p-2.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#111827] dark:border-[#334155] rounded-lg">
-              <span className="font-bold text-neutral-600 dark:text-neutral-400">Date d'inscription :</span>
+              <span className="font-bold text-neutral-600 dark:text-neutral-400">
+                Date d'inscription :
+              </span>
               <span className="font-bold text-[#111827] dark:text-[#F8FAFC]">
-                {formatDisplayDate(profile.createdAt, 'dd MMMM yyyy')}
+                {formatDisplayDate(profile.createdAt, "dd MMMM yyyy")}
               </span>
             </div>
 
@@ -246,7 +257,10 @@ export default function ParametresPage() {
                   </span>
                 </button>
               ) : (
-                <form onSubmit={handlePasswordSubmit} className="p-3.5 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl space-y-3">
+                <form
+                  onSubmit={handlePasswordSubmit}
+                  className="p-3.5 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl space-y-3"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <KeyRound className="w-4 h-4 text-[#2563EB]" />
@@ -280,7 +294,7 @@ export default function ParametresPage() {
                     </label>
                     <div className="relative">
                       <input
-                        type={showPasswords ? 'text' : 'password'}
+                        type={showPasswords ? "text" : "password"}
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
                         required
@@ -295,7 +309,7 @@ export default function ParametresPage() {
                       Nouveau mot de passe (min. 8 car., 1 chiffre, 1 lettre)
                     </label>
                     <input
-                      type={showPasswords ? 'text' : 'password'}
+                      type={showPasswords ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
@@ -309,7 +323,7 @@ export default function ParametresPage() {
                       Confirmer le nouveau mot de passe
                     </label>
                     <input
-                      type={showPasswords ? 'text' : 'password'}
+                      type={showPasswords ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
@@ -324,8 +338,12 @@ export default function ParametresPage() {
                       onClick={() => setShowPasswords(!showPasswords)}
                       className="flex items-center gap-1 text-[10px] font-bold text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                     >
-                      {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      <span>{showPasswords ? 'Masquer' : 'Afficher'}</span>
+                      {showPasswords ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                      <span>{showPasswords ? "Masquer" : "Afficher"}</span>
                     </button>
 
                     <Button
@@ -335,7 +353,9 @@ export default function ParametresPage() {
                       disabled={pwLoading}
                       className="text-xs"
                     >
-                      {pwLoading ? 'Mise à jour...' : 'Sauvegarder le mot de passe'}
+                      {pwLoading
+                        ? "Mise à jour..."
+                        : "Sauvegarder le mot de passe"}
                     </Button>
                   </div>
                 </form>
@@ -365,19 +385,19 @@ export default function ParametresPage() {
           {/* Clair */}
           <button
             type="button"
-            onClick={() => handleSelectTheme('light')}
+            onClick={() => handleSelectTheme("light")}
             className={cn(
-              'flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer text-center select-none',
-              currentTheme === 'light'
-                ? 'bg-[#FEF3C7] border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-0.5'
-                : 'bg-white dark:bg-[#0F172A] border-neutral-300 dark:border-[#334155] hover:border-[#111827]'
+              "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer text-center select-none",
+              currentTheme === "light"
+                ? "bg-[#FEF3C7] border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-0.5"
+                : "bg-white dark:bg-[#0F172A] border-neutral-300 dark:border-[#334155] hover:border-[#111827]",
             )}
           >
             <Sun className="w-6 h-6 text-[#D97706] mb-1.5 stroke-[2.5]" />
             <span className="text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
               Clair
             </span>
-            {currentTheme === 'light' && (
+            {currentTheme === "light" && (
               <span className="text-[9px] font-black uppercase px-1.5 py-0.2 bg-[#F59E0B] text-black rounded mt-1">
                 Actif
               </span>
@@ -387,19 +407,19 @@ export default function ParametresPage() {
           {/* Sombre */}
           <button
             type="button"
-            onClick={() => handleSelectTheme('dark')}
+            onClick={() => handleSelectTheme("dark")}
             className={cn(
-              'flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer text-center select-none',
-              currentTheme === 'dark'
-                ? 'bg-[#1E293B] border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-0.5'
-                : 'bg-white dark:bg-[#0F172A] border-neutral-300 dark:border-[#334155] hover:border-[#111827]'
+              "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer text-center select-none",
+              currentTheme === "dark"
+                ? "bg-[#1E293B] border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-0.5"
+                : "bg-white dark:bg-[#0F172A] border-neutral-300 dark:border-[#334155] hover:border-[#111827]",
             )}
           >
             <Moon className="w-6 h-6 text-[#38BDF8] mb-1.5 stroke-[2.5]" />
             <span className="text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
               Sombre
             </span>
-            {currentTheme === 'dark' && (
+            {currentTheme === "dark" && (
               <span className="text-[9px] font-black uppercase px-1.5 py-0.2 bg-[#38BDF8] text-black rounded mt-1">
                 Actif
               </span>
@@ -409,19 +429,19 @@ export default function ParametresPage() {
           {/* Système */}
           <button
             type="button"
-            onClick={() => handleSelectTheme('system')}
+            onClick={() => handleSelectTheme("system")}
             className={cn(
-              'flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer text-center select-none',
-              currentTheme === 'system'
-                ? 'bg-[#DBEAFE] dark:bg-[#1E3A8A] border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-0.5'
-                : 'bg-white dark:bg-[#0F172A] border-neutral-300 dark:border-[#334155] hover:border-[#111827]'
+              "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer text-center select-none",
+              currentTheme === "system"
+                ? "bg-[#DBEAFE] dark:bg-[#1E3A8A] border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-0.5"
+                : "bg-white dark:bg-[#0F172A] border-neutral-300 dark:border-[#334155] hover:border-[#111827]",
             )}
           >
             <Laptop className="w-6 h-6 text-[#2563EB] dark:text-[#93C5FD] mb-1.5 stroke-[2.5]" />
             <span className="text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
               Système
             </span>
-            {currentTheme === 'system' && (
+            {currentTheme === "system" && (
               <span className="text-[9px] font-black uppercase px-1.5 py-0.2 bg-[#2563EB] text-white rounded mt-1">
                 Actif
               </span>
@@ -464,7 +484,9 @@ export default function ParametresPage() {
                 </span>
               </div>
             </div>
-            <span className="text-xs font-black text-[#059669]">⬇ JSON</span>
+            <span className="text-xs font-black text-[#059669] inline-flex items-center gap-1">
+              <Download className="w-3.5 h-3.5" /> JSON
+            </span>
           </a>
 
           {/* Export CSV */}
@@ -484,7 +506,9 @@ export default function ParametresPage() {
                 </span>
               </div>
             </div>
-            <span className="text-xs font-black text-[#2563EB]">⬇ CSV</span>
+            <span className="text-xs font-black text-[#2563EB] inline-flex items-center gap-1">
+              <Download className="w-3.5 h-3.5" /> CSV
+            </span>
           </a>
 
           {/* Export PDF */}
@@ -530,7 +554,8 @@ export default function ParametresPage() {
         </div>
 
         <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-4 leading-relaxed">
-          Pour des raisons de confidentialité, déconnectez-vous si vous utilisez un appareil public ou partagé.
+          Pour des raisons de confidentialité, déconnectez-vous si vous utilisez
+          un appareil public ou partagé.
         </p>
 
         <Button
@@ -540,7 +565,7 @@ export default function ParametresPage() {
           fullWidth
           disabled={isLoggingOut}
           onClick={() => setShowLogoutConfirm(true)}
-          className="flex items-center justify-center gap-2 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] border-2 border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF]"
+          className="flex items-center justify-center gap-2 border-2 border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] bg-[#FFF7ED] text-[#C2410C] hover:bg-[#EA580C] hover:text-[#FFF7ED] dark:bg-amber-950 dark:text-orange-400 dark:hover:bg-orange-600 dark:hover:text-white"
         >
           <LogOut className="w-4 h-4 stroke-2.5" />
           <span>Se déconnecter de la session</span>
@@ -564,7 +589,9 @@ export default function ParametresPage() {
         </div>
 
         <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">
-          La suppression de votre compte effacera immédiatement et irréversiblement l'ensemble de vos transactions, catégories, budgets, règles et portefeuilles enregistrés sur GEST TRACKER.
+          La suppression de votre compte effacera immédiatement et
+          irréversiblement l'ensemble de vos transactions, catégories, budgets,
+          règles et portefeuilles enregistrés sur GEST TRACKER.
         </p>
 
         <Button

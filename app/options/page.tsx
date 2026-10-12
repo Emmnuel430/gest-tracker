@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   PieChart,
@@ -11,54 +11,58 @@ import {
   ChevronRight,
   SlidersHorizontal,
   Sparkles,
-} from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+} from "lucide-react";
+import { Card } from "@/components/ui/Card";
 
 export default function OptionsPage() {
   const modules = [
     {
-      title: 'Budgets & Plafonds',
-      href: '/budgets',
-      description: 'Plafonds mensuels par catégorie avec jauges de consommation et alertes.',
-      badge: 'Mensuel',
-      color: '#D97706',
-      bgLight: '#FFFBEB',
-      bgDark: '#78350F/25',
+      title: "Budgets & Plafonds",
+      href: "/budgets",
+      description:
+        "Plafonds mensuels par catégorie avec jauges de consommation et alertes.",
+      badge: "Mensuel",
+      color: "#D97706",
+      bgLight: "#FFFBEB",
+      bgDark: "#78350F/25",
       icon: <PieChart className="w-6 h-6 text-[#D97706] stroke-2.5" />,
-      actionLabel: 'Gérer les budgets',
+      actionLabel: "Gérer les budgets",
     },
     {
-      title: 'Règles Récurrentes',
-      href: '/recurrences',
-      description: 'Automatisez vos loyers, abonnements et salaires avec alertes chaque début de mois.',
-      badge: 'Rappels',
-      color: '#7C3AED',
-      bgLight: '#F5F3FF',
-      bgDark: '#5B21B6/25',
+      title: "Règles Récurrentes",
+      href: "/recurrences",
+      description:
+        "Automatisez vos loyers, abonnements et salaires avec alertes chaque début de mois.",
+      badge: "Rappels",
+      color: "#7C3AED",
+      bgLight: "#F5F3FF",
+      bgDark: "#5B21B6/25",
       icon: <Repeat className="w-6 h-6 text-[#7C3AED] stroke-2.5" />,
-      actionLabel: 'Voir les récurrences',
+      actionLabel: "Voir les récurrences",
     },
     {
-      title: 'Portefeuilles & Virements',
-      href: '/portefeuilles',
-      description: 'Comptes physiques et virtuels (Espèces, Wave, Banque) et virements internes.',
-      badge: 'Multi-comptes',
-      color: '#059669',
-      bgLight: '#ECFDF5',
-      bgDark: '#064E3B/25',
+      title: "Portefeuilles & Virements",
+      href: "/portefeuilles",
+      description:
+        "Comptes physiques et virtuels (Espèces, Wave, Banque) et virements internes.",
+      badge: "Multi-comptes",
+      color: "#059669",
+      bgLight: "#ECFDF5",
+      bgDark: "#064E3B/25",
       icon: <Wallet className="w-6 h-6 text-[#059669] stroke-2.5" />,
-      actionLabel: 'Ouvrir les comptes',
+      actionLabel: "Ouvrir les comptes",
     },
     {
-      title: 'Dettes & Créances',
-      href: '/dettes',
-      description: 'Suivi rigoureux de l’argent prêté à autrui et de vos emprunts en attente de solde.',
-      badge: 'Remboursements',
-      color: '#DB2777',
-      bgLight: '#FDF2F8',
-      bgDark: '#831843/25',
+      title: "Dettes & Créances",
+      href: "/dettes",
+      description:
+        "Suivi rigoureux de l’argent prêté à autrui et de vos emprunts en attente de solde.",
+      badge: "Remboursements",
+      color: "#DB2777",
+      bgLight: "#FDF2F8",
+      bgDark: "#831843/25",
       icon: <HandCoins className="w-6 h-6 text-[#DB2777] stroke-2.5" />,
-      actionLabel: 'Suivre les dettes',
+      actionLabel: "Suivre les dettes",
     },
   ];
 
@@ -99,7 +103,7 @@ export default function OptionsPage() {
       <div className="space-y-4">
         {modules.map((mod) => (
           <Link key={mod.href} href={mod.href} className="block group">
-            <Card className="p-4 sm:p-5 transition-all duration-150 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[6px_6px_0px_0px_#111827] dark:group-hover:shadow-[6px_6px_0px_0px_#FFFFFF] cursor-pointer">
+            <Card className="p-4 sm:p-5 transition-all duration-150 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[6px_6px_0px_0px_#111827] dark:group-hover:shadow-[6px_6px_0px_0px_#000000] cursor-pointer">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3.5 flex-1 min-w-0">
                   <div
@@ -144,7 +148,9 @@ export default function OptionsPage() {
             Conseil d’organisation
           </p>
           <p className="font-semibold text-neutral-700 dark:text-neutral-300 mt-0.5">
-            Configurez vos budgets et vos récurrences en début de mois pour bénéficier d’analyses financières ultra-précises sur votre tableau de bord.
+            Configurez vos budgets et vos récurrences en début de mois pour
+            bénéficier d’analyses financières ultra-précises sur votre tableau
+            de bord.
           </p>
         </div>
       </div>
