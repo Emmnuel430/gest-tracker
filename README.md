@@ -33,6 +33,7 @@ Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRA
 ## 1. Vue d'ensemble & Philosophie
 
 GEST TRACKER est conçu pour répondre à deux impératifs :
+
 1. **La vitesse d'exécution :** Enregistrer une entrée ou une sortie d'argent doit prendre moins de 5 secondes sur mobile.
 2. **La lisibilité absolue (Néobrutalisme) :**
    - Bordures nettes de 2px à 3px (`#111827` / `white`).
@@ -119,6 +120,7 @@ my-app/
 ## 4. Fonctionnalités Détaillées par Module
 
 ### 4.1 Authentification & Cloisonnement Multi-User
+
 - **Routes :** `/login` et `/register`.
 - **Mécanisme :**
   - Session gérée par Supabase Auth via des cookies sécurisés lus dans [`middleware.ts`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/middleware.ts).
@@ -127,6 +129,7 @@ my-app/
   - **Cloisonnement total des données :** Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
 
 ### 4.2 Tableau de Bord Principal (`/`)
+
 - **Résumé du Solde :**
   - Solde global en temps réel.
   - Cartes synthétiques des flux pour 3 périodes clés : **Aujourd'hui**, **Mois en cours** et **Année**.
@@ -140,6 +143,7 @@ my-app/
 - **Dernières Opérations :** Liste compacte des transactions récentes avec affichage de la catégorie, moyen de paiement, portefeuille et date.
 
 ### 4.3 Bilan & Conseils Financiers (Moteur d'Insights)
+
 - Situé sur la page d'accueil juste après l'historique récent.
 - Analyse algorithmique instantanée dans [`lib/insights.ts`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/lib/insights.ts) :
   - **Taux d'épargne :** Calcule le pourcentage des revenus conservés sur le mois.
@@ -148,14 +152,17 @@ my-app/
   - **Conseils personnalisés :** Recommandations claires générées automatiquement en français.
 
 ### 4.4 Hub d'Options & Modules (`/options`)
+
 Accessible directement depuis l'onglet central de la barre de navigation. Il regroupe les 4 modules financiers avancés sous forme de cartes d'action interactives :
+
 1. **Budgets & Plafonds**
 2. **Règles Récurrentes**
 3. **Portefeuilles & Virements**
 4. **Dettes & Créances**
 
 ### 4.5 Budgets Mensuels & Alertes (`/budgets`)
-- Définition d'un montant plafond par catégorie pour un mois donné (ex: *Alimentation : 60 000 FCFA pour 2026-10*).
+
+- Définition d'un montant plafond par catégorie pour un mois donné (ex: _Alimentation : 60 000 FCFA pour 2026-10_).
 - Jauge visuelle dynamique tricolore :
   - 🟢 **Vert :** Moins de 75 % consommé.
   - 🟠 **Orange :** Entre 75 % et 99 % consommé (Attention).
@@ -163,12 +170,14 @@ Accessible directement depuis l'onglet central de la barre de navigation. Il reg
 - Navigation mois par mois pour comparer sa consommation dans le temps.
 
 ### 4.6 Règles Récurrentes & Charges Fixes (`/recurrences`)
+
 - Programmation des flux prévisibles : loyer, salaire, abonnements internet, tontine...
 - Configuration : montant, catégorie, moyen de paiement, jour du mois (1 à 31), fréquence (mensuelle, hebdo, annuelle).
 - Statut actif / en pause en un clic.
 - Calcul prévisionnel mensuel automatique (dépenses fixes prévues vs rentrées prévues).
 
 ### 4.7 Portefeuilles & Virements Internes (`/portefeuilles`)
+
 - Différencie où se trouve réellement l'argent :
   - **Espèces** (Cash liquide)
   - **Mobile Money** (Wave, Orange Money)
@@ -181,12 +190,14 @@ Accessible directement depuis l'onglet central de la barre de navigation. Il reg
   - **Stricte Neutralité Comptable :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés mais n'impacte ni les revenus ni les dépenses globales de l'utilisateur.
 
 ### 4.8 Dettes & Créances (`/dettes`)
+
 - **Argent prêté (LENT) :** Créances à récupérer auprès d'autrui.
 - **Argent emprunté (BORROWED) :** Dettes à rembourser.
 - Statuts : `PENDING` (En attente), `PARTIAL` (Partiellement remboursé), `SETTLED` (Soldé).
 - Enregistrement de remboursements partiels successifs avec déduction automatique du reste dû.
 
 ### 4.9 Historique, Graphiques & Import CSV (`/historique`)
+
 - **Filtres multicritères combinables :**
   - Par période : Aujourd'hui, Semaine, Mois, Année, ou Plage personnalisée.
   - Par type : Entrant, Sortant.
@@ -199,7 +210,9 @@ Accessible directement depuis l'onglet central de la barre de navigation. Il reg
   - Algorithme anti-doublon basé sur date, montant et description.
 
 ### 4.10 Paramètres, Thèmes & Sécurité (`/parametres`)
+
 Accessible depuis l'onglet **Compte** :
+
 1. **Identité de session :** Affiche l'email, la date d'inscription et le nombre total d'opérations.
 2. **Changement de mot de passe :**
    - Vérifie obligatoirement l'ancien mot de passe via Supabase avant toute mise à jour.
@@ -387,6 +400,7 @@ pnpm build
 ### Synchronisation Base de Données (Local vs Prod)
 
 Pour appliquer le schéma sur une base Supabase distante (Production) :
+
 - **Option A (Automatisée avec Prisma) :**
   ```powershell
   $env:DATABASE_URL="postgresql://postgres.[REF]:[PASS]@aws-0-[REGION].pooler.supabase.com:5432/postgres?schema=public"
@@ -395,13 +409,37 @@ Pour appliquer le schéma sur une base Supabase distante (Production) :
 - **Option B (Éditeur SQL Supabase) :**
   Copiez le script idempotent [`prisma/migration_v2.sql`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/prisma/migration_v2.sql) et exécutez-le dans le **SQL Editor** de Supabase Cloud.
 
-### Rattachement des Transactions (Backfill)
+### Sécurité des Données & Row Level Security (RLS)
 
-Si vous importez une base existante où des transactions ont été créées sans `user_id`, exécutez le script dédié :
-```powershell
-npx tsx scripts/backfill-user-transactions.ts
+Toutes les tables de l'application contenant des données utilisateur sont protégées par le mécanisme natif **Row Level Security (RLS)** de PostgreSQL sous Supabase :
+
+- `public.transactions`
+- `public.wallets`
+- `public.budgets`
+- `public.recurring_rules`
+- `public.debts`
+
+#### Politiques de sécurité actives :
+
+- **Utilisateurs authentifiés (`authenticated`) :** Accès restreint strictement aux lignes où `(select auth.uid())::text = user_id` (opérations SELECT, INSERT, UPDATE, DELETE).
+- **Accès public anonyme (`anon`) :** Tout accès est rejeté par défaut (politique zero-trust).
+- **Accès serveur applicatif :** Les Server Actions Next.js opérant via Prisma utilisent le rôle administrateur de connexion directe PostgreSQL (qui contourne le RLS pour exécuter les opérations transactionnelles serveur sécurisées), tout en vérifiant systématiquement l'identité utilisateur côté serveur (`getAuthenticatedUser()`).
+
+#### Migration RLS versionnée :
+
+La migration [`supabase/migrations/20261012171259_enable_rls.sql`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/supabase/migrations/20261012171259_enable_rls.sql) applique l'activation de RLS et l'ensemble des 20 politiques de sécurité (4 par table).
+
+Pour appliquer les migrations en local :
+
+```bash
+pnpm supabase migration up --local
 ```
-Ce script identifie l'utilisateur principal dans `auth.users` et lui rattache instantanément toutes les transactions orphelines.
+
+Pour déployer les migrations sur l'instance Supabase distante :
+
+```bash
+pnpm supabase db push
+```
 
 ---
 
@@ -419,7 +457,9 @@ L'application intègre une suite de **76 tests unitaires** couvrant l'ensemble d
 - **`tests/csv-import.test.ts` :** Parsing de fichiers bancaires et détection de doublons.
 
 Pour exécuter les tests :
+
 ```bash
 pnpm test
 ```
-*Résultat garanti : 76 tests passés à 100 %, 0 échec.*
+
+_Résultat garanti : 76 tests passés à 100 %, 0 échec._
