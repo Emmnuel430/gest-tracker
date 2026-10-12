@@ -1,25 +1,48 @@
-import { getDashboardDataAction } from '@/actions/transactions';
-import { BalanceSummary } from '@/components/home/BalanceSummary';
-import { HomeActions } from '@/components/home/HomeActions';
-import { RecentTransactionsList } from '@/components/home/RecentTransactionsList';
+import { getDashboardDataAction } from "@/actions/transactions";
+import { getDueRecurringRulesAction } from "@/actions/recurring";
+import { getFinancialInsightsAction } from "@/actions/insights";
+import { BalanceSummary } from "@/components/home/BalanceSummary";
+import { HomeActions } from "@/components/home/HomeActions";
+import { RecentTransactionsList } from "@/components/home/RecentTransactionsList";
+import { RecurringAlertBanner } from "@/components/recurring/RecurringAlertBanner";
+import { FinancialInsightsCard } from "@/components/insights/FinancialInsightsCard";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const result = await getDashboardDataAction();
+  const [result, dueRulesRes, insightsRes] = await Promise.all([
+    getDashboardDataAction(),
+    getDueRecurringRulesAction(),
+    getFinancialInsightsAction(),
+  ]);
 
-  const emptySummary = { totalIncome: 0, totalExpense: 0, balance: 0, transactionCount: 0 };
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const dueRules =
+    dueRulesRes.success && dueRulesRes.data ? dueRulesRes.data : [];
+  const insights =
+    insightsRes.success && insightsRes.data ? insightsRes.data : [];
 
-  const globalBalance = result.success ? result.data.globalBalance ?? 0 : 0;
-  const summaries = result.success && result.data.summaries
-    ? result.data.summaries
-    : {
-        today: emptySummary,
-        month: result.success ? result.data.summary : emptySummary,
-        year: emptySummary,
-      };
+  const emptySummary = {
+    totalIncome: 0,
+    totalExpense: 0,
+    balance: 0,
+    transactionCount: 0,
+  };
 
-  const recentTransactions = result.success ? result.data.recentTransactions : [];
+  const globalBalance = result.success ? (result.data.globalBalance ?? 0) : 0;
+  const summaries =
+    result.success && result.data.summaries
+      ? result.data.summaries
+      : {
+          today: emptySummary,
+          month: result.success ? result.data.summary : emptySummary,
+          year: emptySummary,
+        };
+
+  const recentTransactions = result.success
+    ? result.data.recentTransactions
+    : [];
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -38,13 +61,25 @@ export default async function HomePage() {
         </span>
       </div>
 
+      {/* Bannière de confirmation rapide pour les échéances récurrentes dues */}
+      <div className="w-full">
+        <RecurringAlertBanner
+          initialDueRules={dueRules}
+          currentMonth={currentMonth}
+        />
+      </div>
+
       {/* 1. Résumé du Solde Global et totaux par période (Sections 10 & 11) */}
       <BalanceSummary globalBalance={globalBalance} summaries={summaries} />
 
-      {/* 2. Les 3 boutons d'actions massifs */}
+      {/* 2. Les 3 boutons d'actions massifs (Entrant, Sortant, Historique) */}
       <HomeActions />
 
-      {/* 3. Dernières opérations récentes (Section 9) */}
+      {/* 3. Bilan & Conseils Financiers (placé immédiatement après l'historique) */}
+      <div className="w-full">
+        <FinancialInsightsCard insights={insights} />
+      </div>
+      {/* 4. Dernières opérations récentes (Section 9) */}
       <RecentTransactionsList transactions={recentTransactions} />
     </div>
   );

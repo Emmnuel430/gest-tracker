@@ -43,7 +43,9 @@ function EditForm({
   onClose: () => void;
   onUpdated: (updated: Transaction) => void;
 }) {
-  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(transaction.type);
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>(
+    transaction.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
+  );
   const [amount, setAmount] = useState(() => formatAmountInput(transaction.amount));
   const [category, setCategory] = useState(transaction.category);
   const [payment, setPayment] = useState(transaction.payment);

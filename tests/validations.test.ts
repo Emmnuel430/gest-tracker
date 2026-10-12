@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { TransactionSchema } from '../lib/validations';
+import { TransactionSchema, RegisterSchema, LoginSchema } from '../lib/validations';
 
 describe('TransactionSchema (Zod)', () => {
   it('valide une transaction conforme', () => {
@@ -96,6 +96,83 @@ describe('TransactionSchema (Zod)', () => {
       assert.equal(result.data.date.getFullYear(), 2026);
       assert.equal(result.data.date.getMonth(), 8); // Septembre (0-indexed)
       assert.equal(result.data.date.getDate(), 25);
+    }
+  });
+});
+
+describe('RegisterSchema & LoginSchema (Zod Auth V2)', () => {
+  it('valide une inscription conforme', () => {
+    const validRegister = {
+      email: 'NOUVEAU.USER@example.com',
+      password: 'Password123',
+      confirmPassword: 'Password123',
+    };
+
+    const result = RegisterSchema.safeParse(validRegister);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.email, 'nouveau.user@example.com'); // Normalisation en minuscules
+    }
+  });
+
+  it('rejette une inscription avec mot de passe trop court (< 8 caractères)', () => {
+    const shortPassword = {
+      email: 'test@example.com',
+      password: 'Pass1',
+      confirmPassword: 'Pass1',
+    };
+
+    const result = RegisterSchema.safeParse(shortPassword);
+    assert.equal(result.success, false);
+  });
+
+  it('rejette une inscription avec mot de passe sans chiffre', () => {
+    const noNumber = {
+      email: 'test@example.com',
+      password: 'PasswordOnly',
+      confirmPassword: 'PasswordOnly',
+    };
+
+    const result = RegisterSchema.safeParse(noNumber);
+    assert.equal(result.success, false);
+  });
+
+  it('rejette une inscription si les mots de passe ne correspondent pas', () => {
+    const mismatch = {
+      email: 'test@example.com',
+      password: 'Password123',
+      confirmPassword: 'DifferentPassword456',
+    };
+
+    const result = RegisterSchema.safeParse(mismatch);
+    assert.equal(result.success, false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path.includes('confirmPassword'));
+      assert.ok(issue);
+    }
+  });
+
+  it('rejette une inscription avec un format email invalide', () => {
+    const invalidEmail = {
+      email: 'email-invalide-sans-arobase',
+      password: 'Password123',
+      confirmPassword: 'Password123',
+    };
+
+    const result = RegisterSchema.safeParse(invalidEmail);
+    assert.equal(result.success, false);
+  });
+
+  it('valide une tentative de connexion correcte', () => {
+    const validLogin = {
+      email: 'User@Example.com ',
+      password: 'SecretPassword',
+    };
+
+    const result = LoginSchema.safeParse(validLogin);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.email, 'user@example.com');
     }
   });
 });

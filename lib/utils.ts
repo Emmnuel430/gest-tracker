@@ -6,6 +6,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export { formatCurrency, formatAmountInput, parseAmountInput } from '@/constants/config';
+
 /**
  * Assainit et sérialise une transaction issue de Prisma (convertit Decimal et Date)
  * pour éviter toute erreur de sérialisation React Server Action / Client Component

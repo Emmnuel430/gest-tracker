@@ -1,10 +1,10 @@
-import React from "react";
-import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight, History } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import { ArrowDownLeft, ArrowUpRight, History } from 'lucide-react';
 
 export function HomeActions() {
   return (
-    <div className="w-full space-y-3 sm:space-y-3.5 my-5 sm:my-6">
+    <div className="w-full space-y-3 sm:space-y-3.5 my-4 sm:my-5">
       {/* BOUTON ENTRANT */}
       <Link href="/entrant" className="block w-full group">
         <div className="w-full bg-[#16A34A] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-3.5 sm:p-5 shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center justify-between gap-3 sm:gap-4 transition-all duration-150 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[6px_6px_0px_0px_#111827] dark:group-hover:shadow-[6px_6px_0px_0px_#000000] group-active:translate-x-1 group-active:translate-y-1 group-active:shadow-none cursor-pointer">
