@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (V2)
+# GEST TRACKER — Documentation Complète (v2.0.2)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
