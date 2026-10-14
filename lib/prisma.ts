@@ -13,7 +13,9 @@ function isPrismaUpToDate(client: unknown): boolean {
     typeof (c.budget as Record<string, unknown> | undefined)?.findMany === 'function' &&
     typeof (c.recurringRule as Record<string, unknown> | undefined)?.findMany === 'function' &&
     typeof (c.wallet as Record<string, unknown> | undefined)?.findMany === 'function' &&
-    typeof (c.debt as Record<string, unknown> | undefined)?.findMany === 'function'
+    typeof (c.debt as Record<string, unknown> | undefined)?.findMany === 'function' &&
+    typeof (c.category as Record<string, unknown> | undefined)?.findMany === 'function' &&
+    typeof (c.recurringReminderLog as Record<string, unknown> | undefined)?.findMany === 'function'
   );
 }
 
