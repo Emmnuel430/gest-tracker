@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.3.0)
+# GEST TRACKER — Documentation Complète (v2.4.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -57,7 +57,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (103 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (123 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -224,17 +224,22 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 
 ### 4.9 Historique, Graphiques & Import CSV (`/historique`)
 
-- **Bouton de filtres interactif :** Affiche un badge numérique dynamique (`activeFiltersCount`) et une surbrillance jaune néobrutaliste dès qu'un filtre (type, catégorie, portefeuille, date) est appliqué.
-- **Filtres multicritères combinables :**
-  - Par période : Aujourd'hui, Semaine, Mois, Année, ou Plage personnalisée.
-  - Par type : Entrant, Sortant.
-  - Par catégorie et par moyen de paiement.
-- **Graphiques interactifs :**
-  - Évolution temporelle des entrées et sorties (Recharts BarChart).
-  - Répartition des dépenses par catégorie (Recharts PieChart).
-- **Import CSV Bancaire :**
-  - Import de fichiers CSV avec détection automatique des séparateurs (virgule ou point-virgule) et encodage UTF-8.
-  - Algorithme anti-doublon basé sur date, montant et description.
+- **Matrice d'affichage contextuelle intelligente (`getHistoryVisibility`) :**
+  - **Type Entrées :** Masque automatiquement le résumé financier global pour focaliser sur le total des encaissements, adapte le libellé des portefeuilles en *"Moyen de réception"*, et présente la répartition et le classement des sources de revenus (`CategoryChart` et `CategoryRanking`).
+  - **Type Dépenses :** Conserve le résumé financier complet et adapte le libellé en *"Moyen de paiement"*.
+  - **Filtrage par Catégorie spécifique :** Masque automatiquement l'onglet Graphiques et la section de répartition par catégorie dans le comparatif (devenue redondante avec le filtre actif).
+  - **Période Personnalisée :** Désactive le comparatif d'évolution temporelle (non représentatif sur dates libres).
+  - **Redirection dynamique d'onglet :** Si un changement de filtre rend l'onglet actif masqué, l'interface bascule instantanément et sans heurts sur l'onglet *Opérations*.
+- **Filtres dépendants & URL Source de Vérité :**
+  - Sélecteur de catégorie inactif avec indication visuelle *"Choisissez d'abord un type"* tant que le type n'est pas sélectionné (`INCOME` ou `EXPENSE`).
+  - Synchronisation bidirectionnelle continue dans l'URL (`?period=...&type=...&category=...&payment=...&tab=...`) via `window.history.replaceState` sans rechargement de page.
+- **Pagination Serveur par Curseur :**
+  - Requêtes indexées ultra-performantes (`idx_transactions_user_date_id`) sur `[user_id, date DESC, id DESC]`.
+  - Bouton néobrutaliste *"Charger plus"* avec indicateur d'avancement et conservation de la position de scroll.
+- **Statistiques & Agrégations Serveur :**
+  - Calcul instantané des totaux et des comparatifs N vs N-1 via des requêtes `groupBy` Prisma optimisées.
+- **Export & Impression PDF :**
+  - Prise en compte immédiate des filtres actifs (période, type, catégorie, portefeuille, dates personnalisées) sur `/api/export/pdf`.
 
 ### 4.10 Paramètres, Thèmes & Sécurité (`/parametres`)
 

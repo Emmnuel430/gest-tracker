@@ -10,12 +10,17 @@ import { getContrastTextColor } from '@/lib/utils';
 
 interface PaymentMethodChartProps {
   breakdown: PaymentMethodBreakdown[];
+  label?: string;
+  type?: 'INCOME' | 'EXPENSE';
 }
 
-export function PaymentMethodChart({ breakdown }: PaymentMethodChartProps) {
+export function PaymentMethodChart({ breakdown, label, type = 'EXPENSE' }: PaymentMethodChartProps) {
   const { getWalletColor } = useWallets();
 
   if (breakdown.length === 0) return null;
+
+  const displayTitle = label || (type === 'INCOME' ? 'Moyens de réception' : 'Moyens de paiement');
+  const displaySubtitle = type === 'INCOME' ? 'Entrées par canal de réception' : 'Dépenses par canal de paiement';
 
   const getMethodIcon = (method: string) => {
     switch (method.toLowerCase()) {
@@ -36,10 +41,10 @@ export function PaymentMethodChart({ breakdown }: PaymentMethodChartProps) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-black text-xs uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
-            Moyens de paiement
+            {displayTitle}
           </h3>
           <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-            Dépenses par canal de paiement
+            {displaySubtitle}
           </p>
         </div>
         <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#111827] dark:text-white border border-[#111827] dark:border-white rounded shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]">

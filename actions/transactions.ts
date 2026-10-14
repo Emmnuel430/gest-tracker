@@ -3,14 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { TransactionSchema, UpdateTransactionSchema } from '@/lib/validations';
+import { TransactionSchema, UpdateTransactionSchema, HistoryFiltersInput } from '@/lib/validations';
 import { serializeTransaction, getErrorMessage } from '@/lib/utils';
-import { getDateRangeForPeriod } from '@/lib/dates';
-import { calculateFinancialSummary } from '@/lib/statistics';
-import { PeriodType } from '@/types/period';
+import { getDateRangeForPeriod, getPreviousDateRange } from '@/lib/dates';
+import {
+  calculateFinancialSummary,
+  calculateCategoryBreakdown,
+  calculatePaymentMethodBreakdown,
+} from '@/lib/statistics';
+import { PeriodType, DateRange } from '@/types/period';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { Transaction } from '@/types/transaction';
-import { FinancialSummary } from '@/types/statistics';
+import { FinancialSummary, CategoryBreakdown, PaymentMethodBreakdown } from '@/types/statistics';
+import { buildPeriodComparison, PeriodComparisonData } from '@/lib/comparisons';
 
 export type ActionResponse<T = unknown> =
   | { success: true; data: T; message?: string }
@@ -202,6 +207,211 @@ export async function getTransactionsAction(options?: {
     return {
       success: false,
       error: getErrorMessage(error) || 'Impossible de charger les transactions',
+    };
+  }
+}
+
+export interface TransactionsPageResult {
+  items: Transaction[];
+  nextCursor: string | null;
+  totalCount: number;
+}
+
+export interface HistoryStatsResult {
+  summary: FinancialSummary;
+  categoryBreakdown: CategoryBreakdown[];
+  paymentBreakdown: PaymentMethodBreakdown[];
+  periodComparison: PeriodComparisonData | null;
+}
+
+/**
+ * Récupère une page de transactions avec pagination par curseur (v2.4.0)
+ */
+export async function getTransactionsPageAction(
+  filters: HistoryFiltersInput,
+  cursor?: string | null,
+  pageSize = 20
+): Promise<ActionResponse<TransactionsPageResult>> {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const where: Prisma.TransactionWhereInput = {
+      userId: user.id,
+    };
+
+    if (filters.period && filters.period !== 'all') {
+      const p = filters.period as PeriodType;
+      const range = getDateRangeForPeriod(p, filters.startDate, filters.endDate);
+      where.date = { gte: range.from, lte: range.to };
+    } else if (filters.startDate && filters.endDate) {
+      const range = getDateRangeForPeriod('custom', filters.startDate, filters.endDate);
+      where.date = { gte: range.from, lte: range.to };
+    }
+
+    if (filters.type && filters.type !== 'all') {
+      where.type = filters.type;
+    }
+
+    if (filters.category && filters.category !== 'all') {
+      where.category = filters.category;
+    }
+
+    if (filters.payment && filters.payment !== 'all') {
+      where.payment = filters.payment;
+    }
+
+    const totalCount = await prisma.transaction.count({ where });
+
+    const transactions = await prisma.transaction.findMany({
+      where,
+      take: pageSize + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      orderBy: [{ date: 'desc' }, { id: 'desc' }],
+    });
+
+    let nextCursor: string | null = null;
+    let items = transactions;
+
+    if (transactions.length > pageSize) {
+      const sliced = transactions.slice(0, pageSize);
+      nextCursor = sliced[sliced.length - 1].id;
+      items = sliced;
+    }
+
+    return {
+      success: true,
+      data: {
+        items: items.map(serializeTransaction),
+        nextCursor,
+        totalCount,
+      },
+    };
+  } catch (error: unknown) {
+    console.error('Erreur getTransactionsPageAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Impossible de charger la page de transactions',
+    };
+  }
+}
+
+/**
+ * Calcule l'intégralité des statistiques d'historique côté serveur (v2.4.0)
+ */
+export async function getHistoryStatsAction(
+  filters: HistoryFiltersInput
+): Promise<ActionResponse<HistoryStatsResult>> {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const where: Prisma.TransactionWhereInput = {
+      userId: user.id,
+    };
+
+    let currentRange: DateRange | null = null;
+    if (filters.period && filters.period !== 'all') {
+      const p = filters.period as PeriodType;
+      currentRange = getDateRangeForPeriod(p, filters.startDate, filters.endDate);
+      where.date = { gte: currentRange.from, lte: currentRange.to };
+    } else if (filters.startDate && filters.endDate) {
+      currentRange = getDateRangeForPeriod('custom', filters.startDate, filters.endDate);
+      where.date = { gte: currentRange.from, lte: currentRange.to };
+    }
+
+    if (filters.type && filters.type !== 'all') {
+      where.type = filters.type;
+    }
+    if (filters.category && filters.category !== 'all') {
+      where.category = filters.category;
+    }
+    if (filters.payment && filters.payment !== 'all') {
+      where.payment = filters.payment;
+    }
+
+    // Récupérer les catégories de l'utilisateur pour les couleurs
+    const userCategories = await prisma.category.findMany({
+      where: { userId: user.id },
+      select: { name: true, color: true },
+    });
+    const categoryColorMap = new Map<string, string>();
+    for (const c of userCategories) {
+      categoryColorMap.set(c.name.toLowerCase(), c.color);
+    }
+    const getCatColor = (name: string) => categoryColorMap.get(name.toLowerCase()) || '#9E9E9E';
+
+    // Récupérer les portefeuilles pour les couleurs de paiement
+    const userWallets = await prisma.wallet.findMany({
+      where: { userId: user.id },
+      select: { name: true, color: true },
+    });
+    const walletColorMap = new Map<string, string>();
+    for (const w of userWallets) {
+      walletColorMap.set(w.name.toLowerCase(), w.color);
+    }
+    const getWalletColor = (name: string) => walletColorMap.get(name.toLowerCase()) || '#2563EB';
+
+    // Transactions de la période courante filtrée
+    const currentTxsRaw = await prisma.transaction.findMany({
+      where,
+      orderBy: { date: 'desc' },
+    });
+    const currentTxs = currentTxsRaw.map(serializeTransaction);
+
+    const summary = calculateFinancialSummary(currentTxs);
+
+    // Répartition par catégorie
+    const targetType = filters.type === 'INCOME' ? 'INCOME' : 'EXPENSE';
+    const categoryBreakdown = calculateCategoryBreakdown(currentTxs, targetType, getCatColor);
+
+    // Répartition par moyen de paiement
+    const paymentTargetTxs = filters.type === 'INCOME'
+      ? currentTxs.filter((t) => t.type === 'INCOME')
+      : currentTxs.filter((t) => t.type === 'EXPENSE');
+    const paymentBreakdown = calculatePaymentMethodBreakdown(paymentTargetTxs);
+
+    // Comparatif de période (si applicable et non 'custom' / 'all')
+    let periodComparison: PeriodComparisonData | null = null;
+    if (currentRange && filters.period !== 'custom' && filters.period !== 'all') {
+      const p = filters.period as PeriodType;
+      const prevRange = getPreviousDateRange(p, currentRange);
+
+      const wherePrev: Prisma.TransactionWhereInput = {
+        userId: user.id,
+        date: { gte: prevRange.from, lte: prevRange.to },
+      };
+      if (filters.type && filters.type !== 'all') wherePrev.type = filters.type;
+      if (filters.category && filters.category !== 'all') wherePrev.category = filters.category;
+      if (filters.payment && filters.payment !== 'all') wherePrev.payment = filters.payment;
+
+      const prevTxsRaw = await prisma.transaction.findMany({
+        where: wherePrev,
+      });
+      const prevTxs = prevTxsRaw.map(serializeTransaction);
+
+      const currentCompareTxs = filters.type === 'INCOME'
+        ? currentTxs.filter((t) => t.type === 'INCOME')
+        : currentTxs.filter((t) => t.type === 'EXPENSE');
+      const prevCompareTxs = filters.type === 'INCOME'
+        ? prevTxs.filter((t) => t.type === 'INCOME')
+        : prevTxs.filter((t) => t.type === 'EXPENSE');
+
+      periodComparison = buildPeriodComparison(currentCompareTxs, prevCompareTxs, getWalletColor);
+    }
+
+    return {
+      success: true,
+      data: {
+        summary,
+        categoryBreakdown,
+        paymentBreakdown,
+        periodComparison,
+      },
+    };
+  } catch (error: unknown) {
+    console.error('Erreur getHistoryStatsAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Impossible de calculer les statistiques d’historique',
     };
   }
 }

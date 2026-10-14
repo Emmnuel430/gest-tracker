@@ -82,6 +82,7 @@ model Transaction {
   @@index([payment])
   @@index([date, type])
   @@index([userId])
+  @@index([userId, date(sort: Desc), id])
   @@index([walletId])
   @@map("transactions")
 }

@@ -35,9 +35,20 @@ export const FilterSchema = z.object({
   endDate: z.string().optional(),
 });
 
+export const HistoryFiltersSchema = z.object({
+  period: z.enum(['today', 'day', 'week', 'month', 'year', 'all', 'custom'] as const).default('month'),
+  type: z.enum(['all', 'INCOME', 'EXPENSE'] as const).default('all'),
+  category: z.string().default('all'),
+  payment: z.string().default('all'),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  tab: z.enum(['list', 'analytics', 'comparison'] as const).default('list'),
+});
+
 export type TransactionFormValues = z.infer<typeof TransactionSchema>;
 export type UpdateTransactionFormValues = z.infer<typeof UpdateTransactionSchema>;
 export type FilterFormValues = z.infer<typeof FilterSchema>;
+export type HistoryFiltersInput = z.infer<typeof HistoryFiltersSchema>;
 
 export const RegisterSchema = z
   .object({
