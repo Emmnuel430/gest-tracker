@@ -3,6 +3,13 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-10-14
+
+### Fixes
+- **server-actions** : Déport des constantes et objets (`DEFAULT_CATEGORIES`, `RESET_COOKIE_NAME`, `RESET_COOKIE_MAX_AGE`) hors des fichiers `'use server'` (`actions/categories.ts`, `actions/auth-recovery.ts`) vers des modules de constantes dédiés (`constants/categories.ts`, `constants/auth.ts`) pour respecter la spécification stricte de Next.js Turbopack interdisant l'export de valeurs non-fonctions depuis les Server Actions.
+
+---
+
 ## [2.6.0] - 2026-10-14
 
 ### Features
