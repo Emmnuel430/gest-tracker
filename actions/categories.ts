@@ -151,6 +151,21 @@ export async function upsertCategoryAction(
         }
       }
 
+      // Vérification d'unicité de la couleur (insensible à la casse)
+      const duplicateColor = await prisma.category.findFirst({
+        where: {
+          userId: user.id,
+          color: { equals: validated.color, mode: 'insensitive' },
+          id: { not: existing.id },
+        },
+      });
+      if (duplicateColor) {
+        return {
+          success: false,
+          error: `Cette couleur est déjà attribuée à la catégorie "${duplicateColor.name}". Veuillez choisir une autre couleur.`,
+        };
+      }
+
       // Mise à jour transactionnelle avec propagation de renommage
       const updated = await prisma.$transaction(async (tx) => {
         const cat = await tx.category.update({
@@ -205,6 +220,21 @@ export async function upsertCategoryAction(
 
       if (duplicate) {
         return { success: false, error: 'Une catégorie portant ce nom existe déjà' };
+      }
+
+      // Vérification d'unicité de la couleur
+      const duplicateColor = await prisma.category.findFirst({
+        where: {
+          userId: user.id,
+          color: { equals: validated.color, mode: 'insensitive' },
+        },
+      });
+
+      if (duplicateColor) {
+        return {
+          success: false,
+          error: `Cette couleur est déjà attribuée à la catégorie "${duplicateColor.name}". Veuillez choisir une autre couleur.`,
+        };
       }
 
       const created = await prisma.category.create({
