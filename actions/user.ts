@@ -151,6 +151,7 @@ export async function deleteAccountAction(): Promise<AccountDeleteResponse> {
     revalidatePath('/recurrences');
     revalidatePath('/portefeuilles');
     revalidatePath('/dettes');
+    revalidatePath('/gestion');
     revalidatePath('/options');
     revalidatePath('/parametres');
 

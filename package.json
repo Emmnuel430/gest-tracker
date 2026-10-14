@@ -1,16 +1,17 @@
 {
   "name": "my-app",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "test": "tsx --test tests/*.test.ts",
+    "lint": "eslint .",
     "postinstall": "prisma generate",
     "supabase:start": "supabase start",
-  "supabase:stop": "supabase stop",
-  "supabase:status": "supabase status"
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
@@ -29,11 +30,14 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.0",
     "prisma": "^7.10.0",
     "supabase": "^2.119.0",
     "tailwindcss": "^4",

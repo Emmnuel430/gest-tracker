@@ -8,6 +8,7 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput } from '@/constants/config';
 import { upsertRecurringRuleAction, RecurringRuleItem } from '@/actions/recurring';
+import { formatDayOfMonthLabel } from '@/lib/recurring';
 
 interface RecurringModalProps {
   isOpen: boolean;
@@ -151,7 +152,7 @@ export function RecurringModal({
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" />
-                Jour du mois : le {dayOfMonth}
+                Jour du mois : {formatDayOfMonthLabel(dayOfMonth).toLowerCase()}
               </label>
               <div className="flex gap-1">
                 {[1, 5, 10, 25, 28].map((day) => (
@@ -179,7 +180,7 @@ export function RecurringModal({
               className="w-full accent-[#00DF81] cursor-pointer"
             />
             <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Rappel mensuel programmé chaque mois au {dayOfMonth} du mois.
+              Rappel mensuel programmé {formatDayOfMonthLabel(dayOfMonth).toLowerCase()}.
             </p>
           </div>
 

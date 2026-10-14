@@ -115,6 +115,106 @@ test('Financial Insights Engine (Sprint 17 Specifications)', async (t) => {
     assert.match(spike?.message || '', /10\.000 FCFA/);
   });
 
+  await t.test('génère un avertissement orange SAVINGS_CAPACITY si la marge d’épargne est sous 15%', () => {
+    const insights = computeFinancialInsights({
+      currentIncome: 100000,
+      currentExpense: 90000,
+      currentBalance: 10000,
+      categoryExpensesCurrent: { Alimentation: 90000 },
+      categoryExpensesPrevious: { Alimentation: 90000 },
+      budgets: [],
+    });
+
+    const savingsWarning = insights.find((i) => i.id === 'savings-warning');
+    assert.ok(savingsWarning);
+    assert.strictEqual(savingsWarning?.severity, 'warning');
+    assert.strictEqual(savingsWarning?.title, 'Marge de sécurité faible');
+    assert.match(savingsWarning?.message || '', /10 %/);
+    assert.match(savingsWarning?.message || '', /10\.000 FCFA/);
+  });
+
+  await t.test('génère un succès SAVINGS_CAPACITY si le taux d’épargne est exactement à 15%', () => {
+    const insights = computeFinancialInsights({
+      currentIncome: 100000,
+      currentExpense: 85000,
+      currentBalance: 15000,
+      categoryExpensesCurrent: { Alimentation: 85000 },
+      categoryExpensesPrevious: { Alimentation: 85000 },
+      budgets: [],
+    });
+
+    const savingsSuccess = insights.find((i) => i.id === 'savings-success');
+    assert.ok(savingsSuccess);
+    assert.strictEqual(savingsSuccess?.severity, 'success');
+    assert.match(savingsSuccess?.message || '', /15 %/);
+  });
+
+  await t.test('cumule les alertes pour plusieurs budgets dépassés et sous tension', () => {
+    const mockBudgets: BudgetInsightData[] = [
+      {
+        category: 'Alimentation',
+        amount: 80000,
+        spent: 100000,
+        percentage: 125,
+        status: 'EXCEEDED',
+      },
+      {
+        category: 'Transport',
+        amount: 50000,
+        spent: 40000,
+        percentage: 80,
+        status: 'WARNING',
+      },
+    ];
+
+    const insights = computeFinancialInsights({
+      currentIncome: 300000,
+      currentExpense: 140000,
+      currentBalance: 160000,
+      categoryExpensesCurrent: { Alimentation: 100000, Transport: 40000 },
+      categoryExpensesPrevious: { Alimentation: 80000, Transport: 35000 },
+      budgets: mockBudgets,
+    });
+
+    const budgetAlerts = insights.filter((i) => i.type === 'BUDGET_ALERT');
+    assert.strictEqual(budgetAlerts.length, 2);
+
+    const exceededAlert = budgetAlerts.find((i) => i.id === 'budget-exceeded-Alimentation');
+    assert.ok(exceededAlert);
+    assert.strictEqual(exceededAlert?.severity, 'danger');
+
+    const warningAlert = budgetAlerts.find((i) => i.id === 'budget-warning-Transport');
+    assert.ok(warningAlert);
+    assert.strictEqual(warningAlert?.severity, 'warning');
+  });
+
+  await t.test('génère une alerte pour TOUTES les catégories en hausse atypique (> 20%), triées par croissance', () => {
+    const insights = computeFinancialInsights({
+      currentIncome: 500000,
+      currentExpense: 120000,
+      currentBalance: 380000,
+      categoryExpensesCurrent: {
+        Transport: 30000, // +50% (20000 -> 30000)
+        Loisirs: 20000,   // +100% (10000 -> 20000)
+        Alimentation: 50000, // 0% (50000 -> 50000)
+      },
+      categoryExpensesPrevious: {
+        Transport: 20000,
+        Loisirs: 10000,
+        Alimentation: 50000,
+      },
+      budgets: [],
+    });
+
+    const spikes = insights.filter((i) => i.type === 'CATEGORY_SPIKE');
+    assert.strictEqual(spikes.length, 2);
+    // Trié par croissance décroissante : Loisirs (+100%) puis Transport (+50%)
+    assert.strictEqual(spikes[0].id, 'spike-Loisirs');
+    assert.match(spikes[0].message, /\+100 %/);
+    assert.strictEqual(spikes[1].id, 'spike-Transport');
+    assert.match(spikes[1].message, /\+50 %/);
+  });
+
   await t.test('génère un insight neutre équilibré si aucun seuil n’est franchi', () => {
     const insights = computeFinancialInsights({
       currentIncome: 0,

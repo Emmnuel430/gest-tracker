@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 
-export default function OptionsPage() {
+export default function GestionPage() {
   const modules = [
     {
       title: "Budgets & Plafonds",
@@ -28,6 +28,8 @@ export default function OptionsPage() {
       icon: <PieChart className="w-6 h-6 text-[#D97706] stroke-2.5" />,
       actionLabel: "Gérer les budgets",
     },
+    // Masqué jusqu'à la v2.6.0 (rappels e-mail)
+    /*
     {
       title: "Règles Récurrentes",
       href: "/recurrences",
@@ -40,6 +42,7 @@ export default function OptionsPage() {
       icon: <Repeat className="w-6 h-6 text-[#7C3AED] stroke-2.5" />,
       actionLabel: "Voir les récurrences",
     },
+    */
     {
       title: "Portefeuilles & Virements",
       href: "/portefeuilles",
@@ -90,7 +93,7 @@ export default function OptionsPage() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
-              Options & Modules
+              Gestion & Modules
             </h1>
             <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400">
               Outils financiers avancés pour piloter vos finances au quotidien
@@ -99,7 +102,7 @@ export default function OptionsPage() {
         </div>
       </div>
 
-      {/* Grille des 4 modules */}
+      {/* Grille des modules */}
       <div className="space-y-4">
         {modules.map((mod) => (
           <Link key={mod.href} href={mod.href} className="block group">

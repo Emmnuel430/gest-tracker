@@ -6,6 +6,7 @@ import { getAuthenticatedUser } from '@/lib/auth';
 import { RecurringRuleSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
 import { getErrorMessage } from '@/lib/utils';
+import { resolveDueDate } from '@/lib/recurring';
 
 export interface RecurringRuleItem {
   id: string;
@@ -274,10 +275,8 @@ export async function processRecurringRuleAction(
     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     if (mode === 'CONFIRM') {
-      // Calcul de la date d'échéance : jour fixé dans le mois en cours (ou aujourd'hui si le jour dépasse)
-      const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const targetDay = Math.min(rule.dayOfMonth, daysInCurrentMonth);
-      const transactionDate = new Date(now.getFullYear(), now.getMonth(), targetDay, 12, 0, 0);
+      // Calcul déterministe de la date d'échéance avec clamp fin de mois
+      const transactionDate = resolveDueDate(now.getFullYear(), now.getMonth(), rule.dayOfMonth);
 
       // Création de la transaction correspondante
       await prisma.transaction.create({

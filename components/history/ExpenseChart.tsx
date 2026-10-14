@@ -18,6 +18,32 @@ interface ExpenseChartProps {
   data: CategoryBreakdown[];
 }
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      name: string;
+      total: number;
+      percentage: number;
+      color: string;
+    };
+  }>;
+}
+
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
+  if (active && payload && payload.length) {
+    const d = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] rounded-lg p-2.5 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000]">
+        <p className="font-black text-xs uppercase text-[#111827] dark:text-[#F8FAFC]">{d.name}</p>
+        <p className="font-extrabold text-sm text-[#DC2626]">{formatCurrency(d.total)}</p>
+        <p className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400">{d.percentage}% des dépenses</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export function ExpenseChart({ data }: ExpenseChartProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -36,32 +62,6 @@ export function ExpenseChart({ data }: ExpenseChartProps) {
     percentage: item.percentage,
     color: item.color,
   }));
-
-  interface CustomTooltipProps {
-    active?: boolean;
-    payload?: Array<{
-      payload: {
-        name: string;
-        total: number;
-        percentage: number;
-        color: string;
-      };
-    }>;
-  }
-
-  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-    if (active && payload && payload.length) {
-      const d = payload[0].payload;
-      return (
-        <div className="bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] rounded-lg p-2.5 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000]">
-          <p className="font-black text-xs uppercase text-[#111827] dark:text-[#F8FAFC]">{d.name}</p>
-          <p className="font-extrabold text-sm text-[#DC2626]">{formatCurrency(d.total)}</p>
-          <p className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400">{d.percentage}% des dépenses</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <Card className="p-4 sm:p-5">

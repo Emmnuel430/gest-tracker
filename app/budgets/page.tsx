@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useCallback, useTransition } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -48,7 +48,7 @@ export default function BudgetsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deletePending, setDeletePending] = useState(false);
 
-  const loadBudgets = () => {
+  const loadBudgets = useCallback(() => {
     setLoading(true);
     getBudgetsWithProgressAction(selectedMonth).then((res) => {
       setLoading(false);
@@ -56,11 +56,11 @@ export default function BudgetsPage() {
         setData(res.data);
       }
     });
-  };
+  }, [selectedMonth]);
 
   useEffect(() => {
     loadBudgets();
-  }, [selectedMonth]);
+  }, [loadBudgets]);
 
   // Navigation entre les mois (ex: 2026-10 -> 2026-09 ou 2026-11)
   const handlePrevMonth = () => {
