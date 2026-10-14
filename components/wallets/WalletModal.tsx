@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { X, Sparkles, Wallet as WalletIcon } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -45,11 +45,37 @@ export function WalletModal({
     initialData?.type || 'CASH'
   );
   const [initialBalance, setInitialBalance] = useState<string>(
-    initialData?.initialBalance ? initialData.initialBalance.toString() : '0'
+    initialData?.initialBalance !== undefined && initialData?.initialBalance !== null
+      ? initialData.initialBalance.toString()
+      : '0'
   );
   const [color, setColor] = useState<string>(initialData?.color || '#2563EB');
   const [isDefault, setIsDefault] = useState<boolean>(initialData?.isDefault || false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Synchronisation systématique de l'état avec initialData à l'ouverture ou modification de la sélection
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setName(initialData.name || '');
+        setType(initialData.type || 'CASH');
+        setInitialBalance(
+          initialData.initialBalance !== undefined && initialData.initialBalance !== null
+            ? initialData.initialBalance.toString()
+            : '0'
+        );
+        setColor(initialData.color || '#2563EB');
+        setIsDefault(initialData.isDefault || false);
+      } else {
+        setName('');
+        setType('CASH');
+        setInitialBalance('0');
+        setColor('#2563EB');
+        setIsDefault(false);
+      }
+      setErrorMessage(null);
+    }
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
