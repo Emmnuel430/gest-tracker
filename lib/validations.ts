@@ -259,6 +259,7 @@ export const RecurringRuleSchema = z.object({
     .optional()
     .nullable(),
   isActive: z.boolean().optional().default(true),
+  remindersEnabled: z.boolean().optional().default(true),
 });
 
 export type RecurringRuleFormValues = z.infer<typeof RecurringRuleSchema>;

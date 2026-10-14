@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { X, Calendar, Sparkles } from 'lucide-react';
+import { X, Calendar, Sparkles, Bell } from 'lucide-react';
 import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -48,6 +48,9 @@ export function RecurringModal({
   const [note, setNote] = useState<string>(
     initialData?.note || ''
   );
+  const [remindersEnabled, setRemindersEnabled] = useState<boolean>(
+    initialData?.remindersEnabled ?? true
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +58,9 @@ export function RecurringModal({
       setCategory(initialData.category);
     } else if (userCategories.length > 0 && !category) {
       setCategory(userCategories[0].name);
+    }
+    if (initialData) {
+      setRemindersEnabled(initialData.remindersEnabled ?? true);
     }
   }, [initialData, userCategories, category]);
 
@@ -111,6 +117,7 @@ export function RecurringModal({
         frequency: 'MONTHLY',
         note: note.trim() || undefined,
         isActive: initialData ? initialData.isActive : true,
+        remindersEnabled,
       });
 
       if (res.success) {
@@ -292,6 +299,26 @@ export function RecurringModal({
               placeholder="Ex: Loyer 2 pièces, Abonnement Netflix, Salaire Net..."
               className="w-full px-3 py-2 text-xs font-medium border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-white dark:bg-[#0F172A] text-[#111827] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#00DF81]"
             />
+          </div>
+
+          {/* 7. Rappels par e-mail */}
+          <div className="p-3 bg-neutral-50 dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl flex items-start gap-3">
+            <input
+              id="remindersEnabled"
+              type="checkbox"
+              checked={remindersEnabled}
+              onChange={(e) => setRemindersEnabled(e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-[#00DF81] rounded border-2 border-[#111827] focus:ring-0 cursor-pointer"
+            />
+            <label htmlFor="remindersEnabled" className="text-xs cursor-pointer select-none">
+              <span className="font-black uppercase text-[#111827] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#60A5FA]" />
+                Rappels e-mail automatiques
+              </span>
+              <span className="block text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 mt-0.5">
+                Recevoir des alertes par e-mail à J-7, J-3 et le jour de l’échéance (J0).
+              </span>
+            </label>
           </div>
 
           {errorMessage && (

@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.5.0)
+# GEST TRACKER — Documentation Complète (v2.6.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -57,7 +57,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (134 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (142 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -185,9 +185,9 @@ my-app/
 Accessible directement depuis l'onglet central de la barre de navigation (avec redirection permanente 308 depuis l'ancienne route `/options`). Il regroupe les modules financiers avancés sous forme de cartes d'action interactives :
 
 1. **Budgets & Plafonds**
-2. **Portefeuilles & Virements**
-3. **Dettes & Créances**
-*(Note : Le module Règles Récurrentes y est temporairement masqué en attendant le service d'e-mails v2.6.0, mais reste accessible directement via son URL).*
+2. **Règles Récurrentes** (avec notifications e-mail à J-7, J-3 et J0)
+3. **Portefeuilles & Virements**
+4. **Dettes & Créances**
 
 ### 4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`)
 
@@ -210,6 +210,12 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 
 - Programmation des flux prévisibles : loyer, salaire, abonnements internet, tontine...
 - Configuration : montant, catégorie, moyen de paiement, jour du mois (1 à 31), fréquence (mensuelle, hebdo, annuelle).
+- **Rappels par e-mail automatiques (v2.6.0) :**
+  - Notifications proactives envoyées à **J-7**, **J-3** et le jour même de l'échéance (**J0**).
+  - Déduplication absolue via contrainte unique `(rule_id, due_date, offset_days)` dans la table `recurring_reminder_logs`.
+  - Commutateur d'activation/désactivation individuel (`remindersEnabled`) disponible par règle récurrente dans le modal d'édition.
+  - Déclenchement automatique planifié quotidiennement à 08:00 UTC via Vercel Cron (`vercel.json`) et endpoint sécurisé `/api/cron/reminders`.
+  - En local : réception instantanée sur le serveur SMTP Mailpit (port `54325`). En production : relais SMTP standard avec TLS.
 - **Résolution calendaire stricte (`Africa/Abidjan`) :** Les échéances prévues les 29, 30 ou 31 du mois sont automatiquement bornées au dernier jour effectif du mois (28 ou 29 février, 30 avril/juin/septembre/novembre), calculées à midi UTC pour neutraliser tout aléa de fuseau horaire.
 - **Libellés contextuels :** Le jour 31 affiche lisiblement "Dernier jour du mois (ex: 28, 30 ou 31)".
 - Statut actif / en pause en un clic.
@@ -525,13 +531,17 @@ pnpm supabase db push
 
 ## 7. Tests Automatisés & Qualité de Code
 
-L'application intègre une suite de **87 tests unitaires** couvrant l'ensemble des règles métier critiques :
+L'application intègre une suite de **142 tests unitaires** couvrant l'ensemble des règles métier critiques :
 
-- **`tests/validations.test.ts` :** Validation Zod des transactions, inscriptions et connexions.
+- **`tests/recurring-reminders.test.ts` :** Moteur de calcul des rappels d'échéances à J-7, J-3 et J0, déduplication stricte des e-mails, clamp calendaire et gestion des exclusions.
+- **`tests/auth-recovery.test.ts` :** Validation du schéma de mot de passe complexe, scoring de robustesse, et flux de récupération à 3 étapes.
+- **`tests/history.test.ts` :** Matrice de visibilité contextuelle, pagination par curseur déterministe, et synchronisation des filtres.
+- **`tests/validations.test.ts` :** Validation Zod des transactions, inscriptions, connexions et règles récurrentes.
 - **`tests/recurring.test.ts` :** Échéances récurrentes, résolution calendaire de fin de mois (bissextile 2028, non-bissextile 2027) et libellés.
-- **`tests/budgets.test.ts` :** Calcul des jauges de consommation, alertes de seuils et pourcentages.
-- **`tests/wallets.test.ts` :** Calculs de soldes multi-comptes en temps réel.
+- **`tests/categories.test.ts` :** Gestion des catégories dynamiques, calcul du contraste W3C, unicité et archivage.
+- **`tests/wallets.test.ts` :** Portefeuilles en tant que source de paiement unique, archivage sécurisé et soldes multi-comptes.
 - **`tests/transfers.test.ts` :** Garantie de neutralité comptable des virements internes.
+- **`tests/budgets.test.ts` :** Calcul des jauges de consommation, alertes de seuils et pourcentages.
 - **`tests/insights.test.ts` :** Détection de hausses anormales multiples, seuil d'épargne 15 %, alertes de budget cumulatives et tri déterministe par sévérité.
 - **`tests/debts.test.ts` :** Gestion des soldes de dettes et remboursements échelonnés.
 - **`tests/csv-import.test.ts` :** Parsing de fichiers bancaires et détection de doublons.
@@ -543,4 +553,4 @@ pnpm test
 pnpm lint
 ```
 
-_Résultat garanti : 87 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+_Résultat garanti : 142 tests passés à 100 %, 0 échec, 0 avertissement ESLint._

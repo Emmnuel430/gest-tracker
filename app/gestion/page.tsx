@@ -28,21 +28,18 @@ export default function GestionPage() {
       icon: <PieChart className="w-6 h-6 text-[#D97706] stroke-2.5" />,
       actionLabel: "Gérer les budgets",
     },
-    // Masqué jusqu'à la v2.6.0 (rappels e-mail)
-    /*
     {
       title: "Règles Récurrentes",
       href: "/recurrences",
       description:
-        "Automatisez vos loyers, abonnements et salaires avec alertes chaque début de mois.",
-      badge: "Rappels",
+        "Automatisez vos charges fixes (loyers, abonnements) avec notifications e-mail à J-7, J-3 et J0.",
+      badge: "Rappels E-mail",
       color: "#7C3AED",
       bgLight: "#F5F3FF",
       bgDark: "#5B21B6/25",
       icon: <Repeat className="w-6 h-6 text-[#7C3AED] stroke-2.5" />,
       actionLabel: "Voir les récurrences",
     },
-    */
     {
       title: "Portefeuilles & Virements",
       href: "/portefeuilles",
