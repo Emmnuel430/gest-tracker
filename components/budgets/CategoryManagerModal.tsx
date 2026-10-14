@@ -12,6 +12,7 @@ import {
   Tag,
   Check,
   AlertCircle,
+  Ban,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -50,6 +51,18 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
   const [color, setColor] = useState('#FF5964');
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Dictionnaire des couleurs déjà utilisées par d'autres catégories (insensible à la casse)
+  const usedCategoryColorsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const cat of allCategories) {
+      if (editingId && cat.id === editingId) continue;
+      if (cat.color) {
+        map.set(cat.color.toLowerCase(), cat.name);
+      }
+    }
+    return map;
+  }, [allCategories, editingId]);
+
   // Suppression dialog state
   const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
@@ -71,8 +84,14 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
     setEditingId(null);
     setName('');
     setKind('EXPENSE');
-    const randomColor = CONTROLLED_PALETTE[Math.floor(Math.random() * CONTROLLED_PALETTE.length)];
-    setColor(randomColor);
+    // Choisir une couleur parmi celles non encore attribuées
+    const available = CONTROLLED_PALETTE.filter(
+      (c) => !allCategories.some((cat) => cat.color?.toLowerCase() === c.toLowerCase())
+    );
+    const chosenColor = available.length > 0
+      ? available[Math.floor(Math.random() * available.length)]
+      : CONTROLLED_PALETTE[0];
+    setColor(chosenColor);
     setFormError(null);
     setViewMode('FORM');
   };
@@ -87,8 +106,16 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
   };
 
   const handleRandomColor = () => {
-    const randomColor = CONTROLLED_PALETTE[Math.floor(Math.random() * CONTROLLED_PALETTE.length)];
-    setColor(randomColor);
+    const available = CONTROLLED_PALETTE.filter(
+      (c) => !usedCategoryColorsMap.has(c.toLowerCase())
+    );
+    if (available.length > 0) {
+      const chosenColor = available[Math.floor(Math.random() * available.length)];
+      setColor(chosenColor);
+    } else {
+      const fallback = CONTROLLED_PALETTE[Math.floor(Math.random() * CONTROLLED_PALETTE.length)];
+      setColor(fallback);
+    }
   };
 
   const handleSubmitForm = (e: React.FormEvent) => {
@@ -99,6 +126,14 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
     }
     if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
       setFormError('La couleur doit être un code hexadécimal valide (#RRGGBB)');
+      return;
+    }
+
+    if (usedCategoryColorsMap.has(color.toLowerCase())) {
+      const ownerName = usedCategoryColorsMap.get(color.toLowerCase());
+      setFormError(
+        `Cette couleur est déjà attribuée à la catégorie "${ownerName}". Veuillez choisir une autre couleur.`
+      );
       return;
     }
 
@@ -369,27 +404,42 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
 
                   {/* Grille de sélection */}
                   <div className="grid grid-cols-10 gap-1.5 p-2.5 bg-neutral-50 dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-xl">
-                    {CONTROLLED_PALETTE.map((palColor) => (
-                      <button
-                        key={palColor}
-                        type="button"
-                        onClick={() => setColor(palColor)}
-                        style={{ backgroundColor: palColor }}
-                        className={`w-7 h-7 rounded-lg border-2 border-[#111827] flex items-center justify-center transition-transform hover:scale-110 ${
-                          color.toLowerCase() === palColor.toLowerCase()
-                            ? 'ring-2 ring-[#FFE600] scale-110 shadow-[1px_1px_0px_0px_#111827]'
-                            : ''
-                        }`}
-                        title={palColor}
-                      >
-                        {color.toLowerCase() === palColor.toLowerCase() && (
-                          <Check
-                            className="w-4 h-4 stroke-3"
-                            style={{ color: getContrastTextColor(palColor) }}
-                          />
-                        )}
-                      </button>
-                    ))}
+                    {CONTROLLED_PALETTE.map((palColor) => {
+                      const isTaken = usedCategoryColorsMap.has(palColor.toLowerCase());
+                      const takenByName = usedCategoryColorsMap.get(palColor.toLowerCase());
+                      const isSelected = color.toLowerCase() === palColor.toLowerCase();
+
+                      return (
+                        <button
+                          key={palColor}
+                          type="button"
+                          disabled={isTaken}
+                          onClick={() => {
+                            setColor(palColor);
+                            setFormError(null);
+                          }}
+                          style={{ backgroundColor: palColor }}
+                          className={`relative w-7 h-7 rounded-lg border-2 border-[#111827] flex items-center justify-center transition-transform ${
+                            isSelected
+                              ? 'ring-2 ring-[#FFE600] scale-110 shadow-[1px_1px_0px_0px_#111827]'
+                              : isTaken
+                              ? 'opacity-30 cursor-not-allowed hover:scale-100'
+                              : 'hover:scale-110 cursor-pointer'
+                          }`}
+                          title={isTaken ? `Couleur déjà attribuée à "${takenByName}"` : palColor}
+                        >
+                          {isSelected && (
+                            <Check
+                              className="w-4 h-4 stroke-3"
+                              style={{ color: getContrastTextColor(palColor) }}
+                            />
+                          )}
+                          {isTaken && !isSelected && (
+                            <Ban className="w-3.5 h-3.5 text-black/70 dark:text-white/70 stroke-2.5" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Saisie hexadécimale directe */}
@@ -410,6 +460,15 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                     />
                     <span className="text-xs text-neutral-500 font-bold">Code couleur</span>
                   </div>
+
+                  {usedCategoryColorsMap.has(color.toLowerCase()) && (
+                    <div className="p-2.5 bg-[#FEE2E2] dark:bg-[#7F1D1D]/30 border-2 border-[#EF4444] rounded-xl flex items-center gap-2 text-[#991B1B] dark:text-[#FCA5A5] text-xs font-bold leading-snug">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>
+                        Cette couleur est déjà attribuée à la catégorie &quot;{usedCategoryColorsMap.get(color.toLowerCase())}&quot;.
+                      </span>
+                    </div>
+                  )}
 
                   {/* Aperçu du badge en direct */}
                   <div className="pt-2">

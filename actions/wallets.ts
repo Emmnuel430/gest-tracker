@@ -165,6 +165,22 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
 
     const { id, name, type, initialBalance, color, isDefault, isArchived } = parseResult.data;
 
+    // Contrôle d'unicité de la couleur par utilisateur (insensible à la casse)
+    const duplicateColor = await prisma.wallet.findFirst({
+      where: {
+        userId: user.id,
+        color: { equals: color, mode: 'insensitive' },
+        ...(id ? { id: { not: id } } : {}),
+      },
+    });
+
+    if (duplicateColor) {
+      return {
+        success: false,
+        error: `Cette couleur est déjà attribuée au portefeuille "${duplicateColor.name}". Veuillez choisir une autre couleur.`,
+      };
+    }
+
     if (isDefault) {
       // Déchoir les autres portefeuilles du statut par défaut
       await prisma.wallet.updateMany({

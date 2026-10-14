@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { X, ArrowRight, Zap, Info } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -33,6 +33,23 @@ export function TransferModal({
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Synchronisation dynamique du portefeuille émetteur et récepteur à l'ouverture ou au changement de defaultSourceId
+  useEffect(() => {
+    if (isOpen) {
+      const activeSource =
+        defaultSourceId && wallets.some((w) => w.id === defaultSourceId)
+          ? defaultSourceId
+          : wallets[0]?.id || '';
+
+      setSourceId(activeSource);
+      const activeTarget = wallets.find((w) => w.id !== activeSource)?.id || '';
+      setTargetId(activeTarget);
+      setAmount('');
+      setNote('');
+      setErrorMessage(null);
+    }
+  }, [isOpen, defaultSourceId, wallets]);
 
   if (!isOpen) return null;
 
@@ -107,7 +124,14 @@ export function TransferModal({
               </label>
               <select
                 value={sourceId}
-                onChange={(e) => setSourceId(e.target.value)}
+                onChange={(e) => {
+                  const nextSource = e.target.value;
+                  setSourceId(nextSource);
+                  if (targetId === nextSource) {
+                    const alternateTarget = wallets.find((w) => w.id !== nextSource)?.id || '';
+                    setTargetId(alternateTarget);
+                  }
+                }}
                 className="w-full px-2.5 py-2 text-xs font-bold border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-white dark:bg-[#0F172A] text-[#111827] dark:text-[#F8FAFC] cursor-pointer"
               >
                 {wallets.map((w) => (
@@ -129,8 +153,8 @@ export function TransferModal({
                 className="w-full px-2.5 py-2 text-xs font-bold border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-white dark:bg-[#0F172A] text-[#111827] dark:text-[#F8FAFC] cursor-pointer"
               >
                 {wallets.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name} ({formatCurrency(w.currentBalance)})
+                  <option key={w.id} value={w.id} disabled={w.id === sourceId}>
+                    {w.name} ({formatCurrency(w.currentBalance)}){w.id === sourceId ? ' (Source)' : ''}
                   </option>
                 ))}
               </select>

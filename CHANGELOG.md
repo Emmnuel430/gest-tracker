@@ -3,6 +3,18 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-10-14
+
+### Features
+- **wallets** : Élimination complète des pop-ups `alert()` et `confirm()` natives du navigateur au profit du composant néobrutaliste accessible `ConfirmDialog` pour la suppression, l'archivage et le désarchivage de comptes.
+- **wallets** : Pré-remplissage garanti et synchronisation réactive de `WalletModal` avec `initialData` et état d'ouverture `isOpen`, éliminant les données résiduelles en modification.
+- **wallets** : Auto-sélection dynamique du portefeuille source dans `TransferModal` lors du clic sur l'action "Faire un virement depuis ce compte" sur n'importe quel `WalletCard`, avec réajustement automatique du compte cible pour prévenir les transferts circulaires.
+- **wallets** : Contrôle d'unicité de la couleur des portefeuilles par utilisateur dans `upsertWalletAction` (insensible à la casse) et neutralisation visuelle des couleurs occupées dans la palette de `WalletModal` avec badge d'indisponibilité.
+- **budgets** : Contrôle d'unicité de la couleur des catégories par utilisateur dans `upsertCategoryAction` (à la création comme à l'édition) et marquage direct des teintes indisponibles dans `CategoryManagerModal` avec infobulle contextuelle et adaptation du générateur aléatoire.
+- **tests** : Nouvelle suite de tests automatisés (`tests/v270-ux-wallets-budgets.test.ts`) validant les règles d'unicité de couleurs, l'isolation multi-utilisateurs et la logique d'auto-sélection des virements, portant la suite globale à 161 tests réussis à 100 %.
+
+---
+
 ## [2.6.1] - 2026-10-14
 
 ### Fixes
