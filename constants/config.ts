@@ -7,6 +7,7 @@ export const APP_CONFIG = {
   locale: 'fr-FR',
   timezone: 'Africa/Abidjan',
 } as const;
+export const SAVINGS_WARNING_THRESHOLD = 15;
 
 /**
  * Formate un montant numérique ou Decimal en chaîne néobrutaliste avec des points comme séparateurs de milliers

@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.0.2)
+# GEST TRACKER — Documentation Complète (v2.0.3)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -13,7 +13,7 @@ Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRA
    - [4.1 Authentification & Cloisonnement Multi-User](#41-authentification--cloisonnement-multi-user)
    - [4.2 Tableau de Bord Principal (`/`)](#42-tableau-de-bord-principal-)
    - [4.3 Bilan & Conseils Financiers (Moteur d'Insights)](#43-bilan--conseils-financiers-moteur-dinsights)
-   - [4.4 Hub d'Options & Modules (`/options`)](#44-hub-doptions--modules-options)
+   - [4.4 Hub de Gestion & Modules (`/gestion`)](#44-hub-de-gestion--modules-gestion)
    - [4.5 Budgets Mensuels & Alertes (`/budgets`)](#45-budgets-mensuels--alertes-budgets)
    - [4.6 Règles Récurrentes & Charges Fixes (`/recurrences`)](#46-règles-récurrentes--charges-fixes-recurrences)
    - [4.7 Portefeuilles & Virements Internes (`/portefeuilles`)](#47-portefeuilles--virements-internes-portefeuilles)
@@ -57,7 +57,8 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (76 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (86 tests unitaires automatisés).
+- **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
 
@@ -79,9 +80,9 @@ my-app/
 │   ├── budgets/              # Page Budgets mensuels
 │   ├── dettes/               # Page Dettes & Créances
 │   ├── entrant/              # Formulaire de recette / revenu
+│   ├── gestion/              # Hub central des modules financiers V2 (redirection 308 depuis /options)
 │   ├── historique/           # Filtres, graphiques et liste complète
 │   ├── login/                # Page de connexion Supabase
-│   ├── options/              # Hub central des modules financiers V2
 │   ├── parametres/           # Profil, thème, sécurité et exports
 │   ├── portefeuilles/        # Portefeuilles et virements
 │   ├── recurrences/          # Règles d'échéances fixes
@@ -102,7 +103,9 @@ my-app/
 ├── lib/                      # Utilitaires réutilisables
 │   ├── auth.ts               # Récupération de l'utilisateur authentifié côté serveur
 │   ├── dates.ts              # Formatage de dates en français
+│   ├── insights.ts           # Moteur d'analyses financières et détection d'anomalies
 │   ├── prisma.ts             # Client Prisma singleton avec Proxy auto-guérisseur
+│   ├── recurring.ts          # Résolution calendaire (clamp fin de mois) et libellés
 │   ├── supabase/             # Clients Supabase (client.ts et server.ts)
 │   ├── theme.ts              # Logique de persistance du thème (Light/Dark/System)
 │   └── validations.ts        # Schémas Zod stricts pour toutes les entités
@@ -112,7 +115,7 @@ my-app/
 │   └── seed.ts               # Seeder de démonstration
 ├── scripts/                  # Scripts de maintenance
 │   └── backfill-user-transactions.ts # Rattachement des transactions orphelines
-└── tests/                    # 76 tests unitaires automatisés
+└── tests/                    # 86 tests unitaires automatisés
 ```
 
 ---
@@ -146,19 +149,19 @@ my-app/
 
 - Situé sur la page d'accueil juste après l'historique récent.
 - Analyse algorithmique instantanée dans [`lib/insights.ts`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/lib/insights.ts) :
-  - **Taux d'épargne :** Calcule le pourcentage des revenus conservés sur le mois.
-  - **Surconsommation budgétaire :** Alerte si un budget catégorie dépasse 75 % ou 100 %.
-  - **Hausse atypique de dépenses :** Détecte si une catégorie augmente de plus de **20 %** par rapport au mois précédent.
-  - **Conseils personnalisés :** Recommandations claires générées automatiquement en français.
+  - **Taux d'épargne :** Évalué avec le seuil standard de 15 %. Taux $\ge 15\%$ : statut `success` (excellent). Taux entre 0 % et 15 % : statut `warning` (épargne fragile). Taux $< 0\%$ : statut `danger` (déficit mensuel).
+  - **Surconsommation budgétaire :** Détection cumulative exhaustive. Liste tous les budgets dépassés ($\ge 100\%$, statut `danger`) et tous les budgets sous tension ($75\%-100\%$, statut `warning`).
+  - **Hausse atypique de dépenses :** Détecte toutes les catégories affichant une hausse de plus de **20 %** et d'au moins **5 000 FCFA** par rapport au mois précédent, triées par montant de surcoût décroissant.
+  - **Conseils personnalisés :** Recommandation systématique de renforcement d'épargne si le taux est inférieur au seuil de 15 %.
 
-### 4.4 Hub d'Options & Modules (`/options`)
+### 4.4 Hub de Gestion & Modules (`/gestion`)
 
-Accessible directement depuis l'onglet central de la barre de navigation. Il regroupe les 4 modules financiers avancés sous forme de cartes d'action interactives :
+Accessible directement depuis l'onglet central de la barre de navigation (avec redirection permanente 308 depuis l'ancienne route `/options`). Il regroupe les modules financiers avancés sous forme de cartes d'action interactives :
 
 1. **Budgets & Plafonds**
-2. **Règles Récurrentes**
-3. **Portefeuilles & Virements**
-4. **Dettes & Créances**
+2. **Portefeuilles & Virements**
+3. **Dettes & Créances**
+*(Note : Le module Règles Récurrentes y est temporairement masqué en attendant le service d'e-mails v2.6.0, mais reste accessible directement via son URL).*
 
 ### 4.5 Budgets Mensuels & Alertes (`/budgets`)
 
@@ -173,6 +176,8 @@ Accessible directement depuis l'onglet central de la barre de navigation. Il reg
 
 - Programmation des flux prévisibles : loyer, salaire, abonnements internet, tontine...
 - Configuration : montant, catégorie, moyen de paiement, jour du mois (1 à 31), fréquence (mensuelle, hebdo, annuelle).
+- **Résolution calendaire stricte (`Africa/Abidjan`) :** Les échéances prévues les 29, 30 ou 31 du mois sont automatiquement bornées au dernier jour effectif du mois (28 ou 29 février, 30 avril/juin/septembre/novembre), calculées à midi UTC pour neutraliser tout aléa de fuseau horaire.
+- **Libellés contextuels :** Le jour 31 affiche lisiblement "Dernier jour du mois (ex: 28, 30 ou 31)".
 - Statut actif / en pause en un clic.
 - Calcul prévisionnel mensuel automatique (dépenses fixes prévues vs rentrées prévues).
 
@@ -198,6 +203,7 @@ Accessible directement depuis l'onglet central de la barre de navigation. Il reg
 
 ### 4.9 Historique, Graphiques & Import CSV (`/historique`)
 
+- **Bouton de filtres interactif :** Affiche un badge numérique dynamique (`activeFiltersCount`) et une surbrillance jaune néobrutaliste dès qu'un filtre (type, catégorie, portefeuille, date) est appliqué.
 - **Filtres multicritères combinables :**
   - Par période : Aujourd'hui, Semaine, Mois, Année, ou Plage personnalisée.
   - Par type : Entrant, Sortant.
@@ -445,21 +451,22 @@ pnpm supabase db push
 
 ## 7. Tests Automatisés & Qualité de Code
 
-L'application intègre une suite de **76 tests unitaires** couvrant l'ensemble des règles métier critiques :
+L'application intègre une suite de **86 tests unitaires** couvrant l'ensemble des règles métier critiques :
 
 - **`tests/validations.test.ts` :** Validation Zod des transactions, inscriptions et connexions.
-- **`tests/recurring.test.ts` :** Échéances récurrentes, calculs d'éligibilité mensuelle et projections.
+- **`tests/recurring.test.ts` :** Échéances récurrentes, résolution calendaire de fin de mois (bissextile 2028, non-bissextile 2027) et libellés.
 - **`tests/budgets.test.ts` :** Calcul des jauges de consommation, alertes de seuils et pourcentages.
 - **`tests/wallets.test.ts` :** Calculs de soldes multi-comptes en temps réel.
 - **`tests/transfers.test.ts` :** Garantie de neutralité comptable des virements internes.
-- **`tests/insights.test.ts` :** Détection de hausses anormales et alertes financières.
+- **`tests/insights.test.ts` :** Détection de hausses anormales multiples, seuil d'épargne 15 % et alertes de budget cumulatives.
 - **`tests/debts.test.ts` :** Gestion des soldes de dettes et remboursements échelonnés.
 - **`tests/csv-import.test.ts` :** Parsing de fichiers bancaires et détection de doublons.
 
-Pour exécuter les tests :
+Pour exécuter les tests et le linter :
 
 ```bash
 pnpm test
+pnpm lint
 ```
 
-_Résultat garanti : 76 tests passés à 100 %, 0 échec._
+_Résultat garanti : 86 tests passés à 100 %, 0 échec, 0 avertissement ESLint._

@@ -78,6 +78,16 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
     initialType !== 'all' || initialCategory !== 'all' || initialPayment !== 'all'
   );
 
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (typeFilter !== 'all') count++;
+    if (categoryFilter !== 'all') count++;
+    if (paymentFilter !== 'all') count++;
+    return count;
+  }, [typeFilter, categoryFilter, paymentFilter]);
+
+  const hasActiveFilters = activeFiltersCount > 0;
+
   // Section 6 : Si 'custom' est sélectionné, masquer Comparatif et basculer sur 'list'
   useEffect(() => {
     if (period === 'custom' && activeTab === 'comparison') {
@@ -222,14 +232,22 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
           <button
             type="button"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`p-1.5 border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer ${
-              showAdvancedFilters
+            aria-pressed={showAdvancedFilters}
+            className={`p-1.5 border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-1.5 ${
+              hasActiveFilters
+                ? 'bg-[#FFE600] text-[#111827] dark:bg-[#FFE600] dark:text-[#111827] border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#FFFFFF]'
+                : showAdvancedFilters
                 ? 'bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#1D4ED8] dark:text-white'
                 : 'bg-white dark:bg-[#1E293B] text-[#111827] dark:text-[#F8FAFC]'
             }`}
             title="Filtres précis"
           >
             <SlidersHorizontal className="w-4 h-4" />
+            {hasActiveFilters && (
+              <span className="w-4 h-4 text-[10px] font-black rounded-full bg-[#111827] text-white flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
           </button>
         </div>
       </div>

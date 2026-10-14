@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RecurringRuleSchema } from '../lib/validations';
+import { resolveDueDate, formatDayOfMonthLabel } from '../lib/recurring';
 
 test('RecurringRuleSchema (Zod Validation V2)', async (t) => {
   await t.test('valide une règle de dépense récurrente conforme', () => {
@@ -200,5 +201,45 @@ test('Recurring Rules Due Status & Forecasting Calculations (V2 Specifications)'
     assert.strictEqual(expectedIncome, 500000);
     assert.strictEqual(expectedExpense, 175000);
     assert.strictEqual(net, 325000);
+  });
+});
+
+test('Recurring Rules Due Date Resolution (End-of-Month Clamp & Formatter)', async (t) => {
+  await t.test('ramène le 31 au 28 février pour une année non bissextile (2027)', () => {
+    // Février = mois index 1
+    const dueDate = resolveDueDate(2027, 1, 31);
+    assert.strictEqual(dueDate.getFullYear(), 2027);
+    assert.strictEqual(dueDate.getMonth(), 1);
+    assert.strictEqual(dueDate.getDate(), 28);
+    assert.strictEqual(dueDate.getHours(), 12);
+  });
+
+  await t.test('ramène le 31 au 29 février pour une année bissextile (2028)', () => {
+    const dueDate = resolveDueDate(2028, 1, 31);
+    assert.strictEqual(dueDate.getFullYear(), 2028);
+    assert.strictEqual(dueDate.getMonth(), 1);
+    assert.strictEqual(dueDate.getDate(), 29);
+    assert.strictEqual(dueDate.getHours(), 12);
+  });
+
+  await t.test('ramène le 31 au 30 avril pour un mois de 30 jours', () => {
+    // Avril = mois index 3
+    const dueDate = resolveDueDate(2026, 3, 31);
+    assert.strictEqual(dueDate.getFullYear(), 2026);
+    assert.strictEqual(dueDate.getMonth(), 3);
+    assert.strictEqual(dueDate.getDate(), 30);
+  });
+
+  await t.test('conserve le jour exact quand le mois comporte au moins ce nombre de jours', () => {
+    const dueDate = resolveDueDate(2026, 9, 15); // 15 octobre 2026
+    assert.strictEqual(dueDate.getDate(), 15);
+  });
+
+  await t.test('formate correctement le libellé pour les jours 29, 30, 31 et standard', () => {
+    assert.strictEqual(formatDayOfMonthLabel(31), 'Le 31 (ou dernier jour du mois)');
+    assert.strictEqual(formatDayOfMonthLabel(30), 'Le 30 (ou dernier jour du mois)');
+    assert.strictEqual(formatDayOfMonthLabel(29), 'Le 29 (ou dernier jour du mois)');
+    assert.strictEqual(formatDayOfMonthLabel(15), 'Le 15 du mois');
+    assert.strictEqual(formatDayOfMonthLabel(5), 'Le 5 du mois');
   });
 });

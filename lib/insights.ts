@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/constants/config';
+import { formatCurrency, SAVINGS_WARNING_THRESHOLD } from '@/constants/config';
 
 export type InsightSeverity = 'danger' | 'warning' | 'success' | 'info';
 
@@ -54,20 +54,33 @@ export function computeFinancialInsights(params: ComputeInsightsParams): Financi
   } else if (currentIncome > 0 && currentExpense <= currentIncome) {
     const savingsAmount = currentIncome - currentExpense;
     const savingsRate = Math.round((savingsAmount / currentIncome) * 100);
-    insights.push({
-      id: 'savings-success',
-      type: 'SAVINGS_CAPACITY',
-      severity: 'success',
-      title: 'Capacité d’épargne positive',
-      message: `Bravo ! Vous avez conservé ${savingsRate} % de vos rentrées (${formatCurrency(savingsAmount)}) ce mois-ci.`,
-    });
+    if (savingsRate < SAVINGS_WARNING_THRESHOLD) {
+      insights.push({
+        id: 'savings-warning',
+        type: 'SAVINGS_CAPACITY',
+        severity: 'warning',
+        title: 'Marge de sécurité faible',
+        message: `Attention, votre épargne résiduelle est sous le seuil de 15 % (${savingsRate} %, soit ${formatCurrency(savingsAmount)} restants ce mois-ci).`,
+      });
+    } else {
+      insights.push({
+        id: 'savings-success',
+        type: 'SAVINGS_CAPACITY',
+        severity: 'success',
+        title: 'Capacité d’épargne positive',
+        message: `Bravo ! Vous avez conservé ${savingsRate} % de vos rentrées (${formatCurrency(savingsAmount)}) ce mois-ci.`,
+      });
+    }
   }
 
-  // RÈGLE 2 : Alerte Budgétaire (catégorie dépassée ou proche du seuil)
+  // RÈGLE 2 : Alerte Budgétaire (catégorie dépassée et/ou proche du seuil)
   if (budgets.length > 0) {
-    // 1. Chercher un budget dépassé
-    const exceeded = budgets.find((b) => b.percentage >= 100);
-    if (exceeded) {
+    // 1. Tous les budgets dépassés (>= 100%), triés par pourcentage décroissant
+    const exceededBudgets = budgets
+      .filter((b) => b.percentage >= 100)
+      .sort((a, b) => b.percentage - a.percentage);
+
+    for (const exceeded of exceededBudgets) {
       const overspent = exceeded.spent - exceeded.amount;
       insights.push({
         id: `budget-exceeded-${exceeded.category}`,
@@ -76,50 +89,57 @@ export function computeFinancialInsights(params: ComputeInsightsParams): Financi
         title: `Plafond ${exceeded.category} dépassé`,
         message: `Vous avez dépassé votre budget ${exceeded.category} de ${formatCurrency(overspent)} (${exceeded.percentage}% consommés).`,
       });
-    } else {
-      // 2. Chercher le budget le plus sous tension (≥ 75%)
-      const atRisk = budgets
-        .filter((b) => b.percentage >= 75)
-        .sort((a, b) => b.percentage - a.percentage)[0];
+    }
 
-      if (atRisk) {
-        const remaining = Math.max(0, atRisk.amount - atRisk.spent);
-        insights.push({
-          id: `budget-warning-${atRisk.category}`,
-          type: 'BUDGET_ALERT',
-          severity: 'warning',
-          title: `Budget ${atRisk.category} sous tension`,
-          message: `Attention, vous avez déjà consommé ${atRisk.percentage}% de votre budget ${atRisk.category}. Reste disponible : ${formatCurrency(remaining)}.`,
-        });
-      }
+    // 2. Tous les budgets sous tension (75% <= percentage < 100%), triés par pourcentage décroissant
+    const atRiskBudgets = budgets
+      .filter((b) => b.percentage >= 75 && b.percentage < 100)
+      .sort((a, b) => b.percentage - a.percentage);
+
+    for (const atRisk of atRiskBudgets) {
+      const remaining = Math.max(0, atRisk.amount - atRisk.spent);
+      insights.push({
+        id: `budget-warning-${atRisk.category}`,
+        type: 'BUDGET_ALERT',
+        severity: 'warning',
+        title: `Budget ${atRisk.category} sous tension`,
+        message: `Attention, vous avez déjà consommé ${atRisk.percentage}% de votre budget ${atRisk.category}. Reste disponible : ${formatCurrency(remaining)}.`,
+      });
     }
   }
 
   // RÈGLE 3 : Hausse atypique de catégorie par rapport à M-1
-  let highestGrowthCat: string | null = null;
-  let highestGrowthPercent = 0;
-  let highestGrowthDiff = 0;
+  const spikes: Array<{
+    category: string;
+    growthPercent: number;
+    growthDiff: number;
+  }> = [];
 
   for (const [cat, currentAmount] of Object.entries(categoryExpensesCurrent)) {
     const prevAmount = categoryExpensesPrevious[cat] || 0;
     // On ne s'intéresse qu'aux variations significatives avec un seuil minimum de dépense (ex: ≥ 5000 FCFA)
     if (prevAmount > 0 && currentAmount > prevAmount && currentAmount >= 5000) {
       const growth = ((currentAmount - prevAmount) / prevAmount) * 100;
-      if (growth > 20 && growth > highestGrowthPercent) {
-        highestGrowthPercent = Math.round(growth);
-        highestGrowthDiff = currentAmount - prevAmount;
-        highestGrowthCat = cat;
+      if (growth > 20) {
+        spikes.push({
+          category: cat,
+          growthPercent: Math.round(growth),
+          growthDiff: currentAmount - prevAmount,
+        });
       }
     }
   }
 
-  if (highestGrowthCat && highestGrowthPercent > 0) {
+  // Tri par croissance décroissante
+  spikes.sort((a, b) => b.growthPercent - a.growthPercent);
+
+  for (const spike of spikes) {
     insights.push({
-      id: `spike-${highestGrowthCat}`,
+      id: `spike-${spike.category}`,
       type: 'CATEGORY_SPIKE',
       severity: 'warning',
-      title: `Forte hausse : ${highestGrowthCat}`,
-      message: `Les dépenses "${highestGrowthCat}" ont bondi de +${highestGrowthPercent} % (+${formatCurrency(highestGrowthDiff)}) par rapport au mois dernier.`,
+      title: `Forte hausse : ${spike.category}`,
+      message: `Les dépenses "${spike.category}" ont bondi de +${spike.growthPercent} % (+${formatCurrency(spike.growthDiff)}) par rapport au mois dernier.`,
     });
   }
 

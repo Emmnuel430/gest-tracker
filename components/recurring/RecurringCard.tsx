@@ -11,6 +11,7 @@ import {
   deleteRecurringRuleAction,
   processRecurringRuleAction,
 } from '@/actions/recurring';
+import { formatDayOfMonthLabel } from '@/lib/recurring';
 
 interface RecurringCardProps {
   rule: RecurringRuleItem;
@@ -130,7 +131,7 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
       <div className="flex items-center gap-2 flex-wrap text-[11px] font-bold text-neutral-600 dark:text-neutral-400 mb-3">
         <span className="flex items-center gap-1 bg-neutral-100 dark:bg-[#131C31] px-2 py-0.5 rounded border border-[#111827] dark:border-[#334155]">
           <Calendar className="w-3 h-3 text-[#111827] dark:text-neutral-300" />
-          Le {rule.dayOfMonth} du mois
+          {formatDayOfMonthLabel(rule.dayOfMonth)}
         </span>
         <span
           className="px-2 py-0.5 rounded border border-[#111827]"

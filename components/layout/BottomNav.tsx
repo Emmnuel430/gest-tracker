@@ -15,7 +15,8 @@ export function BottomNav() {
   }
 
   const isHomeActive = pathname === '/';
-  const isOptionsActive =
+  const isGestionActive =
+    pathname === '/gestion' ||
     pathname === '/options' ||
     pathname === '/budgets' ||
     pathname === '/recurrences' ||
@@ -32,11 +33,11 @@ export function BottomNav() {
       title: 'Tableau de bord',
     },
     {
-      href: '/options',
-      label: 'Options',
-      isActive: isOptionsActive,
+      href: '/gestion',
+      label: 'Gestion',
+      isActive: isGestionActive,
       icon: SlidersHorizontal,
-      title: 'Budgets, Récurrences et Portefeuilles',
+      title: 'Budgets, Portefeuilles et Outils',
     },
     {
       href: '/parametres',

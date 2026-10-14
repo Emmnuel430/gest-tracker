@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Bell, Check, ArrowRight, Zap, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { RecurringRuleItem, processRecurringRuleAction } from '@/actions/recurring';
+import { formatDayOfMonthLabel } from '@/lib/recurring';
 
 interface RecurringAlertBannerProps {
   initialDueRules: RecurringRuleItem[];
@@ -53,7 +54,7 @@ export function RecurringAlertBanner({
               {currentRule.category} &bull; {formatCurrency(currentRule.amount)} ({currentRule.payment})
             </h4>
             <p className="text-xs font-semibold text-[#111827]/80">
-              Prévu le {currentRule.dayOfMonth} du mois. Voulez-vous enregistrer cette opération ?
+              Prévu {formatDayOfMonthLabel(currentRule.dayOfMonth).toLowerCase()}. Voulez-vous enregistrer cette opération ?
             </p>
           </div>
         </div>
