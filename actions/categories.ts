@@ -8,34 +8,7 @@ import { ActionResponse } from '@/types/transaction';
 import { CategoryKind } from '@prisma/client';
 import { getErrorMessage } from '@/lib/utils';
 import { CategoryItem } from '@/lib/categories';
-
-export const DEFAULT_CATEGORIES: Array<{
-  name: string;
-  kind: CategoryKind;
-  color: string;
-}> = [
-  // Revenus
-  { name: 'Travail PC', kind: 'INCOME', color: '#00DF81' },
-  { name: 'Cours en ligne', kind: 'INCOME', color: '#3A86FF' },
-  { name: 'Répetition', kind: 'INCOME', color: '#FFBE0B' },
-  { name: 'Freelance', kind: 'INCOME', color: '#8338EC' },
-  { name: 'Business', kind: 'INCOME', color: '#FB5607' },
-  { name: 'Don', kind: 'INCOME', color: '#FF006E' },
-  // Dépenses
-  { name: 'Alimentation', kind: 'EXPENSE', color: '#FF5964' },
-  { name: 'Transport', kind: 'EXPENSE', color: '#FF9F1C' },
-  { name: 'Famille', kind: 'EXPENSE', color: '#2EC4B6' },
-  { name: 'Kajai', kind: 'EXPENSE', color: '#E71D36' },
-  { name: 'Logement', kind: 'EXPENSE', color: '#7209B7' },
-  { name: 'Santé', kind: 'EXPENSE', color: '#4CC9F0' },
-  { name: 'Éducation', kind: 'EXPENSE', color: '#4361EE' },
-  { name: 'Abonnement', kind: 'EXPENSE', color: '#F72585' },
-  { name: 'Loisirs', kind: 'EXPENSE', color: '#B5179E' },
-  { name: 'Personnel', kind: 'EXPENSE', color: '#70E000' },
-  { name: 'Travail', kind: 'EXPENSE', color: '#38B000' },
-  // Both
-  { name: 'Autre', kind: 'BOTH', color: '#9E9E9E' },
-];
+import { DEFAULT_CATEGORIES } from '@/constants/categories';
 
 /**
  * Récupère les catégories de l'utilisateur avec initialisation paresseuse automatique.

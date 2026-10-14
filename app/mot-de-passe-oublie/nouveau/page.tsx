@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { RESET_COOKIE_NAME } from '@/actions/auth-recovery';
+import { RESET_COOKIE_NAME } from '@/constants/auth';
 import { NewPasswordForm } from '@/components/auth/NewPasswordForm';
 
 export const dynamic = 'force-dynamic';

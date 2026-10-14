@@ -8,9 +8,7 @@ import {
   ResetPasswordSchema,
 } from '@/lib/validations';
 import { getErrorMessage } from '@/lib/utils';
-
-export const RESET_COOKIE_NAME = 'password_reset_verified';
-export const RESET_COOKIE_MAX_AGE = 300; // 5 minutes
+import { RESET_COOKIE_NAME, RESET_COOKIE_MAX_AGE } from '@/constants/auth';
 
 export type AuthRecoveryResponse =
   | { success: true; message: string; data?: unknown }
