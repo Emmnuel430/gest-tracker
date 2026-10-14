@@ -179,6 +179,7 @@ export default function PortefeuillesPage() {
         onClose={() => setWalletModalOpen(false)}
         onSuccess={loadWallets}
         initialData={selectedWallet}
+        existingWallets={wallets}
       />
 
       {/* Modale Virement */}

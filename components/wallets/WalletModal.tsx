@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
-import { X, Sparkles, Wallet as WalletIcon } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useTransition } from 'react';
+import { X, Sparkles, Wallet as WalletIcon, Ban } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput } from '@/constants/config';
@@ -12,6 +12,7 @@ interface WalletModalProps {
   onClose: () => void;
   onSuccess: () => void;
   initialData?: WalletItem | null;
+  existingWallets?: WalletItem[];
 }
 
 const WALLET_TYPES = [
@@ -29,6 +30,10 @@ const PRESET_COLORS = [
   '#7C3AED', // Violet
   '#FF3366', // Rose
   '#FFE600', // Jaune
+  '#52B788', // Vert menthe
+  '#B8C0FF', // Bleu pastel
+  '#FB5607', // Orange corail
+  '#70E000', // Vert lime
   '#64748B', // Gris ardoise
 ];
 
@@ -37,8 +42,22 @@ export function WalletModal({
   onClose,
   onSuccess,
   initialData,
+  existingWallets,
 }: WalletModalProps) {
   const [isPending, startTransition] = useTransition();
+
+  // Dictionnaire des couleurs déjà prises par d'autres portefeuilles (insensible à la casse)
+  const usedColorsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!existingWallets) return map;
+    for (const w of existingWallets) {
+      if (initialData?.id && w.id === initialData.id) continue;
+      if (w.color) {
+        map.set(w.color.toLowerCase(), w.name);
+      }
+    }
+    return map;
+  }, [existingWallets, initialData]);
 
   const [name, setName] = useState<string>(initialData?.name || '');
   const [type, setType] = useState<'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS'>(
@@ -70,12 +89,15 @@ export function WalletModal({
         setName('');
         setType('CASH');
         setInitialBalance('0');
-        setColor('#2563EB');
+        // Trouver la première couleur disponible
+        const availableColor =
+          PRESET_COLORS.find((c) => !usedColorsMap.has(c.toLowerCase())) || '#2563EB';
+        setColor(availableColor);
         setIsDefault(false);
       }
       setErrorMessage(null);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, usedColorsMap]);
 
   if (!isOpen) return null;
 
@@ -85,6 +107,14 @@ export function WalletModal({
 
     if (!name.trim()) {
       setErrorMessage('Veuillez saisir un nom pour le compte');
+      return;
+    }
+
+    if (usedColorsMap.has(color.toLowerCase())) {
+      const ownerName = usedColorsMap.get(color.toLowerCase());
+      setErrorMessage(
+        `Cette couleur est déjà attribuée au portefeuille "${ownerName}". Veuillez choisir une autre couleur.`
+      );
       return;
     }
 
@@ -153,7 +183,9 @@ export function WalletModal({
                   type="button"
                   onClick={() => {
                     setType(wt.value);
-                    setColor(wt.color);
+                    if (!usedColorsMap.has(wt.color.toLowerCase())) {
+                      setColor(wt.color);
+                    }
                   }}
                   className={`p-2 rounded-lg text-left text-xs font-bold border-2 transition-all cursor-pointer ${
                     type === wt.value
@@ -184,22 +216,51 @@ export function WalletModal({
 
           {/* Couleur */}
           <div>
-            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1.5">
-              Couleur d’identification
-            </label>
-            <div className="flex items-center gap-2 flex-wrap">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${
-                    color === c ? 'scale-115 border-black dark:border-white ring-2 ring-black' : 'border-neutral-400'
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
+                Couleur d’identification
+              </label>
+              <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400">
+                Couleur unique par compte
+              </span>
             </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {PRESET_COLORS.map((c) => {
+                const isTaken = usedColorsMap.has(c.toLowerCase());
+                const takenByName = usedColorsMap.get(c.toLowerCase());
+                const isSelected = color.toLowerCase() === c.toLowerCase();
+
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    disabled={isTaken}
+                    onClick={() => {
+                      setColor(c);
+                      setErrorMessage(null);
+                    }}
+                    title={isTaken ? `Couleur déjà utilisée par "${takenByName}"` : c}
+                    className={`relative w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center ${
+                      isSelected
+                        ? 'scale-115 border-black dark:border-white ring-2 ring-black dark:ring-white'
+                        : isTaken
+                        ? 'opacity-30 cursor-not-allowed border-neutral-300 dark:border-neutral-700'
+                        : 'border-neutral-400 hover:scale-105 cursor-pointer'
+                    }`}
+                    style={{ backgroundColor: c }}
+                  >
+                    {isTaken && (
+                      <Ban className="w-3.5 h-3.5 text-black/70 dark:text-white/70 stroke-2.5" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {usedColorsMap.has(color.toLowerCase()) && (
+              <p className="text-[11px] text-[#FF3366] font-bold mt-1">
+                Cette couleur est déjà attribuée au portefeuille "{usedColorsMap.get(color.toLowerCase())}".
+              </p>
+            )}
           </div>
 
           {/* Compte par défaut */}
