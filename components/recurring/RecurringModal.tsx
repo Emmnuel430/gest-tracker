@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { X, Calendar, Sparkles } from 'lucide-react';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, CATEGORY_COLORS } from '@/constants/categories';
+import { useCategories } from '@/components/providers/ReferenceDataProvider';
 import { PAYMENT_METHODS } from '@/constants/payment-methods';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -28,11 +28,13 @@ export function RecurringModal({
   const [type, setType] = useState<'EXPENSE' | 'INCOME'>(
     initialData?.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
+  const { categories: userCategories, getCategoryColor } = useCategories(type);
+
   const [amount, setAmount] = useState<string>(
     initialData?.amount ? initialData.amount.toString() : ''
   );
   const [category, setCategory] = useState<string>(
-    initialData?.category || (type === 'EXPENSE' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0])
+    initialData?.category || ''
   );
   const [payment, setPayment] = useState<string>(
     initialData?.payment || PAYMENT_METHODS[0]
@@ -45,13 +47,23 @@ export function RecurringModal({
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialData?.category) {
+      setCategory(initialData.category);
+    } else if (userCategories.length > 0 && !category) {
+      setCategory(userCategories[0].name);
+    }
+  }, [initialData, userCategories, category]);
+
   if (!isOpen) return null;
 
-  const currentCategories = type === 'EXPENSE' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const selectedCatObj = userCategories.find(
+    (c) => c.name.toLowerCase() === category.toLowerCase()
+  );
 
   const handleTypeChange = (newType: 'EXPENSE' | 'INCOME') => {
     setType(newType);
-    setCategory(newType === 'EXPENSE' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
+    setCategory('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,6 +87,7 @@ export function RecurringModal({
         type,
         amount: numericAmount,
         category,
+        categoryId: selectedCatObj?.id || null,
         payment,
         dayOfMonth,
         frequency: 'MONTHLY',
@@ -190,15 +203,15 @@ export function RecurringModal({
               Catégorie
             </label>
             <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto p-1 border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A]">
-              {currentCategories.map((cat) => {
-                const isSelected = category === cat;
-                const catColor = CATEGORY_COLORS[cat] || '#2563EB';
+              {userCategories.map((cat) => {
+                const isSelected = category.toLowerCase() === cat.name.toLowerCase();
+                const catColor = cat.color || getCategoryColor(cat.name);
 
                 return (
                   <button
-                    key={cat}
+                    key={cat.id || cat.name}
                     type="button"
-                    onClick={() => setCategory(cat)}
+                    onClick={() => setCategory(cat.name)}
                     className={`p-2 rounded-lg text-left text-xs font-bold border-2 transition-all flex items-center gap-2 cursor-pointer ${
                       isSelected
                         ? 'border-[#111827] dark:border-white bg-white dark:bg-[#1E293B] shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]'
@@ -209,7 +222,7 @@ export function RecurringModal({
                       className="w-2.5 h-2.5 rounded-full shrink-0 border border-[#111827]"
                       style={{ backgroundColor: catColor }}
                     />
-                    <span className="truncate">{cat}</span>
+                    <span className="truncate">{cat.name}</span>
                   </button>
                 );
               })}

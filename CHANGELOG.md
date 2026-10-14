@@ -3,6 +3,20 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-10-14
+
+### Features
+- **db** : Création de la table `categories` en base de données avec enum `CategoryKind` (`INCOME`, `EXPENSE`, `BOTH`), contrainte d'unicité par utilisateur `(user_id, name)`, index de performance et isolation hermétique RLS (4 politiques `authenticated`).
+- **architecture** : Implémentation du patron Expand/Contract avec ajout de `category_id` (FK `ON DELETE RESTRICT`) sur `transactions`, `budgets` et `recurring_rules` tout en maintenant synchronisées les colonnes textuelles d'origine `category`.
+- **migrations** : Migration SQL et script de backfill automatisé assurant le peuplement des catégories par défaut et la réconciliation sans perte des catégories existantes et personnalisées de chaque utilisateur.
+- **categories** : Nouvelles Server Actions dédiées (`getCategoriesAction`, `upsertCategoryAction`, `archiveCategoryAction`, `deleteCategoryAction`) avec initialisation paresseuse, validation Zod, interdiction de suppression si référencée (avec proposition d'archivage) et propagation transactionnelle atomique des renommages.
+- **ui** : Modal de gestion des catégories néobrutaliste (`CategoryManagerModal`) intégrée à `/budgets` avec filtrage par type, palette contrôlée de 20 nuances, calcul automatique du contraste W3C du texte selon la luminance, prévisualisation en direct, archivage et modification instantanés.
+- **providers** : Nouveau contexte client `ReferenceDataProvider` et hook universel `useCategories` pour la distribution et le cache des catégories et de leurs couleurs sur l'ensemble de l'application (`BudgetModal`, `BudgetCard`, `TransactionForm`, `EditTransactionModal`, `RecurringModal`, `RecurringCard`, `HistoryView`, `RecentTransactionsList`).
+- **import-csv** : Réconciliation automatique et création dynamique des catégories manquantes lors de l'importation de fichiers CSV avec rattachement immédiat de `categoryId`.
+- **tests** : Couverture unitaire étendue (`tests/categories.test.ts`) portant la suite à 103 tests réussis à 100 %.
+
+---
+
 ## [2.1.0] - 2026-10-14
 
 ### Features

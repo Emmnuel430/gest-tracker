@@ -4,7 +4,7 @@ import React from 'react';
 import { Edit2, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { BudgetProgressItem } from '@/actions/budgets';
 import { formatCurrency } from '@/constants/config';
-import { CATEGORY_COLORS } from '@/constants/categories';
+import { useReferenceData } from '@/components/providers/ReferenceDataProvider';
 
 interface BudgetCardProps {
   budget: BudgetProgressItem;
@@ -13,7 +13,8 @@ interface BudgetCardProps {
 }
 
 export function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
-  const catColor = CATEGORY_COLORS[budget.category] || '#2563EB';
+  const { getCategoryColor } = useReferenceData();
+  const catColor = getCategoryColor(budget.category, '#2563EB');
 
   const isExceeded = budget.status === 'EXCEEDED';
   const isWarning = budget.status === 'WARNING';

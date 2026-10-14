@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { X, Sparkles, Check, AlertTriangle, ArrowRight } from 'lucide-react';
-import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/constants/categories';
+import { useCategories } from '@/components/providers/ReferenceDataProvider';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput } from '@/constants/config';
@@ -27,17 +27,30 @@ export function BudgetModal({
   currentMonth,
   initialData,
 }: BudgetModalProps) {
+  const { categories: expenseCategories } = useCategories('EXPENSE');
   const [isPending, startTransition] = useTransition();
 
   const [category, setCategory] = useState<string>(
-    initialData?.category || EXPENSE_CATEGORIES[0] || 'Alimentation'
+    initialData?.category || ''
   );
   const [amount, setAmount] = useState<string>(
     initialData?.amount ? initialData.amount.toString() : ''
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialData?.category) {
+      setCategory(initialData.category);
+    } else if (expenseCategories.length > 0 && !category) {
+      setCategory(expenseCategories[0].name);
+    }
+  }, [initialData, expenseCategories, category]);
+
   if (!isOpen) return null;
+
+  const selectedCatObj = expenseCategories.find(
+    (c) => c.name.toLowerCase() === category.toLowerCase()
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +65,7 @@ export function BudgetModal({
     startTransition(async () => {
       const res = await upsertBudgetAction({
         category,
+        categoryId: selectedCatObj?.id || null,
         amount: numericAmount,
         month: currentMonth,
       });
@@ -64,8 +78,6 @@ export function BudgetModal({
       }
     });
   };
-
-  const selectedCatColor = CATEGORY_COLORS[category] || '#2563EB';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
@@ -90,15 +102,14 @@ export function BudgetModal({
               Catégorie de dépense
             </label>
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A]">
-              {EXPENSE_CATEGORIES.map((cat) => {
-                const isSelected = category === cat;
-                const catColor = CATEGORY_COLORS[cat] || '#2563EB';
+              {expenseCategories.map((cat) => {
+                const isSelected = category === cat.name;
 
                 return (
                   <button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    onClick={() => setCategory(cat)}
+                    onClick={() => setCategory(cat.name)}
                     className={`flex items-center gap-1.5 p-2 rounded-lg text-xs font-bold border-2 transition-all cursor-pointer text-left ${
                       isSelected
                         ? 'border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827] bg-white dark:bg-[#1E293B] -translate-y-0.5'
@@ -107,9 +118,9 @@ export function BudgetModal({
                   >
                     <span
                       className="w-3 h-3 rounded-full shrink-0 border border-[#111827] dark:border-white"
-                      style={{ backgroundColor: catColor }}
+                      style={{ backgroundColor: cat.color }}
                     />
-                    <span className="truncate text-[#111827] dark:text-[#F8FAFC]">{cat}</span>
+                    <span className="truncate text-[#111827] dark:text-[#F8FAFC]">{cat.name}</span>
                   </button>
                 );
               })}

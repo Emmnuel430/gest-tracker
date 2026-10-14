@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/constants/categories';
+import { useCategories } from '@/components/providers/ReferenceDataProvider';
 import { PAYMENT_METHODS } from '@/constants/payment-methods';
 import { updateTransactionAction } from '@/actions/transactions';
 import { parseAmountInput, formatAmountInput } from '@/constants/config';
@@ -48,6 +48,8 @@ function EditForm({
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>(
     transaction.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
+  const { categories: categoryList } = useCategories(type);
+
   const [amount, setAmount] = useState(() => formatAmountInput(transaction.amount));
   const [category, setCategory] = useState(transaction.category);
   const [payment, setPayment] = useState(transaction.payment);
@@ -60,8 +62,16 @@ function EditForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const categories = type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-  const currentCatColor = CATEGORY_COLORS[category] || '#2563EB';
+  React.useEffect(() => {
+    if (categoryList.length > 0 && !categoryList.some((c) => c.name.toLowerCase() === category.toLowerCase())) {
+      setCategory(categoryList[0].name);
+    }
+  }, [categoryList, category]);
+
+  const selectedCatObj = categoryList.find(
+    (c) => c.name.toLowerCase() === category.toLowerCase()
+  );
+  const currentCatColor = selectedCatObj?.color || '#2563EB';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +92,7 @@ function EditForm({
         type,
         amount: parsedAmount,
         category,
+        categoryId: selectedCatObj?.id || null,
         payment,
         date: finalDate,
         note: note.trim() || undefined,
@@ -121,7 +132,6 @@ function EditForm({
             type="button"
             onClick={() => {
               setType('INCOME');
-              setCategory(INCOME_CATEGORIES[0]);
             }}
             className={`py-2 px-3 border-2 border-[#111827] dark:border-white rounded-lg font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] ${
               type === 'INCOME'
@@ -135,7 +145,6 @@ function EditForm({
             type="button"
             onClick={() => {
               setType('EXPENSE');
-              setCategory(EXPENSE_CATEGORIES[0]);
             }}
             className={`py-2 px-3 border-2 border-[#111827] dark:border-white rounded-lg font-black text-xs uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] ${
               type === 'EXPENSE'
@@ -167,9 +176,9 @@ function EditForm({
           onChange={(e) => setCategory(e.target.value)}
           className="w-full bg-white dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] text-[#111827] dark:text-white rounded-xl p-3 font-bold text-sm shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] focus:outline-none focus:bg-[#EFF6FF] dark:focus:bg-[#1E293B]"
         >
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {categoryList.map((c) => (
+            <option key={c.id} value={c.name}>
+              {c.name}
             </option>
           ))}
         </select>

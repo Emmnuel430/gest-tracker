@@ -12,6 +12,7 @@ import {
   Wallet,
   Sparkles,
   Calendar,
+  Tag,
 } from "lucide-react";
 import {
   getBudgetsWithProgressAction,
@@ -21,6 +22,7 @@ import {
 } from "@/actions/budgets";
 import { BudgetCard } from "@/components/budgets/BudgetCard";
 import { BudgetModal } from "@/components/budgets/BudgetModal";
+import { CategoryManagerModal } from "@/components/budgets/CategoryManagerModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -40,6 +42,7 @@ export default function BudgetsPage() {
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetProgressItem | null>(
     null,
   );
@@ -122,19 +125,32 @@ export default function BudgetsPage() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          onClick={() => {
-            setEditingBudget(null);
-            setIsModalOpen(true);
-          }}
-          className="self-start sm:self-auto flex items-center gap-1.5 shrink-0"
-        >
-          <Plus className="w-4 h-4 stroke-3" />
-          <span>Nouveau Budget</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <Button
+            type="button"
+            variant="neutral"
+            size="md"
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <Tag className="w-4 h-4 stroke-2.5" />
+            <span>Catégories</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={() => {
+              setEditingBudget(null);
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4 stroke-3" />
+            <span>Nouveau Budget</span>
+          </Button>
+        </div>
       </div>
 
       {/* 2. Sélecteur de mois néobrutaliste */}
@@ -296,6 +312,15 @@ export default function BudgetsPage() {
               }
             : null
         }
+      />
+
+      {/* Modal de gestion des catégories */}
+      <CategoryManagerModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => {
+          setIsCategoryModalOpen(false);
+          loadBudgets();
+        }}
       />
 
       {/* Boîte de confirmation de suppression */}

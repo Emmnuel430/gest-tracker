@@ -28,7 +28,7 @@ import {
   calculatePaymentMethodBreakdown,
 } from '@/lib/statistics';
 import { getDateRangeForPeriod, formatPeriodLabel } from '@/lib/dates';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/constants/categories';
+import { useCategories } from '@/components/providers/ReferenceDataProvider';
 import { PAYMENT_METHODS } from '@/constants/payment-methods';
 import { getTransactionsAction } from '@/actions/transactions';
 
@@ -42,6 +42,7 @@ type TransactionTypeFilter = 'all' | 'INCOME' | 'EXPENSE';
 export function HistoryView({ initialTransactions }: HistoryViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { categories, getCategoryColor } = useCategories();
 
   // Initialisation à partir des query params ou valeurs par défaut
   const initialPeriod = (searchParams.get('period') as PeriodType) || 'month';
@@ -145,8 +146,8 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
   );
 
   const expenseBreakdown = useMemo(
-    () => calculateCategoryBreakdown(filteredTransactions, 'EXPENSE'),
-    [filteredTransactions]
+    () => calculateCategoryBreakdown(filteredTransactions, 'EXPENSE', getCategoryColor),
+    [filteredTransactions, getCategoryColor]
   );
 
   const paymentBreakdown = useMemo(
@@ -197,9 +198,13 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
     }
   };
 
-  const allAvailableCategories = [
-    ...new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]),
-  ];
+  const allAvailableCategories = useMemo(() => {
+    const fromCategories = categories.map((c) => c.name);
+    const fromTransactions = transactions.map((t) => t.category).filter(Boolean);
+    return Array.from(new Set([...fromCategories, ...fromTransactions])).sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [categories, transactions]);
 
   return (
     <div className="w-full space-y-5">
