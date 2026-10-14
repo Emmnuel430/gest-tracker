@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useTransition } from 'react';
-import { Calendar, Edit2, Trash2, Power, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Edit2, Trash2, Power, CheckCircle, Clock, Bell, BellOff } from 'lucide-react';
 import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { formatCurrency, getContrastTextColor } from '@/lib/utils';
 import {
@@ -142,6 +142,17 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
         >
           {rule.payment}
         </span>
+        {rule.remindersEnabled ? (
+          <span className="flex items-center gap-1 bg-[#EFF6FF] dark:bg-[#1E3A8A]/30 text-[#1D4ED8] dark:text-[#93C5FD] px-2 py-0.5 rounded border border-[#111827] dark:border-[#334155] text-[10px] font-black uppercase">
+            <Bell className="w-3 h-3 text-[#2563EB] dark:text-[#60A5FA]" />
+            Rappel e-mail
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 bg-neutral-100 dark:bg-[#131C31] text-neutral-500 dark:text-neutral-400 px-2 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-[10px] font-bold">
+            <BellOff className="w-3 h-3 text-neutral-400" />
+            Sans rappel
+          </span>
+        )}
       </div>
 
       {/* Statut Échéance du mois */}

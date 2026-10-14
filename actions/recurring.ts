@@ -20,6 +20,7 @@ export interface RecurringRuleItem {
   frequency: 'MONTHLY' | 'WEEKLY' | 'YEARLY';
   note?: string | null;
   isActive: boolean;
+  remindersEnabled: boolean;
   lastProcessedMonth?: string | null;
   createdAt: string;
 }
@@ -54,6 +55,7 @@ export async function getRecurringRulesAction(): Promise<ActionResponse<Recurrin
         frequency: r.frequency,
         note: r.note,
         isActive: r.isActive,
+        remindersEnabled: r.remindersEnabled,
         lastProcessedMonth: r.lastProcessedMonth,
         createdAt: r.createdAt.toISOString(),
       })),
@@ -92,6 +94,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       frequency,
       note,
       isActive,
+      remindersEnabled,
       categoryId,
       walletId,
     } = parseResult.data;
@@ -152,6 +155,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
           frequency,
           note: note || null,
           isActive: isActive ?? true,
+          remindersEnabled: remindersEnabled ?? true,
         },
       });
     } else {
@@ -169,6 +173,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
           frequency,
           note: note || null,
           isActive: isActive ?? true,
+          remindersEnabled: remindersEnabled ?? true,
         },
       });
     }
@@ -296,11 +301,14 @@ export async function getDueRecurringRulesAction(): Promise<ActionResponse<Recur
         type: r.type,
         amount: Number(r.amount),
         category: r.category,
+        categoryId: r.categoryId,
         payment: r.payment,
+        walletId: r.walletId,
         dayOfMonth: r.dayOfMonth,
         frequency: r.frequency,
         note: r.note,
         isActive: r.isActive,
+        remindersEnabled: r.remindersEnabled,
         lastProcessedMonth: r.lastProcessedMonth,
         createdAt: r.createdAt.toISOString(),
       })),

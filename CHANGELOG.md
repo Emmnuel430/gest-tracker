@@ -3,6 +3,18 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-10-14
+
+### Features
+- **reminders** : Moteur de détection déterministe des rappels d'échéances des règles récurrentes (`getRemindersDueOn`) avec paliers d'anticipation à J-7, J-3 et le jour de l'échéance (J0), prise en compte rigoureuse du clamp de fin de mois (`resolveDueDate`) et politique anti-doublon.
+- **db** : Nouvelle table `recurring_reminder_logs` en base de données avec contrainte d'unicité `(rule_id, due_date, offset_days)`, indexation optimisée, suivi des tentatives (jusqu'à 3) et politique de sécurité RLS.
+- **mailer** : Service d'expédition d'emails transactionnels avec Nodemailer (`lib/mailer.ts`), interfaçage avec Mailpit en environnement de développement local (port 54325) et SMTP sécurisé en production, gabarit HTML néobrutaliste aux couleurs de l'application avec mise en valeur du montant en FCFA.
+- **cron** : Endpoint serveur planifié `/api/cron/reminders` sécurisé par `CRON_SECRET`, extraction sans session des règles et destinataires associés, et planification quotidienne déclarée dans `vercel.json` (`0 8 * * *`).
+- **ui** : Réactivation complète du module "Règles Récurrentes" sur `/gestion`, intégration du champ `remindersEnabled` avec interrupteur dédié dans `RecurringModal`, et affichage des indicateurs de statut de rappel (`Bell` / `BellOff`) sur chaque `RecurringCard`.
+- **tests** : Couverture unitaire étendue (`tests/recurring-reminders.test.ts`) avec validation des déduplications, du clamp calendaire et de l'exclusion des règles inactives/désactivées, portant la suite globale à 142 tests réussis à 100 %.
+
+---
+
 ## [2.5.0] - 2026-10-14
 
 ### Features
