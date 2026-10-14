@@ -3,6 +3,14 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-10-14
+
+### Features
+- **insights** : Tri déterministe des observations financières par sévérité prioritaire (`danger` > `warning` > `info` > `success`) afin de présenter les alertes critiques en premier.
+- **insights** : Nouveau composant carrousel interactif néobrutaliste (`InsightsCarousel`) sans dépendance externe : affichage d'une alerte à la fois, pagination fluide par glissement, défilement automatique (6 s) avec mise en pause au survol et au focus clavier, boutons de navigation précédent / suivant, indicateurs cliquables et compteur textuel, support tactile (swipe mobile), navigation au clavier (flèches gauche/droite) et prise en compte de l'accessibilité `prefers-reduced-motion`.
+
+---
+
 ## [2.0.3] - 2026-10-14
 
 ### Bug Fixes
