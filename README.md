@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.4.0)
+# GEST TRACKER — Documentation Complète (v2.5.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -57,7 +57,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (123 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (134 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -127,12 +127,25 @@ my-app/
 
 ### 4.1 Authentification & Cloisonnement Multi-User
 
-- **Routes :** `/login` et `/register`.
-- **Mécanisme :**
-  - Session gérée par Supabase Auth via des cookies sécurisés lus dans [`middleware.ts`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/middleware.ts).
-  - Toute tentative d'accès à une page protégée sans session valide redirige instantanément vers `/login`.
-  - Inscription protégée par validation Zod stricte (minimum 8 caractères, au moins 1 lettre et 1 chiffre, confirmation identique).
-  - **Cloisonnement total des données :** Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
+- **Routes :** `/login`, `/register`, et `/mot-de-passe-oublie` (3 étapes).
+- **Politique de mot de passe stricte (`PasswordSchema`) :**
+  - Minimum 8 caractères.
+  - Au moins 1 lettre majuscule (`[A-Z]`).
+  - Au moins 1 lettre minuscule (`[a-z]`).
+  - Au moins 1 chiffre (`[0-9]`).
+  - Au moins 1 caractère spécial (`[^A-Za-z0-9]`).
+  - **Garantie serveur :** Appliquée et verrouillée au niveau du moteur Supabase Auth (`password_requirements = "lower_upper_letters_digits_symbols"`).
+- **Jauge de robustesse (`PasswordStrengthMeter`) :**
+  - Barre segmentée en 4 sections avec évaluation déterministe (score 0 à 4).
+  - Libellés textuels explicites (*Faible*, *Moyen*, *Bon*, *Robuste*).
+  - Checklist en direct des 5 critères avec icônes Lucide (information non portée par la seule couleur).
+  - Boutons de soumission (`/register`, `/parametres`, `/mot-de-passe-oublie/nouveau`) bloqués tant que la politique n'est pas intégralement respectée.
+- **Parcours de Récupération de Mot de Passe en 3 Étapes :**
+  1. `/mot-de-passe-oublie` : Saisie de l'adresse email. Réponse générique identique que le compte existe ou non (prévention stricte de l'énumération de comptes).
+  2. `/mot-de-passe-oublie/verification` : Saisie du code à 6 chiffres avec compte à rebours de 60 secondes pour le renvoi et expiration du code à 10 minutes (`otp_expiry = 600`).
+  3. `/mot-de-passe-oublie/nouveau` : Définition du nouveau mot de passe accessible uniquement en présence du cookie court `httpOnly` (5 min) délivré lors de l'étape 2.
+  - **Environnement local :** Les e-mails de récupération sont consultables instantanément dans l'interface Mailpit locale à l'adresse [`http://127.0.0.1:54324`](http://127.0.0.1:54324).
+- **Cloisonnement total des données :** Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
 
 ### 4.2 Tableau de Bord Principal (`/`)
 

@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { RegisterSchema } from '@/lib/validations';
+import { RegisterSchema, evaluatePasswordStrength } from '@/lib/validations';
+import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
 import { getErrorMessage } from '@/lib/utils';
 
 export default function RegisterPage() {
@@ -148,9 +149,7 @@ export default function RegisterPage() {
                 required
                 autoComplete="new-password"
               />
-              <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                8 caractères min., avec au moins 1 lettre et 1 chiffre
-              </p>
+              <PasswordStrengthMeter password={password} />
               {fieldErrors.password && (
                 <p className="mt-1 text-[11px] font-bold text-[#DC2626]">
                   {fieldErrors.password}
@@ -187,7 +186,12 @@ export default function RegisterPage() {
               variant="primary"
               size="lg"
               fullWidth
-              disabled={isPending}
+              disabled={
+                isPending ||
+                !evaluatePasswordStrength(password).isValid ||
+                !confirmPassword ||
+                password !== confirmPassword
+              }
               className="mt-2 bg-[#10B981] hover:bg-[#059669] text-white"
             >
               {isPending ? (

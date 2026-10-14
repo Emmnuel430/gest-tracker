@@ -104,8 +104,8 @@ describe('RegisterSchema & LoginSchema (Zod Auth V2)', () => {
   it('valide une inscription conforme', () => {
     const validRegister = {
       email: 'NOUVEAU.USER@example.com',
-      password: 'Password123',
-      confirmPassword: 'Password123',
+      password: 'Password123!',
+      confirmPassword: 'Password123!',
     };
 
     const result = RegisterSchema.safeParse(validRegister);
@@ -129,8 +129,8 @@ describe('RegisterSchema & LoginSchema (Zod Auth V2)', () => {
   it('rejette une inscription avec mot de passe sans chiffre', () => {
     const noNumber = {
       email: 'test@example.com',
-      password: 'PasswordOnly',
-      confirmPassword: 'PasswordOnly',
+      password: 'PasswordOnly!',
+      confirmPassword: 'PasswordOnly!',
     };
 
     const result = RegisterSchema.safeParse(noNumber);
@@ -140,8 +140,8 @@ describe('RegisterSchema & LoginSchema (Zod Auth V2)', () => {
   it('rejette une inscription si les mots de passe ne correspondent pas', () => {
     const mismatch = {
       email: 'test@example.com',
-      password: 'Password123',
-      confirmPassword: 'DifferentPassword456',
+      password: 'Password123!',
+      confirmPassword: 'DifferentPassword456!',
     };
 
     const result = RegisterSchema.safeParse(mismatch);

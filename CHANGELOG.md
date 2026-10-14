@@ -3,6 +3,20 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-10-14
+
+### Features
+- **auth** : Politique de sécurité de mot de passe stricte et unifiée (`PasswordSchema`) : minimum 8 caractères, au moins une minuscule, une majuscule, un chiffre et un caractère spécial, garantie côté serveur dans `supabase/config.toml` (`lower_upper_letters_digits_symbols`).
+- **ui** : Nouveau composant néobrutaliste autonome `PasswordStrengthMeter` avec barre segmentée en 4 sections, libellés textuels explicites ("Faible", "Moyen", "Bon", "Robuste") et checklist de conformité détaillée en temps réel.
+- **recovery** : Parcours complet de récupération de mot de passe en 3 étapes sécurisées :
+  - `/mot-de-passe-oublie` : Saisie d'email avec réponse générique anti-énumération de comptes (`requestPasswordResetAction`).
+  - `/mot-de-passe-oublie/verification` : Saisie du code OTP à 6 chiffres avec compte à rebours de 60 secondes pour le renvoi et émission d'un cookie court `httpOnly` (5 min) attestant la vérification (`verifyPasswordResetOtpAction`).
+  - `/mot-de-passe-oublie/nouveau` : Définition du nouveau mot de passe avec validation en direct, restriction stricte aux sessions munies du cookie de vérification et redirection propre vers la connexion (`resetPasswordAction`).
+- **security** : Durcissement des limites d'émission d'emails dans Supabase (`max_frequency = "60s"`, `otp_expiry = 600s`), gabarit HTML néobrutaliste dédié pour les e-mails de récupération (`supabase/templates/recovery.html`), et protection des routes dans `middleware.ts`.
+- **tests** : Nouvelle suite de tests unitaires dédiés (`tests/auth-recovery.test.ts`), portant la suite globale à 134 tests automatisés réussis à 100 %.
+
+---
+
 ## [2.4.0] - 2026-10-14
 
 ### Features
