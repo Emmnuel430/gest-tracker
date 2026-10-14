@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { Lock, ShieldCheck, AlertTriangle, ArrowRight } from 'lucide-react';
+import React, { useState, useTransition, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Lock, ShieldCheck, AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/lib/utils';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get('reset') === 'success';
+
   const [isPending, startTransition] = useTransition();
 
   const [email, setEmail] = useState('');
@@ -35,7 +38,11 @@ export default function LoginPage() {
         });
 
         if (error) {
-          setErrorMessage(error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : error.message);
+          setErrorMessage(
+            error.message === 'Invalid login credentials'
+              ? 'Email ou mot de passe incorrect.'
+              : error.message
+          );
           return;
         }
 
@@ -62,6 +69,13 @@ export default function LoginPage() {
       </div>
 
       <div className="bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000]">
+        {resetSuccess && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-[#DCFCE7] dark:bg-[#064E3B] border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] text-xs font-bold text-[#166534] dark:text-[#86EFAC]">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#16A34A]" />
+            <span>Votre mot de passe a été mis à jour avec succès. Vous pouvez maintenant vous connecter.</span>
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
             label="Email"
@@ -73,15 +87,25 @@ export default function LoginPage() {
             autoComplete="email"
           />
 
-          <Input
-            label="Mot de passe"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            autoComplete="current-password"
-          />
+          <div>
+            <Input
+              label="Mot de passe"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              autoComplete="current-password"
+            />
+            <div className="flex justify-end mt-1">
+              <Link
+                href="/mot-de-passe-oublie"
+                className="text-[11px] font-bold text-[#2563EB] dark:text-[#60A5FA] hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
+          </div>
 
           {errorMessage && (
             <div className="flex items-center gap-2 p-3 bg-[#FEF2F2] dark:bg-[#2C0B0E] border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-bold text-[#DC2626]">
@@ -128,5 +152,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-sm mx-auto py-8 text-center text-xs font-bold text-neutral-500">
+          Chargement de la page de connexion...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

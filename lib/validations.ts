@@ -50,6 +50,78 @@ export type UpdateTransactionFormValues = z.infer<typeof UpdateTransactionSchema
 export type FilterFormValues = z.infer<typeof FilterSchema>;
 export type HistoryFiltersInput = z.infer<typeof HistoryFiltersSchema>;
 
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+export const PasswordSchema = z
+  .string()
+  .min(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+  .regex(/[a-z]/, { message: 'Le mot de passe doit contenir au moins une lettre minuscule' })
+  .regex(/[A-Z]/, { message: 'Le mot de passe doit contenir au moins une lettre majuscule' })
+  .regex(/[0-9]/, { message: 'Le mot de passe doit contenir au moins un chiffre' })
+  .regex(/[^A-Za-z0-9]/, { message: 'Le mot de passe doit contenir au moins un caractère spécial' });
+
+export interface PasswordCriteria {
+  hasMinLength: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasDigit: boolean;
+  hasSymbol: boolean;
+  score: number; // 0 à 4
+  label: 'Faible' | 'Moyen' | 'Bon' | 'Robuste';
+  isValid: boolean;
+}
+
+export function evaluatePasswordStrength(password: string): PasswordCriteria {
+  if (!password) {
+    return {
+      hasMinLength: false,
+      hasUppercase: false,
+      hasLowercase: false,
+      hasDigit: false,
+      hasSymbol: false,
+      score: 0,
+      label: 'Faible',
+      isValid: false,
+    };
+  }
+
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+
+  let score = 0;
+  if (hasMinLength) score++;
+  if (hasUppercase && hasLowercase) score++;
+  if (hasDigit) score++;
+  if (hasSymbol) score++;
+
+  let label: 'Faible' | 'Moyen' | 'Bon' | 'Robuste' = 'Faible';
+  if (score >= 4) {
+    label = 'Robuste';
+  } else if (score === 3) {
+    label = 'Bon';
+  } else if (score === 2) {
+    label = 'Moyen';
+  } else {
+    label = 'Faible';
+  }
+
+  const isValid = hasMinLength && hasUppercase && hasLowercase && hasDigit && hasSymbol;
+
+  return {
+    hasMinLength,
+    hasUppercase,
+    hasLowercase,
+    hasDigit,
+    hasSymbol,
+    score,
+    label,
+    isValid,
+  };
+}
+
 export const RegisterSchema = z
   .object({
     email: z
@@ -57,11 +129,7 @@ export const RegisterSchema = z
       .trim()
       .toLowerCase()
       .email({ message: 'Veuillez saisir une adresse email valide' }),
-    password: z
-      .string()
-      .min(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
-      .regex(/[0-9]/, { message: 'Le mot de passe doit contenir au moins un chiffre' })
-      .regex(/[a-zA-Z]/, { message: 'Le mot de passe doit contenir au moins une lettre' }),
+    password: PasswordSchema,
     confirmPassword: z.string().min(1, { message: 'Veuillez confirmer votre mot de passe' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -84,11 +152,7 @@ export type LoginFormValues = z.infer<typeof LoginSchema>;
 export const ChangePasswordSchema = z
   .object({
     oldPassword: z.string().min(1, { message: 'Veuillez saisir votre mot de passe actuel' }),
-    newPassword: z
-      .string()
-      .min(8, { message: 'Le nouveau mot de passe doit contenir au moins 8 caractères' })
-      .regex(/[0-9]/, { message: 'Le nouveau mot de passe doit contenir au moins un chiffre' })
-      .regex(/[a-zA-Z]/, { message: 'Le nouveau mot de passe doit contenir au moins une lettre' }),
+    newPassword: PasswordSchema,
     confirmPassword: z.string().min(1, { message: 'Veuillez confirmer le nouveau mot de passe' }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -101,6 +165,42 @@ export const ChangePasswordSchema = z
   });
 
 export type ChangePasswordFormValues = z.infer<typeof ChangePasswordSchema>;
+
+export const RequestPasswordResetSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({ message: 'Veuillez saisir une adresse email valide' }),
+});
+
+export type RequestPasswordResetFormValues = z.infer<typeof RequestPasswordResetSchema>;
+
+export const VerifyPasswordResetOtpSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email({ message: 'Veuillez saisir une adresse email valide' }),
+  token: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, { message: 'Le code doit comporter exactement 6 chiffres' }),
+});
+
+export type VerifyPasswordResetOtpFormValues = z.infer<typeof VerifyPasswordResetOtpSchema>;
+
+export const ResetPasswordSchema = z
+  .object({
+    password: PasswordSchema,
+    confirmPassword: z.string().min(1, { message: 'Veuillez confirmer le nouveau mot de passe' }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  });
+
+export type ResetPasswordFormValues = z.infer<typeof ResetPasswordSchema>;
 
 export const CategorySchema = z.object({
   id: z.string().optional(),

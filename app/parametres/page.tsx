@@ -37,6 +37,8 @@ import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatDisplayDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { PasswordStrengthMeter } from "@/components/ui/PasswordStrengthMeter";
+import { evaluatePasswordStrength } from "@/lib/validations";
 
 export default function ParametresPage() {
   const router = useRouter();
@@ -306,7 +308,7 @@ export default function ParametresPage() {
 
                   <div>
                     <label className="block text-[10px] font-black uppercase text-neutral-600 dark:text-neutral-400 mb-1">
-                      Nouveau mot de passe (min. 8 car., 1 chiffre, 1 lettre)
+                      Nouveau mot de passe
                     </label>
                     <input
                       type={showPasswords ? "text" : "password"}
@@ -316,6 +318,7 @@ export default function ParametresPage() {
                       placeholder="Nouveau mot de passe sécurisé"
                       className="w-full px-3 py-2 text-xs font-bold border-2 border-[#111827] dark:border-[#334155] rounded-lg bg-white dark:bg-[#1E293B] text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                     />
+                    <PasswordStrengthMeter password={newPassword} />
                   </div>
 
                   <div>
@@ -350,7 +353,13 @@ export default function ParametresPage() {
                       type="submit"
                       variant="primary"
                       size="sm"
-                      disabled={pwLoading}
+                      disabled={
+                        pwLoading ||
+                        !evaluatePasswordStrength(newPassword).isValid ||
+                        !confirmPassword ||
+                        newPassword !== confirmPassword ||
+                        !oldPassword
+                      }
                       className="text-xs"
                     >
                       {pwLoading
