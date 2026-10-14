@@ -4,11 +4,7 @@ import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Calendar, Clock, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import {
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  CATEGORY_COLORS,
-} from "@/constants/categories";
+import { useCategories } from "@/components/providers/ReferenceDataProvider";
 import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_THEMES,
@@ -29,13 +25,19 @@ export function TransactionForm({ type }: TransactionFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const isIncome = type === "INCOME";
-  const categories = isIncome ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const { categories: categoryList } = useCategories(type);
 
   // Form State
   const [amount, setAmount] = useState<string>("");
-  const [category, setCategory] = useState<string>(categories[0] || "");
+  const [category, setCategory] = useState<string>("");
   const [payment, setPayment] = useState<string>(PAYMENT_METHODS[0] || "Wave");
   const [note, setNote] = useState<string>("");
+
+  React.useEffect(() => {
+    if (categoryList.length > 0 && (!category || !categoryList.some((c) => c.name === category))) {
+      setCategory(categoryList[0].name);
+    }
+  }, [categoryList, category]);
 
   // Logique métier date : instantanée par défaut, dépliable pour rétroactif / personnalisé
   const [showCustomDate, setShowCustomDate] = useState<boolean>(false);
@@ -47,7 +49,10 @@ export function TransactionForm({ type }: TransactionFormProps) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const selectedCatColor = CATEGORY_COLORS[category] || "#2563EB";
+  const selectedCatObj = categoryList.find(
+    (c) => c.name.toLowerCase() === category.toLowerCase()
+  );
+  const selectedCatColor = selectedCatObj?.color || "#2563EB";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +76,7 @@ export function TransactionForm({ type }: TransactionFormProps) {
         type,
         amount: numericAmount,
         category,
+        categoryId: selectedCatObj?.id || null,
         payment,
         date: finalDate,
         note: note ? note.trim() : undefined,
@@ -140,9 +146,9 @@ export function TransactionForm({ type }: TransactionFormProps) {
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-white dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-xl p-3.5 font-bold text-sm text-[#111827] dark:text-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] focus:outline-none focus:bg-[#EFF6FF] dark:focus:bg-[#1E293B] cursor-pointer transition-all"
               >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                {categoryList.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.name}
                   </option>
                 ))}
               </select>

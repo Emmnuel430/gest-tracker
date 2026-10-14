@@ -1,4 +1,4 @@
-import { PrismaClient, TransactionType } from '@prisma/client';
+import { PrismaClient, TransactionType, CategoryKind } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { subDays, subMonths } from 'date-fns';
 import fs from 'fs';
@@ -22,10 +22,55 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('[INFO] Démarrage du seed des transactions...');
+  console.log('[INFO] Démarrage du seed des transactions et catégories...');
 
   // Nettoyage préalable des transactions existantes dans la base de test
   await prisma.transaction.deleteMany();
+
+  const seedUserId = '00000000-0000-0000-0000-000000000000';
+
+  const defaultCategories = [
+    { name: 'Alimentation', kind: CategoryKind.EXPENSE, color: '#EF4444' },
+    { name: 'Transport', kind: CategoryKind.EXPENSE, color: '#F97316' },
+    { name: 'Logement', kind: CategoryKind.EXPENSE, color: '#84CC16' },
+    { name: 'Santé', kind: CategoryKind.EXPENSE, color: '#06B6D4' },
+    { name: 'Loisirs', kind: CategoryKind.EXPENSE, color: '#A855F7' },
+    { name: 'Kajai', kind: CategoryKind.EXPENSE, color: '#EC4899' },
+    { name: 'Famille', kind: CategoryKind.EXPENSE, color: '#6366F1' },
+    { name: 'Autre Dépense', kind: CategoryKind.EXPENSE, color: '#64748B' },
+    { name: 'Travail PC', kind: CategoryKind.INCOME, color: '#10B981' },
+    { name: 'Freelance', kind: CategoryKind.INCOME, color: '#3B82F6' },
+    { name: 'Cours en ligne', kind: CategoryKind.INCOME, color: '#F59E0B' },
+    { name: 'Don', kind: CategoryKind.INCOME, color: '#8B5CF6' },
+    { name: 'Vente', kind: CategoryKind.INCOME, color: '#14B8A6' },
+    { name: 'Autre Revenu', kind: CategoryKind.INCOME, color: '#94A3B8' },
+  ];
+
+  const categoryMap = new Map<string, string>();
+  for (const cat of defaultCategories) {
+    const existing = await prisma.category.findUnique({
+      where: {
+        userId_name: {
+          userId: seedUserId,
+          name: cat.name,
+        },
+      },
+    });
+
+    if (existing) {
+      categoryMap.set(cat.name.toLowerCase(), existing.id);
+    } else {
+      const created = await prisma.category.create({
+        data: {
+          userId: seedUserId,
+          name: cat.name,
+          kind: cat.kind,
+          color: cat.color,
+        },
+      });
+      categoryMap.set(cat.name.toLowerCase(), created.id);
+    }
+  }
 
   const now = new Date();
 
@@ -249,7 +294,10 @@ async function main() {
 
   for (const tx of transactionsData) {
     await prisma.transaction.create({
-      data: tx,
+      data: {
+        ...tx,
+        categoryId: categoryMap.get(tx.category.toLowerCase()) || null,
+      },
     });
   }
 

@@ -140,6 +140,9 @@ export async function deleteAccountAction(): Promise<AccountDeleteResponse> {
     if (prisma?.wallet?.deleteMany) {
       await prisma.wallet.deleteMany({ where: { userId: user.id } });
     }
+    if (prisma?.category?.deleteMany) {
+      await prisma.category.deleteMany({ where: { userId: user.id } });
+    }
 
     // 2. Déconnexion de la session Supabase
     const supabase = await createClient();

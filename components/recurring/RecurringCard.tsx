@@ -2,7 +2,7 @@
 
 import React, { useTransition } from 'react';
 import { Calendar, Edit2, Trash2, Power, CheckCircle, Clock } from 'lucide-react';
-import { CATEGORY_COLORS } from '@/constants/categories';
+import { useCategories } from '@/components/providers/ReferenceDataProvider';
 import { PAYMENT_METHOD_THEMES } from '@/constants/payment-methods';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -22,9 +22,10 @@ interface RecurringCardProps {
 
 export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: RecurringCardProps) {
   const [isPending, startTransition] = useTransition();
+  const { getCategoryColor } = useCategories();
 
   const isDueThisMonth = rule.isActive && rule.lastProcessedMonth !== currentMonth;
-  const catColor = CATEGORY_COLORS[rule.category] || '#2563EB';
+  const catColor = getCategoryColor(rule.category);
   const paymentTheme = PAYMENT_METHOD_THEMES[rule.payment] || { bg: '#E0E0E0', text: '#000000' };
 
   const handleToggle = () => {

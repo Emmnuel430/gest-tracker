@@ -47,6 +47,15 @@ export async function importTransactionsFromCsvAction(
       },
     });
 
+    // Récupérer les catégories existantes de l'utilisateur pour lier categoryId
+    const existingCategories = await prisma.category.findMany({
+      where: { userId: user.id },
+    });
+    const categoryMap = new Map<string, string>();
+    for (const c of existingCategories) {
+      categoryMap.set(c.name.toLowerCase().trim(), c.id);
+    }
+
     // Création d'un ensemble de signatures uniques : "YYYY-MM-DD_TYPE_AMOUNT_CATEGORY"
     const existingSignatures = new Set(
       existingTransactions.map((tx) => {
@@ -60,11 +69,42 @@ export async function importTransactionsFromCsvAction(
     let duplicateCount = 0;
     let invalidCount = 0;
 
+    // Collecter les nouvelles catégories pour les créer avant l'insertion
+    for (const row of rows) {
+      const rawCat = (row.category || 'Autre').trim();
+      const catKey = rawCat.toLowerCase();
+      if (rawCat && !categoryMap.has(catKey)) {
+        const rawType = (row.type || 'EXPENSE').toUpperCase().trim();
+        const kind = rawType.includes('INCOME') || rawType.includes('ENTRANT') || rawType.includes('REVENU')
+          ? 'INCOME'
+          : 'EXPENSE';
+
+        try {
+          const newCat = await prisma.category.create({
+            data: {
+              userId: user.id,
+              name: rawCat,
+              kind,
+              color: '#2563EB',
+            },
+          });
+          categoryMap.set(catKey, newCat.id);
+        } catch {
+          // Si collision concurrente, récupérer la catégorie
+          const found = await prisma.category.findFirst({
+            where: { userId: user.id, name: rawCat },
+          });
+          if (found) categoryMap.set(catKey, found.id);
+        }
+      }
+    }
+
     const toInsert: {
       userId: string;
       type: 'INCOME' | 'EXPENSE';
       amount: number;
       category: string;
+      categoryId: string | null;
       payment: string;
       note: string | null;
       date: Date;
@@ -101,6 +141,7 @@ export async function importTransactionsFromCsvAction(
           type,
           amount: numericAmount,
           category,
+          categoryId: categoryMap.get(category.toLowerCase()) || null,
           payment,
           note,
           date: dateValid,

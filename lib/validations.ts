@@ -17,6 +17,7 @@ export const TransactionSchema = z.object({
     .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
     .optional()
     .nullable(),
+  categoryId: z.string().optional().nullable(),
   walletId: z.string().optional().nullable(),
   targetWalletId: z.string().optional().nullable(),
 });
@@ -90,8 +91,29 @@ export const ChangePasswordSchema = z
 
 export type ChangePasswordFormValues = z.infer<typeof ChangePasswordSchema>;
 
+export const CategorySchema = z.object({
+  id: z.string().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: 'Le nom de la catégorie est obligatoire' })
+    .max(50, { message: 'Le nom ne peut pas dépasser 50 caractères' }),
+  kind: z.enum(['INCOME', 'EXPENSE', 'BOTH'] as const, {
+    message: 'Le type doit être INCOME, EXPENSE ou BOTH',
+  }),
+  color: z
+    .string()
+    .trim()
+    .regex(/^#[0-9A-Fa-f]{6}$/, { message: 'La couleur doit être au format hexadécimal (#RRGGBB)' })
+    .transform((val) => val.toUpperCase()),
+  isArchived: z.boolean().default(false),
+});
+
+export type CategoryFormValues = z.input<typeof CategorySchema>;
+
 export const BudgetSchema = z.object({
   category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
+  categoryId: z.string().optional().nullable(),
   amount: z.coerce
     .number({ message: 'Le montant doit être un nombre valide' })
     .positive({ message: 'Le montant doit être strictement supérieur à 0' }),
@@ -111,6 +133,7 @@ export const RecurringRuleSchema = z.object({
     .number({ message: 'Le montant doit être un nombre valide' })
     .positive({ message: 'Le montant doit être strictement supérieur à 0' }),
   category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
+  categoryId: z.string().optional().nullable(),
   payment: z.string().min(1, { message: 'Veuillez sélectionner un moyen de paiement' }),
   dayOfMonth: z.coerce
     .number({ message: 'Le jour doit être un nombre valide' })

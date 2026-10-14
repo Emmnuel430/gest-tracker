@@ -9,7 +9,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EditTransactionModal } from "@/components/transactions/EditTransactionModal";
 import { deleteTransactionAction } from "@/actions/transactions";
 import { PAYMENT_METHOD_THEMES } from "@/constants/payment-methods";
-import { CATEGORY_COLORS } from "@/constants/categories";
+import { useCategories } from "@/components/providers/ReferenceDataProvider";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -25,13 +25,14 @@ export function TransactionItem({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const { getCategoryColor } = useCategories();
 
   const isIncome = transaction.type === "INCOME";
   const paymentTheme = PAYMENT_METHOD_THEMES[transaction.payment] || {
     bg: "#EFF6FF",
     text: "#111827",
   };
-  const catColor = CATEGORY_COLORS[transaction.category] || "#2563EB";
+  const catColor = getCategoryColor(transaction.category);
 
   const handleDelete = async () => {
     setIsDeleting(true);

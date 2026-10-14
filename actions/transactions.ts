@@ -55,7 +55,25 @@ export async function createTransactionAction(
       };
     }
 
-    const { type, amount, category, payment, date, note } = parseResult.data;
+    const { type, amount, category, payment, date, note, categoryId } = parseResult.data;
+
+    let resolvedCategoryId: string | null = categoryId || null;
+    if (resolvedCategoryId) {
+      const cat = await prisma.category.findUnique({ where: { id: resolvedCategoryId } });
+      if (!cat || cat.userId !== user.id) {
+        return { success: false, error: 'Catégorie non autorisée' };
+      }
+      if (cat.kind !== 'BOTH' && cat.kind !== type) {
+        return { success: false, error: 'Catégorie incompatible avec ce type d’opération' };
+      }
+    } else if (category) {
+      const cat = await prisma.category.findUnique({
+        where: { userId_name: { userId: user.id, name: category } },
+      });
+      if (cat) {
+        resolvedCategoryId = cat.id;
+      }
+    }
 
     // Logique métier : Horodatage exact si non fourni manuellement
     const finalDate =
@@ -67,6 +85,7 @@ export async function createTransactionAction(
         type,
         amount,
         category,
+        categoryId: resolvedCategoryId,
         payment,
         date: finalDate,
         note: note ? note.trim() : null,
@@ -319,12 +338,32 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
       };
     }
 
+    let resolvedCategoryId = data.categoryId !== undefined ? data.categoryId : undefined;
+    if (resolvedCategoryId) {
+      const cat = await prisma.category.findUnique({ where: { id: resolvedCategoryId } });
+      if (!cat || cat.userId !== user.id) {
+        return { success: false, error: 'Catégorie non autorisée' };
+      }
+      const targetType = data.type || existing.type;
+      if (cat.kind !== 'BOTH' && cat.kind !== targetType) {
+        return { success: false, error: 'Catégorie incompatible avec ce type d’opération' };
+      }
+    } else if (data.category && resolvedCategoryId === undefined) {
+      const cat = await prisma.category.findUnique({
+        where: { userId_name: { userId: user.id, name: data.category } },
+      });
+      if (cat) {
+        resolvedCategoryId = cat.id;
+      }
+    }
+
     const updated = await prisma.transaction.update({
       where: { id },
       data: {
         ...(data.type && { type: data.type }),
         ...(data.amount && { amount: data.amount }),
         ...(data.category && { category: data.category }),
+        ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
         ...(data.payment && { payment: data.payment }),
         ...(data.date instanceof Date && !isNaN(data.date.getTime()) && { date: data.date }),
         ...(data.note !== undefined && { note: data.note ? data.note.trim() : null }),

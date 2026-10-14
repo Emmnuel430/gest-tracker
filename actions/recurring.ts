@@ -78,7 +78,25 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       };
     }
 
-    const { id, type, amount, category, payment, dayOfMonth, frequency, note, isActive } = parseResult.data;
+    const { id, type, amount, category, payment, dayOfMonth, frequency, note, isActive, categoryId } = parseResult.data;
+
+    let resolvedCategoryId = categoryId || null;
+    if (resolvedCategoryId) {
+      const cat = await prisma.category.findUnique({ where: { id: resolvedCategoryId } });
+      if (!cat || cat.userId !== user.id) {
+        return { success: false, error: 'Catégorie non autorisée' };
+      }
+      if (cat.kind !== 'BOTH' && cat.kind !== type) {
+        return { success: false, error: 'Catégorie incompatible avec ce type d’opération' };
+      }
+    } else if (category) {
+      const cat = await prisma.category.findUnique({
+        where: { userId_name: { userId: user.id, name: category } },
+      });
+      if (cat) {
+        resolvedCategoryId = cat.id;
+      }
+    }
 
     let savedRule;
     if (id) {
@@ -89,6 +107,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
           type,
           amount,
           category,
+          categoryId: resolvedCategoryId,
           payment,
           dayOfMonth,
           frequency,
@@ -104,6 +123,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
           type,
           amount,
           category,
+          categoryId: resolvedCategoryId,
           payment,
           dayOfMonth,
           frequency,

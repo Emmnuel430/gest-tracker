@@ -29,7 +29,8 @@ export function calculateFinancialSummary(transactions: Transaction[]): Financia
 
 export function calculateCategoryBreakdown(
   transactions: Transaction[],
-  type: 'INCOME' | 'EXPENSE' = 'EXPENSE'
+  type: 'INCOME' | 'EXPENSE' = 'EXPENSE',
+  colorResolver?: (category: string) => string
 ): CategoryBreakdown[] {
   const filtered = transactions.filter((tx) => tx.type === type);
   const totalAmount = filtered.reduce((acc, tx) => acc + tx.amount, 0);
@@ -48,11 +49,15 @@ export function calculateCategoryBreakdown(
 
   groupMap.forEach((val, cat) => {
     const percentage = totalAmount > 0 ? (val.total / totalAmount) * 100 : 0;
+    const resolvedColor = colorResolver
+      ? colorResolver(cat)
+      : (CATEGORY_COLORS[cat] || '#000000');
+
     breakdown.push({
       category: cat,
       total: val.total,
       percentage: Math.round(percentage * 10) / 10,
-      color: CATEGORY_COLORS[cat] || '#000000',
+      color: resolvedColor,
       count: val.count,
     });
   });

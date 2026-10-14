@@ -1,10 +1,12 @@
+'use client';
+
 import React from "react";
 import Link from "next/link";
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, Sparkles } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { formatCurrency } from "@/constants/config";
 import { formatDisplayDate, formatTime } from "@/lib/dates";
-import { CATEGORY_COLORS } from "@/constants/categories";
+import { useCategories } from "@/components/providers/ReferenceDataProvider";
 import { PAYMENT_METHOD_THEMES } from "@/constants/payment-methods";
 
 interface RecentTransactionsListProps {
@@ -14,6 +16,8 @@ interface RecentTransactionsListProps {
 export function RecentTransactionsList({
   transactions,
 }: RecentTransactionsListProps) {
+  const { getCategoryColor } = useCategories();
+
   if (!transactions || transactions.length === 0) {
     return (
       <div className="w-full mt-6 bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[5px_5px_0px_0px_#111827] dark:shadow-[5px_5px_0px_0px_#000000] text-center">
@@ -48,7 +52,7 @@ export function RecentTransactionsList({
       <div className="space-y-2.5">
         {transactions.map((tx) => {
           const isIncome = tx.type === "INCOME";
-          const catColor = CATEGORY_COLORS[tx.category] || "#2563EB";
+          const catColor = getCategoryColor(tx.category);
           const paymentTheme = PAYMENT_METHOD_THEMES[tx.payment] || {
             bg: "#EFF6FF",
             text: "#111827",

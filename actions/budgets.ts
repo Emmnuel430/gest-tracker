@@ -42,7 +42,25 @@ export async function upsertBudgetAction(rawData: unknown): Promise<ActionRespon
       };
     }
 
-    const { category, amount, month } = parseResult.data;
+    const { category, amount, month, categoryId } = parseResult.data;
+
+    let resolvedCategoryId = categoryId || null;
+    if (resolvedCategoryId) {
+      const cat = await prisma.category.findUnique({ where: { id: resolvedCategoryId } });
+      if (!cat || cat.userId !== user.id) {
+        return { success: false, error: 'Catégorie non autorisée' };
+      }
+      if (cat.kind === 'INCOME') {
+        return { success: false, error: 'Les budgets ne peuvent être définis que pour des dépenses' };
+      }
+    } else if (category) {
+      const cat = await prisma.category.findUnique({
+        where: { userId_name: { userId: user.id, name: category } },
+      });
+      if (cat) {
+        resolvedCategoryId = cat.id;
+      }
+    }
 
     const budget = await prisma.budget.upsert({
       where: {
@@ -55,11 +73,13 @@ export async function upsertBudgetAction(rawData: unknown): Promise<ActionRespon
       create: {
         userId: user.id,
         category,
+        categoryId: resolvedCategoryId,
         amount,
         month,
       },
       update: {
         amount,
+        ...(resolvedCategoryId && { categoryId: resolvedCategoryId }),
       },
     });
 

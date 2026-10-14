@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.1.0)
+# GEST TRACKER — Documentation Complète (v2.2.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -14,7 +14,7 @@ Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRA
    - [4.2 Tableau de Bord Principal (`/`)](#42-tableau-de-bord-principal-)
    - [4.3 Bilan & Conseils Financiers (Moteur d'Insights)](#43-bilan--conseils-financiers-moteur-dinsights)
    - [4.4 Hub de Gestion & Modules (`/gestion`)](#44-hub-de-gestion--modules-gestion)
-   - [4.5 Budgets Mensuels & Alertes (`/budgets`)](#45-budgets-mensuels--alertes-budgets)
+   - [4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`)](#45-budgets-mensuels--gestion-des-catégories-budgets)
    - [4.6 Règles Récurrentes & Charges Fixes (`/recurrences`)](#46-règles-récurrentes--charges-fixes-recurrences)
    - [4.7 Portefeuilles & Virements Internes (`/portefeuilles`)](#47-portefeuilles--virements-internes-portefeuilles)
    - [4.8 Dettes & Créances (`/dettes`)](#48-dettes--créances-dettes)
@@ -57,7 +57,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (87 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (103 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -68,7 +68,8 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 my-app/
 ├── actions/                  # Next.js Server Actions ('use server')
 │   ├── budgets.ts            # Gestion des plafonds budgétaires et calcul de consommation
-│   ├── csv-import.ts         # Importation de relevés bancaires avec dédoublonnage
+│   ├── categories.ts         # CRUD catégories personnalisées, seed paresseux, renommage
+│   ├── csv-import.ts         # Importation de relevés bancaires avec dédoublonnage et mapping catégorie
 │   ├── debts.ts              # Dettes, créances et remboursements partiels
 │   ├── insights.ts           # Moteur d'analyses financières et détection d'anomalies
 │   ├── recurring.ts          # Échéances récurrentes et génération automatique
@@ -77,7 +78,7 @@ my-app/
 │   └── wallets.ts            # Portefeuilles et virements internes neutres
 ├── app/                      # Pages et Routes Next.js App Router
 │   ├── api/                  # Routes API (Export JSON, CSV, PDF)
-│   ├── budgets/              # Page Budgets mensuels
+│   ├── budgets/              # Page Budgets mensuels & Gestion des catégories
 │   ├── dettes/               # Page Dettes & Créances
 │   ├── entrant/              # Formulaire de recette / revenu
 │   ├── gestion/              # Hub central des modules financiers V2 (redirection 308 depuis /options)
@@ -88,20 +89,22 @@ my-app/
 │   ├── recurrences/          # Règles d'échéances fixes
 │   ├── register/             # Inscription avec confirmation de mot de passe
 │   ├── sortant/              # Formulaire de dépense
-│   ├── layout.tsx            # Layout racine avec injection de thème et BottomNav
+│   ├── layout.tsx            # Layout racine avec ReferenceDataProvider, Thème et BottomNav
 │   └── page.tsx              # Tableau de bord principal
 ├── components/               # Composants React organisés par domaine
-│   ├── budgets/              # BudgetCard, BudgetModal
+│   ├── budgets/              # BudgetCard, BudgetModal, CategoryManagerModal
 │   ├── debts/                # DebtCard, DebtModal, RepaymentModal
 │   ├── home/                 # BalanceSummary, HomeActions, RecentTransactionsList
 │   ├── insights/             # FinancialInsightsCard, InsightsCarousel
 │   ├── layout/               # BottomNav (3 onglets), HeaderAuth
+│   ├── providers/            # ReferenceDataProvider (cache réactif catégories et couleurs)
 │   ├── recurring/            # RecurringCard, RecurringModal, RecurringAlertBanner
 │   ├── ui/                   # Button, Card, ConfirmDialog (modal de sécurité)
 │   └── wallets/              # WalletCard, WalletModal, TransferModal
-├── constants/                # Catégories, moyens de paiement et configuration
+├── constants/                # Catégories par défaut, moyens de paiement et configuration
 ├── lib/                      # Utilitaires réutilisables
 │   ├── auth.ts               # Récupération de l'utilisateur authentifié côté serveur
+│   ├── categories.ts         # Filtrage de catégories par kind (INCOME/EXPENSE/BOTH)
 │   ├── dates.ts              # Formatage de dates en français
 │   ├── insights.ts           # Moteur d'analyses financières et détection d'anomalies
 │   ├── prisma.ts             # Client Prisma singleton avec Proxy auto-guérisseur
@@ -112,10 +115,10 @@ my-app/
 ├── prisma/                   # Configuration de base de données
 │   ├── migration_v2.sql      # Script SQL idempotent de migration pour la Production
 │   ├── schema.prisma         # Schéma déclaratif Prisma 7
-│   └── seed.ts               # Seeder de démonstration
+│   └── seed.ts               # Seeder de démonstration avec catégories relationnelles
 ├── scripts/                  # Scripts de maintenance
 │   └── backfill-user-transactions.ts # Rattachement des transactions orphelines
-└── tests/                    # 87 tests unitaires automatisés
+└── tests/                    # 103 tests unitaires automatisés (node:test + tsx)
 ```
 
 ---
@@ -173,13 +176,21 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 3. **Dettes & Créances**
 *(Note : Le module Règles Récurrentes y est temporairement masqué en attendant le service d'e-mails v2.6.0, mais reste accessible directement via son URL).*
 
-### 4.5 Budgets Mensuels & Alertes (`/budgets`)
+### 4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`)
 
-- Définition d'un montant plafond par catégorie pour un mois donné (ex: _Alimentation : 60 000 FCFA pour 2026-10_).
-- Jauge visuelle dynamique tricolore :
+- **Budgets mensuels par catégorie :** Définition d'un montant plafond pour un mois donné (ex: _Alimentation : 60 000 FCFA pour 2026-10_).
+- **Jauge visuelle dynamique tricolore :**
   - **Vert :** Moins de 75 % consommé.
   - **Orange :** Entre 75 % et 99 % consommé (Attention).
   - **Rouge :** 100 % ou plus (Dépassement de budget).
+- **Gestionnaire de Catégories Personnalisées (`CategoryManagerModal`) :**
+  - Bouton dédié **"Catégories"** sur la vue `/budgets`.
+  - Liste filtrable par type (`Toutes`, `Dépenses`, `Revenus`, `Mixtes / Both`).
+  - Palette néobrutaliste contrôlée de 20 couleurs contrastées ou saisie d'un code hexadécimal libre.
+  - Calcul dynamique de luminance W3C pour assurer un contraste de texte optimal (`#111827` sur fond clair, `#FFFFFF` sur fond sombre).
+  - Prévisualisation dynamique du badge avant enregistrement.
+  - Protection contre la suppression accidentelle si la catégorie est référencée par des transactions, budgets ou règles récurrentes (recommandation d'archivage).
+  - Propagation transactionnelle atomique des renommages pour préserver la rétrocompatibilité expand/contract.
 - Navigation mois par mois pour comparer sa consommation dans le temps.
 
 ### 4.6 Règles Récurrentes & Charges Fixes (`/recurrences`)
@@ -260,6 +271,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum CategoryKind {
+  INCOME
+  EXPENSE
+  BOTH
+}
+
 enum TransactionType {
   INCOME
   EXPENSE
@@ -290,6 +307,26 @@ enum DebtStatus {
   SETTLED
 }
 
+model Category {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  name       String
+  kind       CategoryKind
+  color      String
+  isArchived Boolean      @default(false) @map("is_archived")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  transactions   Transaction[]
+  budgets        Budget[]
+  recurringRules RecurringRule[]
+
+  @@unique([userId, name])
+  @@index([userId, kind])
+  @@index([userId])
+  @@map("categories")
+}
+
 model Transaction {
   id             String          @id @default(uuid())
   type           TransactionType
@@ -298,6 +335,11 @@ model Transaction {
   payment        String
   note           String?
   date           DateTime        @default(now())
+
+  // Catégorie reliée (patron Expand/Contract)
+  categoryId     String?         @map("category_id")
+  categoryRel    Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
   userId         String?         @map("user_id")
   walletId       String?         @map("wallet_id")
   wallet         Wallet?         @relation("SourceWallet", fields: [walletId], references: [id], onDelete: SetNull)
@@ -326,13 +368,15 @@ model Wallet {
 }
 
 model Budget {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  category  String
-  amount    Decimal  @db.Decimal(12, 2)
-  month     String   // Format "YYYY-MM"
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  category   String
+  categoryId String?   @map("category_id")
+  categoryRel Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  amount     Decimal   @db.Decimal(12, 2)
+  month      String    // Format "YYYY-MM"
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   @@unique([userId, category, month])
   @@map("budgets")
@@ -344,6 +388,8 @@ model RecurringRule {
   type               TransactionType
   amount             Decimal             @db.Decimal(12, 2)
   category           String
+  categoryId         String?             @map("category_id")
+  categoryRel        Category?           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   payment            String
   dayOfMonth         Int                 @map("day_of_month")
   frequency          RecurrenceFrequency @default(MONTHLY)
