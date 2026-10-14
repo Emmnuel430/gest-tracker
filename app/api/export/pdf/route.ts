@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getDateRangeForPeriod } from '@/lib/dates';
@@ -13,17 +14,37 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get('period') as PeriodType) || 'month';
+    const type = searchParams.get('type');
+    const category = searchParams.get('category');
+    const payment = searchParams.get('payment');
+    const start = searchParams.get('start');
+    const end = searchParams.get('end');
 
-    const range = getDateRangeForPeriod(period);
+    const range =
+      period === 'custom' && start && end
+        ? getDateRangeForPeriod('custom', start, end)
+        : getDateRangeForPeriod(period);
+
+    const where: Prisma.TransactionWhereInput = {
+      userId: user.id,
+      date: {
+        gte: range.from,
+        lte: range.to,
+      },
+    };
+
+    if (type && type !== 'all' && (type === 'INCOME' || type === 'EXPENSE')) {
+      where.type = type;
+    }
+    if (category && category !== 'all') {
+      where.category = { equals: category, mode: 'insensitive' };
+    }
+    if (payment && payment !== 'all') {
+      where.payment = { equals: payment, mode: 'insensitive' };
+    }
 
     const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: user.id,
-        date: {
-          gte: range.from,
-          lte: range.to,
-        },
-      },
+      where,
       orderBy: { date: 'desc' },
     });
 

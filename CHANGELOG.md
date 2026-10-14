@@ -3,6 +3,21 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-14
+
+### Features
+- **historique** : Refonte contextuelle de l'historique avec matrice d'affichage intelligente (`getHistoryVisibility`) masquant dynamiquement le résumé financier sur les entrées, masquant les graphiques et sections redondantes lors du filtrage par catégorie spécifique, et adaptant les libellés ("Moyen de réception" pour les entrées, "Moyen de paiement" pour les dépenses).
+- **pagination** : Pagination serveur par curseur (`getTransactionsPageAction`) avec tri déterministe `[date DESC, id DESC]`, bouton néobrutaliste "Charger plus" avec indicateur de progression, et réinitialisation propre à la première page lors de modifications de filtres.
+- **performance** : Agrégations serveur directes (`getHistoryStatsAction`) par `groupBy` Prisma sur les totaux par type, catégorie et portefeuille pour la période courante et la période précédente, avec transmission des statistiques précalculées aux composants de visualisation.
+- **db** : Migration `history_pagination_index` ajoutant l'index composé optimisé `idx_transactions_user_date_id (user_id, date DESC, id)` pour garantir des requêtes de pagination ultra-rapides sans scan de table.
+- **navigation** : Synchronisation bidirectionnelle fluide de l'ensemble des filtres dans l'URL (`period`, `type`, `category`, `payment`, `tab`, `start`, `end`) sans rechargement de page via `window.history.replaceState`.
+- **filtres** : Dépendance stricte du sélecteur de catégories désactivé avec message incitatif ("Choisissez d'abord un type") tant qu'aucun type n'est sélectionné, et réinitialisation automatique si la catégorie devient incompatible avec le nouveau type.
+- **analytics** : Généralisation des composants d'analyse `CategoryChart` et `CategoryRanking` acceptant indifféremment les entrées et les dépenses avec palettes dynamiques.
+- **export** : Prise en compte de l'ensemble des filtres actifs (`period`, `type`, `category`, `payment`, dates personnalisées) dans l'export et l'impression PDF via `/api/export/pdf`.
+- **tests** : Couverture complète de la matrice de visibilité et de la pagination (`tests/history.test.ts`), portant la suite de tests à 123 tests unitaires réussis à 100 %.
+
+---
+
 ## [2.3.0] - 2026-10-14
 
 ### Features

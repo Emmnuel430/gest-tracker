@@ -4,20 +4,22 @@ import { formatCurrency } from '@/constants/config';
 
 interface ExpenseRankingProps {
   breakdown: CategoryBreakdown[];
+  type?: 'INCOME' | 'EXPENSE';
 }
 
-export function ExpenseRanking({ breakdown }: ExpenseRankingProps) {
+export function ExpenseRanking({ breakdown, type = 'EXPENSE' }: ExpenseRankingProps) {
   if (!breakdown || breakdown.length === 0) {
     return null;
   }
 
+  const isIncome = type === 'INCOME';
   // Limiter au top 5 des catégories
   const topCategories = breakdown.slice(0, 5);
 
   return (
     <div className="bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] rounded-xl p-4 sm:p-5 shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] w-full">
       <h3 className="text-xs font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC] mb-3">
-        Top Catégories de Dépenses
+        {isIncome ? "Top Catégories d'Entrées" : 'Top Catégories de Dépenses'}
       </h3>
 
       <div className="space-y-3">
@@ -52,3 +54,5 @@ export function ExpenseRanking({ breakdown }: ExpenseRankingProps) {
     </div>
   );
 }
+
+export { ExpenseRanking as CategoryRanking };
