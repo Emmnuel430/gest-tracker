@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Layers } from 'lucide-react';
 import { WalletItem, getWalletsAction } from '@/actions/wallets';
@@ -17,19 +17,20 @@ export default function PortefeuillesPage() {
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<WalletItem | null>(null);
   const [defaultTransferSourceId, setDefaultTransferSourceId] = useState<string | undefined>(undefined);
+  const [showArchived, setShowArchived] = useState<boolean>(false);
 
-  const loadWallets = async () => {
+  const loadWallets = useCallback(async (includeArchived = showArchived) => {
     setLoading(true);
-    const res = await getWalletsAction();
+    const res = await getWalletsAction({ includeArchived });
     if (res.success && res.data) {
       setWallets(res.data);
     }
     setLoading(false);
-  };
+  }, [showArchived]);
 
   useEffect(() => {
-    loadWallets();
-  }, []);
+    loadWallets(showArchived);
+  }, [loadWallets, showArchived]);
 
   const handleOpenCreate = () => {
     setSelectedWallet(null);
@@ -138,9 +139,22 @@ export default function PortefeuillesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs font-black uppercase text-neutral-500 dark:text-neutral-400 px-1">
-              <span>Répartition des soldes</span>
-              <span className="text-[11px] font-bold">{wallets.length} portefeuille(s)</span>
+            <div className="flex items-center justify-between text-xs font-black uppercase text-neutral-500 dark:text-neutral-400 px-1 gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span>Répartition des soldes</span>
+                <span className="text-[11px] font-bold">({wallets.length} compte(s))</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowArchived((prev) => !prev)}
+                className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border transition-all cursor-pointer ${
+                  showArchived
+                    ? 'bg-[#111827] text-white border-[#111827] dark:bg-white dark:text-[#111827]'
+                    : 'bg-white dark:bg-[#1E293B] text-neutral-600 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:border-[#111827]'
+                }`}
+              >
+                {showArchived ? 'Masquer les comptes archivés' : 'Afficher les comptes archivés'}
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

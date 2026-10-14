@@ -28,8 +28,7 @@ import {
   calculatePaymentMethodBreakdown,
 } from '@/lib/statistics';
 import { getDateRangeForPeriod, formatPeriodLabel } from '@/lib/dates';
-import { useCategories } from '@/components/providers/ReferenceDataProvider';
-import { PAYMENT_METHODS } from '@/constants/payment-methods';
+import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { getTransactionsAction } from '@/actions/transactions';
 
 interface HistoryViewProps {
@@ -43,6 +42,7 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { categories, getCategoryColor } = useCategories();
+  const { wallets } = useWallets({ includeArchived: true });
 
   // Initialisation à partir des query params ou valeurs par défaut
   const initialPeriod = (searchParams.get('period') as PeriodType) || 'month';
@@ -88,6 +88,18 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
   }, [typeFilter, categoryFilter, paymentFilter]);
 
   const hasActiveFilters = activeFiltersCount > 0;
+
+  // Liste dynamique des moyens de paiement / portefeuilles disponibles
+  const availablePayments = useMemo(() => {
+    const set = new Set<string>();
+    for (const w of wallets) {
+      if (w.name) set.add(w.name);
+    }
+    for (const t of initialTransactions) {
+      if (t.payment) set.add(t.payment);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [wallets, initialTransactions]);
 
   // Section 6 : Si 'custom' est sélectionné, masquer Comparatif et basculer sur 'list'
   useEffect(() => {
@@ -333,7 +345,7 @@ export function HistoryView({ initialTransactions }: HistoryViewProps) {
                 className="w-full bg-[#EFF6FF] dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-lg p-2 text-xs font-bold text-[#111827] dark:text-white shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
               >
                 <option value="all">Tous les canaux</option>
-                {PAYMENT_METHODS.map((p) => (
+                {availablePayments.map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>

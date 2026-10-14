@@ -8,8 +8,8 @@ import { formatDisplayDate, formatTime } from "@/lib/dates";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EditTransactionModal } from "@/components/transactions/EditTransactionModal";
 import { deleteTransactionAction } from "@/actions/transactions";
-import { PAYMENT_METHOD_THEMES } from "@/constants/payment-methods";
-import { useCategories } from "@/components/providers/ReferenceDataProvider";
+import { useCategories, useWallets } from "@/components/providers/ReferenceDataProvider";
+import { getContrastTextColor } from "@/lib/utils";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -26,11 +26,14 @@ export function TransactionItem({
   const [showConfirm, setShowConfirm] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const { getCategoryColor } = useCategories();
+  const { getWalletColor } = useWallets();
 
   const isIncome = transaction.type === "INCOME";
-  const paymentTheme = PAYMENT_METHOD_THEMES[transaction.payment] || {
-    bg: "#EFF6FF",
-    text: "#111827",
+  const walletBg = getWalletColor(transaction.payment);
+  const walletText = getContrastTextColor(walletBg);
+  const paymentTheme = {
+    bg: walletBg,
+    text: walletText,
   };
   const catColor = getCategoryColor(transaction.category);
 

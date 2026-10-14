@@ -3,6 +3,19 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-14
+
+### Features
+- **wallets** : Les portefeuilles deviennent la source unique et vivante de tous les moyens de paiement de l'application (suppression de la dépendance aux constantes codées en dur).
+- **db** : Migration `wallets_payment_source` avec ajout de la colonne `is_archived` sur `wallets`, index d'optimisation, ajout de la clé étrangère `wallet_id` sur `recurring_rules`, et rétro-compatibilité Expand/Contract synchronisant en continu la colonne textuelle `payment`.
+- **migrations** : Backfill automatisé en base créant les portefeuilles manquants d'après les anciens libellés textuels et reliant 100 % des transactions et règles récurrentes sans perte de données.
+- **architecture** : Intégration du cache unifié `useWallets` dans `ReferenceDataProvider` fournissant la couleur dynamique de chaque portefeuille et un calcul de contraste W3C lisible pour les badges et graphiques.
+- **ui** : Refonte complète des sélecteurs de moyens de paiement dans `TransactionForm`, `EditTransactionModal`, `RecurringModal`, `HistoryView`, `RecentTransactionsList`, `TransactionItem`, `RecurringCard` et `PaymentMethodChart`.
+- **portefeuilles** : Ajout du cycle d'archivage/désarchivage de portefeuilles (`archiveWalletAction`), protection contre l'archivage du compte principal, interdiction stricte de suppression des portefeuilles liés à des transactions avec recommandation d'archivage, et filtre d'affichage des comptes archivés sur `/portefeuilles`.
+- **tests** : Extension de la suite de tests unitaires à 109 tests réussis (`tests/wallets.test.ts`), 0 erreur TypeScript et conformité ESLint stricte avec 0 warning.
+
+---
+
 ## [2.2.0] - 2026-10-14
 
 ### Features

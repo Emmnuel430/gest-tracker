@@ -55,7 +55,7 @@ export async function createTransactionAction(
       };
     }
 
-    const { type, amount, category, payment, date, note, categoryId } = parseResult.data;
+    const { type, amount, category, payment, date, note, categoryId, walletId } = parseResult.data;
 
     let resolvedCategoryId: string | null = categoryId || null;
     if (resolvedCategoryId) {
@@ -75,6 +75,28 @@ export async function createTransactionAction(
       }
     }
 
+    // Résolution du portefeuille et synchronisation du moyen de paiement
+    let resolvedWalletId: string | null = walletId || null;
+    let resolvedPaymentName: string = payment;
+
+    if (resolvedWalletId) {
+      const w = await prisma.wallet.findFirst({
+        where: { id: resolvedWalletId, userId: user.id },
+      });
+      if (!w) {
+        return { success: false, error: 'Portefeuille non autorisé ou introuvable' };
+      }
+      resolvedPaymentName = w.name;
+    } else if (payment) {
+      const w = await prisma.wallet.findFirst({
+        where: { userId: user.id, name: { equals: payment, mode: 'insensitive' } },
+      });
+      if (w) {
+        resolvedWalletId = w.id;
+        resolvedPaymentName = w.name;
+      }
+    }
+
     // Logique métier : Horodatage exact si non fourni manuellement
     const finalDate =
       date instanceof Date && !isNaN(date.getTime()) ? date : new Date();
@@ -86,7 +108,8 @@ export async function createTransactionAction(
         amount,
         category,
         categoryId: resolvedCategoryId,
-        payment,
+        payment: resolvedPaymentName,
+        walletId: resolvedWalletId,
         date: finalDate,
         note: note ? note.trim() : null,
       },
@@ -94,6 +117,7 @@ export async function createTransactionAction(
 
     revalidatePath('/');
     revalidatePath('/historique');
+    revalidatePath('/portefeuilles');
     revalidatePath('/entrant');
     revalidatePath('/sortant');
 
@@ -357,6 +381,28 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
       }
     }
 
+    // Résolution et validation du portefeuille
+    let resolvedWalletId = data.walletId !== undefined ? data.walletId : undefined;
+    let resolvedPaymentName = data.payment;
+
+    if (resolvedWalletId) {
+      const w = await prisma.wallet.findFirst({
+        where: { id: resolvedWalletId, userId: user.id },
+      });
+      if (!w) {
+        return { success: false, error: 'Portefeuille non autorisé ou introuvable' };
+      }
+      resolvedPaymentName = w.name;
+    } else if (data.payment && resolvedWalletId === undefined) {
+      const w = await prisma.wallet.findFirst({
+        where: { userId: user.id, name: { equals: data.payment, mode: 'insensitive' } },
+      });
+      if (w) {
+        resolvedWalletId = w.id;
+        resolvedPaymentName = w.name;
+      }
+    }
+
     const updated = await prisma.transaction.update({
       where: { id },
       data: {
@@ -364,7 +410,8 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
         ...(data.amount && { amount: data.amount }),
         ...(data.category && { category: data.category }),
         ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
-        ...(data.payment && { payment: data.payment }),
+        ...(resolvedPaymentName && { payment: resolvedPaymentName }),
+        ...(resolvedWalletId !== undefined && { walletId: resolvedWalletId }),
         ...(data.date instanceof Date && !isNaN(data.date.getTime()) && { date: data.date }),
         ...(data.note !== undefined && { note: data.note ? data.note.trim() : null }),
       },
@@ -372,6 +419,7 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
 
     revalidatePath('/');
     revalidatePath('/historique');
+    revalidatePath('/portefeuilles');
 
     return {
       success: true,

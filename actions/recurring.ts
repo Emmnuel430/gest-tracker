@@ -13,7 +13,9 @@ export interface RecurringRuleItem {
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   amount: number;
   category: string;
+  categoryId?: string | null;
   payment: string;
+  walletId?: string | null;
   dayOfMonth: number;
   frequency: 'MONTHLY' | 'WEEKLY' | 'YEARLY';
   note?: string | null;
@@ -45,7 +47,9 @@ export async function getRecurringRulesAction(): Promise<ActionResponse<Recurrin
         type: r.type,
         amount: Number(r.amount),
         category: r.category,
+        categoryId: r.categoryId,
         payment: r.payment,
+        walletId: r.walletId,
         dayOfMonth: r.dayOfMonth,
         frequency: r.frequency,
         note: r.note,
@@ -78,7 +82,19 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       };
     }
 
-    const { id, type, amount, category, payment, dayOfMonth, frequency, note, isActive, categoryId } = parseResult.data;
+    const {
+      id,
+      type,
+      amount,
+      category,
+      payment,
+      dayOfMonth,
+      frequency,
+      note,
+      isActive,
+      categoryId,
+      walletId,
+    } = parseResult.data;
 
     let resolvedCategoryId = categoryId || null;
     if (resolvedCategoryId) {
@@ -98,6 +114,28 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       }
     }
 
+    // Résolution et validation du portefeuille
+    let resolvedWalletId: string | null = walletId || null;
+    let resolvedPaymentName: string = payment;
+
+    if (resolvedWalletId) {
+      const w = await prisma.wallet.findFirst({
+        where: { id: resolvedWalletId, userId: user.id },
+      });
+      if (!w) {
+        return { success: false, error: 'Portefeuille non autorisé ou introuvable' };
+      }
+      resolvedPaymentName = w.name;
+    } else if (payment) {
+      const w = await prisma.wallet.findFirst({
+        where: { userId: user.id, name: { equals: payment, mode: 'insensitive' } },
+      });
+      if (w) {
+        resolvedWalletId = w.id;
+        resolvedPaymentName = w.name;
+      }
+    }
+
     let savedRule;
     if (id) {
       // Modification
@@ -108,7 +146,8 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
           amount,
           category,
           categoryId: resolvedCategoryId,
-          payment,
+          payment: resolvedPaymentName,
+          walletId: resolvedWalletId,
           dayOfMonth,
           frequency,
           note: note || null,
@@ -124,7 +163,8 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
           amount,
           category,
           categoryId: resolvedCategoryId,
-          payment,
+          payment: resolvedPaymentName,
+          walletId: resolvedWalletId,
           dayOfMonth,
           frequency,
           note: note || null,
@@ -136,6 +176,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
     revalidatePath('/');
     revalidatePath('/recurrences');
     revalidatePath('/budgets');
+    revalidatePath('/portefeuilles');
 
     return {
       success: true,
@@ -305,7 +346,9 @@ export async function processRecurringRuleAction(
           type: rule.type,
           amount: rule.amount,
           category: rule.category,
+          categoryId: rule.categoryId,
           payment: rule.payment,
+          walletId: rule.walletId,
           note: rule.note ? `${rule.note} [Échéance récurrente]` : 'Échéance récurrente confirmée',
           date: transactionDate,
         },
@@ -322,6 +365,7 @@ export async function processRecurringRuleAction(
     revalidatePath('/historique');
     revalidatePath('/budgets');
     revalidatePath('/recurrences');
+    revalidatePath('/portefeuilles');
 
     return {
       success: true,

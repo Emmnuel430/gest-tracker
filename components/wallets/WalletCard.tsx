@@ -1,9 +1,20 @@
 'use client';
 
 import React, { useTransition } from 'react';
-import { Edit2, Trash2, ArrowRightLeft, Star, Smartphone, CreditCard, Banknote, PiggyBank } from 'lucide-react';
+import {
+  Edit2,
+  Trash2,
+  ArrowRightLeft,
+  Star,
+  Smartphone,
+  CreditCard,
+  Banknote,
+  PiggyBank,
+  Archive,
+  ArchiveRestore,
+} from 'lucide-react';
 import { formatCurrency } from '@/constants/config';
-import { WalletItem, deleteWalletAction } from '@/actions/wallets';
+import { WalletItem, deleteWalletAction, archiveWalletAction } from '@/actions/wallets';
 
 interface WalletCardProps {
   wallet: WalletItem;
@@ -23,10 +34,30 @@ export function WalletCard({
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
-    if (!confirm(`Supprimer le portefeuille "${wallet.name}" ? Vos transactions passées seront conservées.`)) return;
+    if (!confirm(`Supprimer définitivement le portefeuille "${wallet.name}" ?`)) return;
     startTransition(async () => {
       const res = await deleteWalletAction(wallet.id);
-      if (res.success) onRefresh();
+      if (!res.success) {
+        alert(res.error || 'Impossible de supprimer ce compte.');
+        return;
+      }
+      onRefresh();
+    });
+  };
+
+  const handleToggleArchive = () => {
+    const nextArchived = !wallet.isArchived;
+    const promptText = nextArchived
+      ? `Archiver le portefeuille "${wallet.name}" ? Il ne sera plus proposé pour les nouvelles opérations.`
+      : `Désarchiver le portefeuille "${wallet.name}" ?`;
+    if (!confirm(promptText)) return;
+    startTransition(async () => {
+      const res = await archiveWalletAction(wallet.id, nextArchived);
+      if (!res.success) {
+        alert(res.error || 'Erreur lors de la mise à jour du portefeuille.');
+        return;
+      }
+      onRefresh();
     });
   };
 
@@ -51,7 +82,13 @@ export function WalletCard({
   }
 
   return (
-    <div className="p-4 bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] space-y-3 transition-all">
+    <div
+      className={`p-4 rounded-2xl border-3 transition-all space-y-3 ${
+        wallet.isArchived
+          ? 'bg-neutral-50 dark:bg-[#1E293B]/60 border-dashed border-neutral-400 dark:border-neutral-600 opacity-80'
+          : 'bg-white dark:bg-[#1E293B] border-[#111827] dark:border-[#334155] shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000]'
+      }`}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -72,6 +109,11 @@ export function WalletCard({
                   Principal
                 </span>
               )}
+              {wallet.isArchived && (
+                <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 border border-[#111827] dark:border-neutral-500">
+                  Archivé
+                </span>
+              )}
             </div>
             <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 uppercase">
               {typeLabel}
@@ -81,6 +123,21 @@ export function WalletCard({
 
         {/* Boutons actions */}
         <div className="flex items-center gap-1 shrink-0">
+          {!wallet.isDefault && (
+            <button
+              type="button"
+              onClick={handleToggleArchive}
+              disabled={isPending}
+              title={wallet.isArchived ? 'Désarchiver' : 'Archiver'}
+              className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-neutral-200 dark:hover:bg-[#1E293B] text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
+            >
+              {wallet.isArchived ? (
+                <ArchiveRestore className="w-3.5 h-3.5 stroke-2.5" />
+              ) : (
+                <Archive className="w-3.5 h-3.5 stroke-2.5" />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onEdit(wallet)}
@@ -134,14 +191,16 @@ export function WalletCard({
       </div>
 
       {/* Bouton virement rapide depuis ce compte */}
-      <button
-        type="button"
-        onClick={() => onTransfer(wallet.id)}
-        className="w-full py-2 px-3 bg-neutral-100 dark:bg-[#131C31] hover:bg-[#FFE600] text-[#111827] dark:text-[#F8FAFC] hover:text-[#111827] font-black text-xs uppercase rounded-xl border-2 border-[#111827] dark:border-[#334155] hover:border-[#111827] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
-      >
-        <ArrowRightLeft className="w-3.5 h-3.5 stroke-2.5" />
-        Faire un virement depuis ce compte
-      </button>
+      {!wallet.isArchived && (
+        <button
+          type="button"
+          onClick={() => onTransfer(wallet.id)}
+          className="w-full py-2 px-3 bg-neutral-100 dark:bg-[#131C31] hover:bg-[#FFE600] text-[#111827] dark:text-[#F8FAFC] hover:text-[#111827] font-black text-xs uppercase rounded-xl border-2 border-[#111827] dark:border-[#334155] hover:border-[#111827] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
+        >
+          <ArrowRightLeft className="w-3.5 h-3.5 stroke-2.5" />
+          Faire un virement depuis ce compte
+        </button>
+      )}
     </div>
   );
 }

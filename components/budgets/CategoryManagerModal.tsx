@@ -27,15 +27,8 @@ export const CONTROLLED_PALETTE = [
   '#38B000', '#52B788', '#0EA5E9', '#F59E0B', '#9E9E9E',
 ];
 
-export function getContrastTextColor(hexColor: string): '#111827' | '#FFFFFF' {
-  const cleanHex = hexColor.replace('#', '');
-  if (cleanHex.length !== 6) return '#FFFFFF';
-  const r = parseInt(cleanHex.substring(0, 2), 16);
-  const g = parseInt(cleanHex.substring(2, 4), 16);
-  const b = parseInt(cleanHex.substring(4, 6), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 145 ? '#111827' : '#FFFFFF';
-}
+import { getContrastTextColor } from '@/lib/utils';
+export { getContrastTextColor };
 
 interface CategoryManagerModalProps {
   isOpen: boolean;
