@@ -154,5 +154,15 @@ export function computeFinancialInsights(params: ComputeInsightsParams): Financi
     });
   }
 
+  // Tri déterministe par sévérité : danger > warning > info > success (V2.1.0)
+  const SEVERITY_ORDER: Record<InsightSeverity, number> = {
+    danger: 0,
+    warning: 1,
+    info: 2,
+    success: 3,
+  };
+
+  insights.sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99));
+
   return insights;
 }

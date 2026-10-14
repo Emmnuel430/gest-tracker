@@ -215,6 +215,39 @@ test('Financial Insights Engine (Sprint 17 Specifications)', async (t) => {
     assert.match(spikes[1].message, /\+50 %/);
   });
 
+  await t.test('trie rigoureusement les insights par sévérité : danger > warning > info > success (V2.1.0)', () => {
+    const mockBudgets: BudgetInsightData[] = [
+      {
+        category: 'Alimentation',
+        amount: 80000,
+        spent: 95000,
+        percentage: 119,
+        status: 'EXCEEDED',
+      },
+    ];
+
+    const insights = computeFinancialInsights({
+      currentIncome: 500000,
+      currentExpense: 350000, // 30% d'épargne -> produit un insight SAVINGS_CAPACITY "success"
+      currentBalance: 150000,
+      categoryExpensesCurrent: {
+        Alimentation: 95000,
+        Transport: 30000, // +50% -> produit un insight CATEGORY_SPIKE "warning"
+      },
+      categoryExpensesPrevious: {
+        Alimentation: 80000,
+        Transport: 20000,
+      },
+      budgets: mockBudgets, // dépassement -> produit un insight BUDGET_ALERT "danger"
+    });
+
+    // On s'attend à 3 insights : 1 danger, 1 warning, 1 success
+    assert.strictEqual(insights.length, 3);
+    assert.strictEqual(insights[0].severity, 'danger');
+    assert.strictEqual(insights[1].severity, 'warning');
+    assert.strictEqual(insights[2].severity, 'success');
+  });
+
   await t.test('génère un insight neutre équilibré si aucun seuil n’est franchi', () => {
     const insights = computeFinancialInsights({
       currentIncome: 0,
