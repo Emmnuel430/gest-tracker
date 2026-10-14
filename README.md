@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.0.3)
+# GEST TRACKER — Documentation Complète (v2.1.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -57,7 +57,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (86 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (87 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -94,7 +94,7 @@ my-app/
 │   ├── budgets/              # BudgetCard, BudgetModal
 │   ├── debts/                # DebtCard, DebtModal, RepaymentModal
 │   ├── home/                 # BalanceSummary, HomeActions, RecentTransactionsList
-│   ├── insights/             # FinancialInsightsCard
+│   ├── insights/             # FinancialInsightsCard, InsightsCarousel
 │   ├── layout/               # BottomNav (3 onglets), HeaderAuth
 │   ├── recurring/            # RecurringCard, RecurringModal, RecurringAlertBanner
 │   ├── ui/                   # Button, Card, ConfirmDialog (modal de sécurité)
@@ -115,7 +115,7 @@ my-app/
 │   └── seed.ts               # Seeder de démonstration
 ├── scripts/                  # Scripts de maintenance
 │   └── backfill-user-transactions.ts # Rattachement des transactions orphelines
-└── tests/                    # 86 tests unitaires automatisés
+└── tests/                    # 87 tests unitaires automatisés
 ```
 
 ---
@@ -145,10 +145,20 @@ my-app/
   - Bouton **HISTORIQUE** bleu néobrutaliste (`/historique`) pour explorer les archives.
 - **Dernières Opérations :** Liste compacte des transactions récentes avec affichage de la catégorie, moyen de paiement, portefeuille et date.
 
-### 4.3 Bilan & Conseils Financiers (Moteur d'Insights)
+### 4.3 Bilan & Conseils Financiers (Moteur d'Insights & Carrousel)
 
-- Situé sur la page d'accueil juste après l'historique récent.
-- Analyse algorithmique instantanée dans [`lib/insights.ts`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/lib/insights.ts) :
+- Situé sur la page d'accueil juste après les boutons d'actions rapides.
+- **Tri déterministe par sévérité :** Les conseils sont ordonnés par niveau de priorité décroissant (`danger` > `warning` > `info` > `success`) afin que les alertes budgétaires critiques et risques de déficit soient immédiatement présentés.
+- **Carrousel interactif néobrutaliste (`InsightsCarousel`) :**
+  - Affichage épuré d'une alerte à la fois avec hauteur calibrée anti-décalage de mise en page.
+  - Défilement automatique toutes les 6 secondes avec mise en pause au survol de la souris et au focus clavier.
+  - Boutons de navigation précédent / suivant et pastilles de pagination interactives.
+  - Compteur textuel dynamique (ex: `2 / 5`).
+  - Navigation gestuelle tactile (swipe mobile gauche / droite).
+  - Contrôle clavier direct (flèches directionnelles gauche et droite).
+  - Respect strict de l'accessibilité `prefers-reduced-motion` (désactivation de l'autoplay et transitions instantanées).
+  - Mode carte unique transparente si un seul insight est produit (aucun contrôle superflu).
+- **Analyse algorithmique instantanée dans [`lib/insights.ts`](file:///c:/Users/Albetarus/3D%20Objects/expense-tracker/my-app/lib/insights.ts) :**
   - **Taux d'épargne :** Évalué avec le seuil standard de 15 %. Taux $\ge 15\%$ : statut `success` (excellent). Taux entre 0 % et 15 % : statut `warning` (épargne fragile). Taux $< 0\%$ : statut `danger` (déficit mensuel).
   - **Surconsommation budgétaire :** Détection cumulative exhaustive. Liste tous les budgets dépassés ($\ge 100\%$, statut `danger`) et tous les budgets sous tension ($75\%-100\%$, statut `warning`).
   - **Hausse atypique de dépenses :** Détecte toutes les catégories affichant une hausse de plus de **20 %** et d'au moins **5 000 FCFA** par rapport au mois précédent, triées par montant de surcoût décroissant.
@@ -451,14 +461,14 @@ pnpm supabase db push
 
 ## 7. Tests Automatisés & Qualité de Code
 
-L'application intègre une suite de **86 tests unitaires** couvrant l'ensemble des règles métier critiques :
+L'application intègre une suite de **87 tests unitaires** couvrant l'ensemble des règles métier critiques :
 
 - **`tests/validations.test.ts` :** Validation Zod des transactions, inscriptions et connexions.
 - **`tests/recurring.test.ts` :** Échéances récurrentes, résolution calendaire de fin de mois (bissextile 2028, non-bissextile 2027) et libellés.
 - **`tests/budgets.test.ts` :** Calcul des jauges de consommation, alertes de seuils et pourcentages.
 - **`tests/wallets.test.ts` :** Calculs de soldes multi-comptes en temps réel.
 - **`tests/transfers.test.ts` :** Garantie de neutralité comptable des virements internes.
-- **`tests/insights.test.ts` :** Détection de hausses anormales multiples, seuil d'épargne 15 % et alertes de budget cumulatives.
+- **`tests/insights.test.ts` :** Détection de hausses anormales multiples, seuil d'épargne 15 %, alertes de budget cumulatives et tri déterministe par sévérité.
 - **`tests/debts.test.ts` :** Gestion des soldes de dettes et remboursements échelonnés.
 - **`tests/csv-import.test.ts` :** Parsing de fichiers bancaires et détection de doublons.
 
@@ -469,4 +479,4 @@ pnpm test
 pnpm lint
 ```
 
-_Résultat garanti : 86 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+_Résultat garanti : 87 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
