@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
   Edit2,
   Trash2,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/constants/config';
 import { WalletItem, deleteWalletAction, archiveWalletAction } from '@/actions/wallets';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface WalletCardProps {
   wallet: WalletItem;
@@ -32,31 +33,33 @@ export function WalletCard({
   onRefresh,
 }: WalletCardProps) {
   const [isPending, startTransition] = useTransition();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
 
-  const handleDelete = () => {
-    if (!confirm(`Supprimer définitivement le portefeuille "${wallet.name}" ?`)) return;
+  const confirmDelete = () => {
     startTransition(async () => {
       const res = await deleteWalletAction(wallet.id);
       if (!res.success) {
-        alert(res.error || 'Impossible de supprimer ce compte.');
+        setIsDeleteDialogOpen(false);
+        setActionErrorMessage(res.error || 'Impossible de supprimer ce compte.');
         return;
       }
+      setIsDeleteDialogOpen(false);
       onRefresh();
     });
   };
 
-  const handleToggleArchive = () => {
+  const confirmToggleArchive = () => {
     const nextArchived = !wallet.isArchived;
-    const promptText = nextArchived
-      ? `Archiver le portefeuille "${wallet.name}" ? Il ne sera plus proposé pour les nouvelles opérations.`
-      : `Désarchiver le portefeuille "${wallet.name}" ?`;
-    if (!confirm(promptText)) return;
     startTransition(async () => {
       const res = await archiveWalletAction(wallet.id, nextArchived);
       if (!res.success) {
-        alert(res.error || 'Erreur lors de la mise à jour du portefeuille.');
+        setIsArchiveDialogOpen(false);
+        setActionErrorMessage(res.error || 'Erreur lors de la mise à jour du portefeuille.');
         return;
       }
+      setIsArchiveDialogOpen(false);
       onRefresh();
     });
   };
@@ -126,7 +129,7 @@ export function WalletCard({
           {!wallet.isDefault && (
             <button
               type="button"
-              onClick={handleToggleArchive}
+              onClick={() => setIsArchiveDialogOpen(true)}
               disabled={isPending}
               title={wallet.isArchived ? 'Désarchiver' : 'Archiver'}
               className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-neutral-200 dark:hover:bg-[#1E293B] text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
@@ -149,7 +152,7 @@ export function WalletCard({
           </button>
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setIsDeleteDialogOpen(true)}
             disabled={isPending}
             title="Supprimer"
             className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-red-500 hover:text-white text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
@@ -201,6 +204,50 @@ export function WalletCard({
           Faire un virement depuis ce compte
         </button>
       )}
+
+      {/* Modale de confirmation de suppression */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="Supprimer le portefeuille"
+        message={`Supprimer définitivement le portefeuille "${wallet.name}" ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        isLoading={isPending}
+        loadingLabel="Suppression..."
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
+      {/* Modale de confirmation d'archivage / désarchivage */}
+      <ConfirmDialog
+        isOpen={isArchiveDialogOpen}
+        title={wallet.isArchived ? 'Désarchiver le portefeuille' : 'Archiver le portefeuille'}
+        message={
+          wallet.isArchived
+            ? `Désarchiver le portefeuille "${wallet.name}" ? Il sera de nouveau proposé pour vos opérations.`
+            : `Archiver le portefeuille "${wallet.name}" ? Il ne sera plus proposé pour les nouvelles opérations.`
+        }
+        confirmLabel={wallet.isArchived ? 'Désarchiver' : 'Archiver'}
+        cancelLabel="Annuler"
+        variant="warning"
+        isLoading={isPending}
+        loadingLabel={wallet.isArchived ? 'Désarchivage...' : 'Archivage...'}
+        onCancel={() => setIsArchiveDialogOpen(false)}
+        onConfirm={confirmToggleArchive}
+      />
+
+      {/* Modale d'erreur d'action */}
+      <ConfirmDialog
+        isOpen={actionErrorMessage !== null}
+        title="Action impossible"
+        message={actionErrorMessage || ''}
+        confirmLabel="Compris"
+        cancelLabel="Fermer"
+        variant="danger"
+        onCancel={() => setActionErrorMessage(null)}
+        onConfirm={() => setActionErrorMessage(null)}
+      />
     </div>
   );
 }
