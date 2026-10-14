@@ -81,7 +81,8 @@ export function calculateVariation(current: number, previous: number): Compariso
  */
 export function buildPeriodComparison(
   currentExpenses: Transaction[],
-  previousExpenses: Transaction[]
+  previousExpenses: Transaction[],
+  getWalletColor?: (name: string) => string
 ): PeriodComparisonData {
   const currentTotal = currentExpenses.reduce((acc, tx) => acc + tx.amount, 0);
   const previousTotal = previousExpenses.reduce((acc, tx) => acc + tx.amount, 0);
@@ -128,9 +129,10 @@ export function buildPeriodComparison(
   const paymentComparisons: PaymentComparisonItem[] = Array.from(paymentMap.entries())
     .map(([pm, val]) => {
       const variation = calculateVariation(val.current, val.previous);
+      const bg = getWalletColor ? getWalletColor(pm) : (PAYMENT_METHOD_THEMES[pm]?.bg || '#EFF6FF');
       return {
         payment: pm,
-        theme: PAYMENT_METHOD_THEMES[pm] || { bg: '#EFF6FF', text: '#111827' },
+        theme: { bg, text: '#111827' },
         ...variation,
       };
     })

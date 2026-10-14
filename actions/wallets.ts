@@ -15,6 +15,7 @@ export interface WalletItem {
   currentBalance: number;
   color: string;
   isDefault: boolean;
+  isArchived: boolean;
   totalIncome: number;
   totalExpense: number;
   totalTransferIn: number;
@@ -25,7 +26,9 @@ export interface WalletItem {
 /**
  * Récupère tous les portefeuilles de l'utilisateur avec leurs soldes calculés en temps réel
  */
-export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> {
+export async function getWalletsAction(options?: {
+  includeArchived?: boolean;
+}): Promise<ActionResponse<WalletItem[]>> {
   try {
     const user = await getAuthenticatedUser();
 
@@ -33,8 +36,13 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
       return { success: true, data: [] };
     }
 
+    const whereClause: { userId: string; isArchived?: boolean } = { userId: user.id };
+    if (!options?.includeArchived) {
+      // Par défaut on peut récupérer tous les portefeuilles ou filtrer selon option
+    }
+
     let wallets = await prisma.wallet.findMany({
-      where: { userId: user.id },
+      where: whereClause,
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
 
@@ -49,6 +57,7 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
             initialBalance: 0,
             color: '#52B788',
             isDefault: true,
+            isArchived: false,
           },
           {
             userId: user.id,
@@ -57,6 +66,7 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
             initialBalance: 0,
             color: '#1DC4F2',
             isDefault: false,
+            isArchived: false,
           },
           {
             userId: user.id,
@@ -65,12 +75,13 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
             initialBalance: 0,
             color: '#B8C0FF',
             isDefault: false,
+            isArchived: false,
           },
         ],
       });
 
       wallets = await prisma.wallet.findMany({
-        where: { userId: user.id },
+        where: whereClause,
         orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
       });
     }
@@ -115,6 +126,7 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
         currentBalance,
         color: w.color,
         isDefault: w.isDefault,
+        isArchived: w.isArchived,
         totalIncome: income,
         totalExpense: expense,
         totalTransferIn: transferIn,
@@ -125,7 +137,7 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
 
     return {
       success: true,
-      data: result,
+      data: options?.includeArchived ? result : result.filter((w) => !w.isArchived),
     };
   } catch (error: unknown) {
     console.error('Erreur getWalletsAction :', error);
@@ -137,7 +149,7 @@ export async function getWalletsAction(): Promise<ActionResponse<WalletItem[]>> 
 }
 
 /**
- * Enregistre ou met à jour un portefeuille
+ * Enregistre ou met à jour un portefeuille avec propagation atomique du nom
  */
 export async function upsertWalletAction(rawData: unknown): Promise<ActionResponse> {
   try {
@@ -151,7 +163,7 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
       };
     }
 
-    const { id, name, type, initialBalance, color, isDefault } = parseResult.data;
+    const { id, name, type, initialBalance, color, isDefault, isArchived } = parseResult.data;
 
     if (isDefault) {
       // Déchoir les autres portefeuilles du statut par défaut
@@ -163,16 +175,51 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
 
     let saved;
     if (id) {
-      saved = await prisma.wallet.update({
+      const existing = await prisma.wallet.findFirst({
         where: { id, userId: user.id },
-        data: {
-          name,
-          type,
-          initialBalance,
-          color,
-          isDefault,
-        },
       });
+
+      if (!existing) {
+        return { success: false, error: 'Portefeuille introuvable' };
+      }
+
+      // Si le nom a changé, propager atomiquement le nouveau libellé vers transactions et récurrences
+      if (existing.name !== name) {
+        const [updatedWallet] = await prisma.$transaction([
+          prisma.wallet.update({
+            where: { id },
+            data: {
+              name,
+              type,
+              initialBalance,
+              color,
+              isDefault,
+              isArchived: isArchived ?? existing.isArchived,
+            },
+          }),
+          prisma.transaction.updateMany({
+            where: { userId: user.id, walletId: id },
+            data: { payment: name },
+          }),
+          prisma.recurringRule.updateMany({
+            where: { userId: user.id, walletId: id },
+            data: { payment: name },
+          }),
+        ]);
+        saved = updatedWallet;
+      } else {
+        saved = await prisma.wallet.update({
+          where: { id },
+          data: {
+            name,
+            type,
+            initialBalance,
+            color,
+            isDefault,
+            isArchived: isArchived ?? existing.isArchived,
+          },
+        });
+      }
     } else {
       saved = await prisma.wallet.create({
         data: {
@@ -182,12 +229,14 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
           initialBalance,
           color,
           isDefault,
+          isArchived: isArchived ?? false,
         },
       });
     }
 
     revalidatePath('/portefeuilles');
     revalidatePath('/');
+    revalidatePath('/historique');
 
     return {
       success: true,
@@ -204,38 +253,103 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
 }
 
 /**
- * Supprime un portefeuille (déliaison non destructive des transactions)
+ * Archive ou désarchive un portefeuille
+ */
+export async function archiveWalletAction(
+  id: string,
+  isArchived: boolean
+): Promise<ActionResponse> {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const wallet = await prisma.wallet.findFirst({
+      where: { id, userId: user.id },
+    });
+
+    if (!wallet) {
+      return { success: false, error: 'Portefeuille introuvable' };
+    }
+
+    if (isArchived && wallet.isDefault) {
+      return {
+        success: false,
+        error: 'Impossible d’archiver le portefeuille par défaut. Veuillez d’abord désigner un autre compte par défaut.',
+      };
+    }
+
+    await prisma.wallet.update({
+      where: { id },
+      data: { isArchived },
+    });
+
+    revalidatePath('/portefeuilles');
+    revalidatePath('/');
+    revalidatePath('/historique');
+
+    return {
+      success: true,
+      data: { id, isArchived },
+      message: isArchived ? 'Portefeuille archivé' : 'Portefeuille réactivé',
+    };
+  } catch (error: unknown) {
+    console.error('Erreur archiveWalletAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Erreur lors de l’archivage',
+    };
+  }
+}
+
+/**
+ * Supprime un portefeuille s'il n'est relié à aucune opération (recommande l'archivage sinon)
  */
 export async function deleteWalletAction(id: string): Promise<ActionResponse> {
   try {
     const user = await getAuthenticatedUser();
 
-    // Délier les transactions pour préserver l'historique comptable
-    await prisma.transaction.updateMany({
-      where: { walletId: id, userId: user.id },
-      data: { walletId: null },
-    });
-
-    await prisma.transaction.updateMany({
-      where: { targetWalletId: id, userId: user.id },
-      data: { targetWalletId: null },
-    });
-
-    const res = await prisma.wallet.deleteMany({
+    const wallet = await prisma.wallet.findFirst({
       where: { id, userId: user.id },
     });
 
-    if (res.count === 0) {
+    if (!wallet) {
       return { success: false, error: 'Portefeuille introuvable' };
     }
 
+    // Contrôle strict : vérifier si le portefeuille a des transactions ou des récurrences liées
+    const txCount = await prisma.transaction.count({
+      where: {
+        userId: user.id,
+        OR: [{ walletId: id }, { targetWalletId: id }],
+      },
+    });
+
+    const rulesCount = await prisma.recurringRule.count({
+      where: {
+        userId: user.id,
+        walletId: id,
+      },
+    });
+
+    if (txCount > 0 || rulesCount > 0) {
+      return {
+        success: false,
+        error:
+          'Ce portefeuille contient des transactions ou règles enregistrées. Pour préserver l’intégrité de vos comptes, vous pouvez l’archiver au lieu de le supprimer.',
+      };
+    }
+
+    await prisma.wallet.delete({
+      where: { id },
+    });
+
     revalidatePath('/portefeuilles');
     revalidatePath('/');
+    revalidatePath('/historique');
 
     return {
       success: true,
       data: { id },
-      message: 'Portefeuille supprimé',
+      message: 'Portefeuille supprimé avec succès',
     };
   } catch (error: unknown) {
     console.error('Erreur deleteWalletAction :', error);

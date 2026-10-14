@@ -6,6 +6,8 @@ import { PeriodType, DateRange } from '@/types/period';
 import { formatCurrency } from '@/constants/config';
 import { getPreviousDateRange, formatDisplayDate } from '@/lib/dates';
 import { buildPeriodComparison } from '@/lib/comparisons';
+import { useWallets } from '@/components/providers/ReferenceDataProvider';
+import { getContrastTextColor } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 
 interface PeriodComparisonProps {
@@ -19,6 +21,8 @@ export function PeriodComparison({
   period,
   currentRange,
 }: PeriodComparisonProps) {
+  const { getWalletColor } = useWallets();
+
   const previousRange = useMemo(() => {
     return getPreviousDateRange(period, currentRange);
   }, [period, currentRange]);
@@ -36,8 +40,8 @@ export function PeriodComparison({
       return d >= previousRange.from && d <= previousRange.to;
     });
 
-    return buildPeriodComparison(currentExpenses, previousExpenses);
-  }, [transactions, currentRange, previousRange]);
+    return buildPeriodComparison(currentExpenses, previousExpenses, getWalletColor);
+  }, [transactions, currentRange, previousRange, getWalletColor]);
 
   const {
     currentTotal,
@@ -226,7 +230,7 @@ export function PeriodComparison({
                       className="text-[10px] font-black px-2 py-0.5 border border-[#111827] dark:border-white rounded shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]"
                       style={{
                         backgroundColor: pm.theme.bg,
-                        color: pm.theme.text,
+                        color: getContrastTextColor(pm.theme.bg),
                       }}
                     >
                       {pm.payment}

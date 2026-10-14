@@ -135,6 +135,7 @@ export const RecurringRuleSchema = z.object({
   category: z.string().min(1, { message: 'Veuillez sélectionner une catégorie' }),
   categoryId: z.string().optional().nullable(),
   payment: z.string().min(1, { message: 'Veuillez sélectionner un moyen de paiement' }),
+  walletId: z.string().optional().nullable(),
   dayOfMonth: z.coerce
     .number({ message: 'Le jour doit être un nombre valide' })
     .int({ message: 'Le jour doit être un entier' })
@@ -153,13 +154,14 @@ export type RecurringRuleFormValues = z.infer<typeof RecurringRuleSchema>;
 
 export const WalletSchema = z.object({
   id: z.string().optional(),
-  name: z.string().min(1, { message: 'Veuillez saisir un nom pour le portefeuille' }),
+  name: z.string().trim().min(1, { message: 'Veuillez saisir un nom pour le portefeuille' }),
   type: z.enum(['CASH', 'MOBILE_MONEY', 'BANK', 'SAVINGS'] as const, {
     message: 'Type de portefeuille invalide',
   }),
   initialBalance: z.coerce.number().default(0),
   color: z.string().default('#2563EB'),
   isDefault: z.boolean().default(false),
+  isArchived: z.boolean().default(false),
 });
 
 export type WalletFormValues = z.infer<typeof WalletSchema>;

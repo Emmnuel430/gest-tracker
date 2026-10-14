@@ -8,8 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
-import { useCategories } from '@/components/providers/ReferenceDataProvider';
-import { PAYMENT_METHODS } from '@/constants/payment-methods';
+import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { updateTransactionAction } from '@/actions/transactions';
 import { parseAmountInput, formatAmountInput } from '@/constants/config';
 import { formatDateForInput, formatTimeForInput, combineDateAndTime } from '@/lib/dates';
@@ -49,10 +48,21 @@ function EditForm({
     transaction.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
   const { categories: categoryList } = useCategories(type);
+  const { wallets: userWallets } = useWallets();
 
   const [amount, setAmount] = useState(() => formatAmountInput(transaction.amount));
   const [category, setCategory] = useState(transaction.category);
   const [payment, setPayment] = useState(transaction.payment);
+  const [walletId, setWalletId] = useState<string>(transaction.walletId || '');
+
+  React.useEffect(() => {
+    if (userWallets.length > 0 && !walletId) {
+      const match = userWallets.find(
+        (w) => w.name.toLowerCase() === payment.toLowerCase()
+      );
+      if (match) setWalletId(match.id);
+    }
+  }, [userWallets, payment, walletId]);
 
   // Sélecteur date & heure toujours visible et pré-rempli en édition
   const [date, setDate] = useState(() => formatDateForInput(transaction.date));
@@ -94,6 +104,7 @@ function EditForm({
         category,
         categoryId: selectedCatObj?.id || null,
         payment,
+        walletId: walletId || null,
         date: finalDate,
         note: note.trim() || undefined,
       });
@@ -191,19 +202,24 @@ function EditForm({
         </div>
       </div>
 
-      {/* Moyen de paiement */}
+      {/* Moyen de paiement / Portefeuille */}
       <div>
         <label className="block text-xs font-black uppercase mb-1 text-[#111827] dark:text-[#F8FAFC]">
-          Moyen de paiement
+          Portefeuille / Moyen de paiement
         </label>
         <select
-          value={payment}
-          onChange={(e) => setPayment(e.target.value)}
+          value={walletId || ''}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            setWalletId(selectedId);
+            const found = userWallets.find((w) => w.id === selectedId);
+            if (found) setPayment(found.name);
+          }}
           className="w-full bg-white dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] text-[#111827] dark:text-white rounded-xl p-3 font-bold text-sm shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] focus:outline-none focus:bg-[#EFF6FF] dark:focus:bg-[#1E293B]"
         >
-          {PAYMENT_METHODS.map((p) => (
-            <option key={p} value={p}>
-              {p}
+          {userWallets.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.name}
             </option>
           ))}
         </select>

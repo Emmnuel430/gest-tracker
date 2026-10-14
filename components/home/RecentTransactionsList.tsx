@@ -6,8 +6,8 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, Sparkles } from "lucide-react"
 import { Transaction } from "@/types/transaction";
 import { formatCurrency } from "@/constants/config";
 import { formatDisplayDate, formatTime } from "@/lib/dates";
-import { useCategories } from "@/components/providers/ReferenceDataProvider";
-import { PAYMENT_METHOD_THEMES } from "@/constants/payment-methods";
+import { useCategories, useWallets } from "@/components/providers/ReferenceDataProvider";
+import { getContrastTextColor } from "@/lib/utils";
 
 interface RecentTransactionsListProps {
   transactions: Transaction[];
@@ -17,6 +17,7 @@ export function RecentTransactionsList({
   transactions,
 }: RecentTransactionsListProps) {
   const { getCategoryColor } = useCategories();
+  const { getWalletColor } = useWallets();
 
   if (!transactions || transactions.length === 0) {
     return (
@@ -53,9 +54,11 @@ export function RecentTransactionsList({
         {transactions.map((tx) => {
           const isIncome = tx.type === "INCOME";
           const catColor = getCategoryColor(tx.category);
-          const paymentTheme = PAYMENT_METHOD_THEMES[tx.payment] || {
-            bg: "#EFF6FF",
-            text: "#111827",
+          const walletBg = getWalletColor(tx.payment);
+          const walletText = getContrastTextColor(walletBg);
+          const paymentTheme = {
+            bg: walletBg,
+            text: walletText,
           };
 
           return (

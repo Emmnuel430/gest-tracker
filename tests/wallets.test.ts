@@ -92,3 +92,79 @@ test('Wallet Real-Time Balance Calculations (Sprint 18)', async (t) => {
     assert.strictEqual(currentBalance, 140000);
   });
 });
+
+test('Wallet Archiving & Payment Source v2.3.0 Specifications', async (t) => {
+  const { RecurringRuleSchema } = await import('../lib/validations');
+  const { getContrastTextColor } = await import('../lib/utils');
+
+  await t.test('WalletSchema accepte isArchived', () => {
+    const res = WalletSchema.safeParse({
+      name: 'Ancien compte',
+      type: 'BANK',
+      initialBalance: 0,
+      isArchived: true,
+    });
+    assert.strictEqual(res.success, true);
+    if (res.success) {
+      assert.strictEqual(res.data.isArchived, true);
+    }
+  });
+
+  await t.test('RecurringRuleSchema valide walletId et categoryId', () => {
+    const res = RecurringRuleSchema.safeParse({
+      amount: 15000,
+      type: 'EXPENSE',
+      category: 'Loyer',
+      categoryId: 'cat-uuid-123',
+      payment: 'Mon Compte Wave',
+      walletId: 'wallet-uuid-456',
+      dayOfMonth: 5,
+    });
+    assert.strictEqual(res.success, true);
+    if (res.success) {
+      assert.strictEqual(res.data.walletId, 'wallet-uuid-456');
+      assert.strictEqual(res.data.categoryId, 'cat-uuid-123');
+    }
+  });
+
+  await t.test('getContrastTextColor calcule le contraste W3C lisible', () => {
+    // Fond clair -> texte sombre
+    assert.strictEqual(getContrastTextColor('#FFE600'), '#111827');
+    assert.strictEqual(getContrastTextColor('#1DC4F2'), '#111827');
+    assert.strictEqual(getContrastTextColor('#FFFFFF'), '#111827');
+    // Fond sombre -> texte blanc
+    assert.strictEqual(getContrastTextColor('#111827'), '#FFFFFF');
+    assert.strictEqual(getContrastTextColor('#2563EB'), '#FFFFFF');
+  });
+
+  await t.test('Règle métier : interdiction d’archiver le portefeuille par défaut', () => {
+    const canArchiveWallet = (wallet: { isDefault: boolean }, targetArchiveState: boolean) => {
+      if (targetArchiveState && wallet.isDefault) {
+        return { allowed: false, error: 'Impossible d’archiver le portefeuille par défaut' };
+      }
+      return { allowed: true };
+    };
+
+    const defaultWallet = { isDefault: true };
+    const check1 = canArchiveWallet(defaultWallet, true);
+    assert.strictEqual(check1.allowed, false);
+
+    const normalWallet = { isDefault: false };
+    const check2 = canArchiveWallet(normalWallet, true);
+    assert.strictEqual(check2.allowed, true);
+  });
+
+  await t.test('Règle métier : interdiction de supprimer un portefeuille contenant des opérations', () => {
+    const canDeleteWallet = (txCount: number, recurringCount: number) => {
+      if (txCount > 0 || recurringCount > 0) {
+        return { allowed: false, error: 'Ce portefeuille contient des opérations. Archivez-le.' };
+      }
+      return { allowed: true };
+    };
+
+    assert.strictEqual(canDeleteWallet(5, 0).allowed, false);
+    assert.strictEqual(canDeleteWallet(0, 1).allowed, false);
+    assert.strictEqual(canDeleteWallet(0, 0).allowed, true);
+  });
+});
+

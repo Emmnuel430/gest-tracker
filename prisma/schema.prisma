@@ -94,13 +94,16 @@ model Wallet {
   initialBalance     Decimal         @default(0) @map("initial_balance") @db.Decimal(12, 2)
   color              String          @default("#2563EB")
   isDefault          Boolean         @default(false) @map("is_default")
+  isArchived         Boolean         @default(false) @map("is_archived")
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   transactionsSource Transaction[]   @relation("SourceWallet")
   transactionsTarget Transaction[]   @relation("TargetWallet")
+  recurringRules     RecurringRule[]
 
   @@index([userId])
+  @@index([userId, isArchived])
   @@map("wallets")
 }
 
@@ -136,6 +139,8 @@ model RecurringRule {
   categoryId         String?             @map("category_id")
   categoryRel        Category?           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   payment            String
+  walletId           String?             @map("wallet_id")
+  wallet             Wallet?             @relation(fields: [walletId], references: [id], onDelete: Restrict)
   dayOfMonth         Int                 @map("day_of_month") // Jour de l'échéance (1 à 31)
   frequency          RecurrenceFrequency @default(MONTHLY)
   note               String?
@@ -146,6 +151,8 @@ model RecurringRule {
 
   @@index([userId, isActive])
   @@index([categoryId])
+  @@index([walletId])
+  @@index([userId, walletId])
   @@map("recurring_rules")
 }
 

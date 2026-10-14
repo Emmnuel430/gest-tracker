@@ -3,12 +3,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { CategoryItem, filterCategoriesByType } from '@/lib/categories';
 import { getCategoriesAction } from '@/actions/categories';
+import { WalletItem, getWalletsAction } from '@/actions/wallets';
 
 interface ReferenceDataContextType {
   categories: CategoryItem[];
+  wallets: WalletItem[];
   isLoading: boolean;
   refreshCategories: () => Promise<void>;
+  refreshWallets: () => Promise<void>;
   getCategoryColor: (categoryName: string, fallbackColor?: string) => string;
+  getWalletColor: (walletNameOrId: string, fallbackColor?: string) => string;
 }
 
 const ReferenceDataContext = createContext<ReferenceDataContextType | null>(null);
@@ -16,12 +20,17 @@ const ReferenceDataContext = createContext<ReferenceDataContextType | null>(null
 export function ReferenceDataProvider({
   children,
   initialCategories = [],
+  initialWallets = [],
 }: {
   children: React.ReactNode;
   initialCategories?: CategoryItem[];
+  initialWallets?: WalletItem[];
 }) {
   const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
-  const [isLoading, setIsLoading] = useState<boolean>(initialCategories.length === 0);
+  const [wallets, setWallets] = useState<WalletItem[]>(initialWallets);
+  const [isLoading, setIsLoading] = useState<boolean>(
+    initialCategories.length === 0 || initialWallets.length === 0
+  );
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -31,18 +40,36 @@ export function ReferenceDataProvider({
       }
     } catch (err) {
       console.error('Erreur lors du chargement des catégories :', err);
-    } finally {
-      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchWallets = useCallback(async () => {
+    try {
+      const res = await getWalletsAction({ includeArchived: true });
+      if (res.success && res.data) {
+        setWallets(res.data);
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des portefeuilles :', err);
     }
   }, []);
 
   useEffect(() => {
-    if (initialCategories.length === 0) {
-      fetchCategories();
-    }
-  }, [fetchCategories, initialCategories.length]);
+    let isMounted = true;
+    const loadAll = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchCategories(), fetchWallets()]);
+      if (isMounted) setIsLoading(false);
+    };
 
-  const colorMap = useMemo(() => {
+    loadAll();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchCategories, fetchWallets]);
+
+  // Map de couleurs des catégories
+  const categoryColorMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const cat of categories) {
       map.set(cat.name.toLowerCase(), cat.color);
@@ -53,18 +80,39 @@ export function ReferenceDataProvider({
   const getCategoryColor = useCallback(
     (categoryName: string, fallbackColor: string = '#9E9E9E') => {
       if (!categoryName) return fallbackColor;
-      return colorMap.get(categoryName.toLowerCase()) || fallbackColor;
+      return categoryColorMap.get(categoryName.toLowerCase()) || fallbackColor;
     },
-    [colorMap]
+    [categoryColorMap]
+  );
+
+  // Map de couleurs des portefeuilles (accessible par id ou par nom)
+  const walletColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const w of wallets) {
+      map.set(w.id.toLowerCase(), w.color);
+      map.set(w.name.toLowerCase(), w.color);
+    }
+    return map;
+  }, [wallets]);
+
+  const getWalletColor = useCallback(
+    (walletNameOrId: string, fallbackColor: string = '#2563EB') => {
+      if (!walletNameOrId) return fallbackColor;
+      return walletColorMap.get(walletNameOrId.toLowerCase()) || fallbackColor;
+    },
+    [walletColorMap]
   );
 
   return (
     <ReferenceDataContext.Provider
       value={{
         categories,
+        wallets,
         isLoading,
         refreshCategories: fetchCategories,
+        refreshWallets: fetchWallets,
         getCategoryColor,
+        getWalletColor,
       }}
     >
       {children}
@@ -100,5 +148,28 @@ export function useCategories(
     isLoading,
     refreshCategories,
     getCategoryColor,
+  };
+}
+
+export function useWallets(options?: { includeArchived?: boolean }) {
+  const { wallets, isLoading, refreshWallets, getWalletColor } = useReferenceData();
+  const includeArchived = options?.includeArchived;
+
+  const filteredWallets = useMemo(() => {
+    if (includeArchived) return wallets;
+    return wallets.filter((w) => !w.isArchived);
+  }, [wallets, includeArchived]);
+
+  const defaultWallet = useMemo(() => {
+    return wallets.find((w) => w.isDefault && !w.isArchived) || wallets.find((w) => !w.isArchived) || null;
+  }, [wallets]);
+
+  return {
+    wallets: filteredWallets,
+    allWallets: wallets,
+    defaultWallet,
+    isLoading,
+    refreshWallets,
+    getWalletColor,
   };
 }

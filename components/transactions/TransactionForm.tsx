@@ -4,11 +4,7 @@ import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Calendar, Clock, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { useCategories } from "@/components/providers/ReferenceDataProvider";
-import {
-  PAYMENT_METHODS,
-  PAYMENT_METHOD_THEMES,
-} from "@/constants/payment-methods";
+import { useCategories, useWallets } from "@/components/providers/ReferenceDataProvider";
 import { createTransactionAction } from "@/actions/transactions";
 import { Button } from "@/components/ui/Button";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
@@ -26,11 +22,13 @@ export function TransactionForm({ type }: TransactionFormProps) {
 
   const isIncome = type === "INCOME";
   const { categories: categoryList } = useCategories(type);
+  const { wallets: userWallets, defaultWallet } = useWallets();
 
   // Form State
   const [amount, setAmount] = useState<string>("");
   const [category, setCategory] = useState<string>("");
-  const [payment, setPayment] = useState<string>(PAYMENT_METHODS[0] || "Wave");
+  const [payment, setPayment] = useState<string>("");
+  const [walletId, setWalletId] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
   React.useEffect(() => {
@@ -38,6 +36,14 @@ export function TransactionForm({ type }: TransactionFormProps) {
       setCategory(categoryList[0].name);
     }
   }, [categoryList, category]);
+
+  React.useEffect(() => {
+    if (userWallets.length > 0 && !walletId) {
+      const initial = defaultWallet || userWallets[0];
+      setWalletId(initial.id);
+      setPayment(initial.name);
+    }
+  }, [userWallets, defaultWallet, walletId]);
 
   // Logique métier date : instantanée par défaut, dépliable pour rétroactif / personnalisé
   const [showCustomDate, setShowCustomDate] = useState<boolean>(false);
@@ -78,6 +84,7 @@ export function TransactionForm({ type }: TransactionFormProps) {
         category,
         categoryId: selectedCatObj?.id || null,
         payment,
+        walletId: walletId || null,
         date: finalDate,
         note: note ? note.trim() : undefined,
       });
@@ -165,37 +172,45 @@ export function TransactionForm({ type }: TransactionFormProps) {
             </div>
           </div>
 
-          {/* SÉLECTEUR MOYEN DE PAIEMENT */}
+          {/* SÉLECTEUR PORTEFEUILLE / CANAL */}
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC] mb-2">
-              Moyen de paiement *
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
+                Portefeuille source *
+              </label>
+              <Link
+                href="/portefeuilles"
+                className="text-[11px] font-bold text-[#2563EB] dark:text-[#60A5FA] hover:underline"
+              >
+                Gérer
+              </Link>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {PAYMENT_METHODS.map((pm) => {
-                const isSelected = payment === pm;
-                const theme = PAYMENT_METHOD_THEMES[pm] || {
-                  bg: "#EFF6FF",
-                  text: "#111827",
-                };
+              {userWallets.map((w) => {
+                const isSelected = walletId === w.id || payment.toLowerCase() === w.name.toLowerCase();
                 return (
                   <button
-                    key={pm}
+                    key={w.id}
                     type="button"
-                    onClick={() => setPayment(pm)}
+                    onClick={() => {
+                      setWalletId(w.id);
+                      setPayment(w.name);
+                    }}
                     className={cn(
-                      "px-3 py-2 rounded-lg text-xs font-black uppercase tracking-wide border-2 border-[#111827] dark:border-[#334155] transition-all cursor-pointer select-none flex items-center justify-between",
+                      "px-3 py-2 rounded-lg text-xs font-black uppercase tracking-wide border-2 border-[#111827] dark:border-[#334155] transition-all cursor-pointer select-none flex items-center justify-between gap-1.5",
                       isSelected
-                        ? "shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] -translate-y-0.5 ring-2 ring-[#111827] dark:ring-white"
-                        : "bg-white dark:bg-[#131C31] text-[#111827] dark:text-neutral-300 hover:bg-[#EFF6FF] dark:hover:bg-[#1E293B] shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]",
+                        ? "shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] -translate-y-0.5 ring-2 ring-[#111827] dark:ring-white bg-white dark:bg-[#1E293B]"
+                        : "bg-white dark:bg-[#131C31] text-[#111827] dark:text-neutral-300 hover:bg-[#EFF6FF] dark:hover:bg-[#1E293B] shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]"
                     )}
-                    style={
-                      isSelected
-                        ? { backgroundColor: theme.bg, color: theme.text }
-                        : {}
-                    }
                   >
-                    <span className="truncate">{pm}</span>
-                    {isSelected && <Check className="w-3.5 h-3.5 stroke-3" />}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0 border border-[#111827]"
+                        style={{ backgroundColor: w.color }}
+                      />
+                      <span className="truncate">{w.name}</span>
+                    </div>
+                    {isSelected && <Check className="w-3.5 h-3.5 stroke-3 shrink-0" />}
                   </button>
                 );
               })}

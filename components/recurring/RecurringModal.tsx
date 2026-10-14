@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { X, Calendar, Sparkles } from 'lucide-react';
-import { useCategories } from '@/components/providers/ReferenceDataProvider';
-import { PAYMENT_METHODS } from '@/constants/payment-methods';
+import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput } from '@/constants/config';
@@ -29,6 +28,7 @@ export function RecurringModal({
     initialData?.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
   const { categories: userCategories, getCategoryColor } = useCategories(type);
+  const { wallets: userWallets, defaultWallet } = useWallets();
 
   const [amount, setAmount] = useState<string>(
     initialData?.amount ? initialData.amount.toString() : ''
@@ -37,7 +37,10 @@ export function RecurringModal({
     initialData?.category || ''
   );
   const [payment, setPayment] = useState<string>(
-    initialData?.payment || PAYMENT_METHODS[0]
+    initialData?.payment || ''
+  );
+  const [walletId, setWalletId] = useState<string>(
+    initialData?.walletId || ''
   );
   const [dayOfMonth, setDayOfMonth] = useState<number>(
     initialData?.dayOfMonth || 5
@@ -54,6 +57,20 @@ export function RecurringModal({
       setCategory(userCategories[0].name);
     }
   }, [initialData, userCategories, category]);
+
+  useEffect(() => {
+    if (initialData?.walletId) {
+      setWalletId(initialData.walletId);
+    } else if (userWallets.length > 0 && !walletId) {
+      const match = payment
+        ? userWallets.find((w) => w.name.toLowerCase() === payment.toLowerCase())
+        : defaultWallet || userWallets[0];
+      if (match) {
+        setWalletId(match.id);
+        setPayment(match.name);
+      }
+    }
+  }, [initialData, userWallets, defaultWallet, payment, walletId]);
 
   if (!isOpen) return null;
 
@@ -89,6 +106,7 @@ export function RecurringModal({
         category,
         categoryId: selectedCatObj?.id || null,
         payment,
+        walletId: walletId || null,
         dayOfMonth,
         frequency: 'MONTHLY',
         note: note.trim() || undefined,
@@ -229,26 +247,36 @@ export function RecurringModal({
             </div>
           </div>
 
-          {/* 5. Moyen de paiement */}
+          {/* 5. Moyen de paiement / Portefeuille */}
           <div>
             <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1.5">
-              Moyen de paiement habituel
+              Portefeuille / Moyen de paiement
             </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {PAYMENT_METHODS.map((pm) => (
-                <button
-                  key={pm}
-                  type="button"
-                  onClick={() => setPayment(pm)}
-                  className={`p-2 rounded-lg text-center text-xs font-bold border-2 transition-all cursor-pointer truncate ${
-                    payment === pm
-                      ? 'border-[#111827] dark:border-white bg-[#00DF81] text-[#111827] shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]'
-                      : 'border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A] text-neutral-700 dark:text-neutral-300'
-                  }`}
-                >
-                  {pm}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+              {userWallets.map((w) => {
+                const isSelected = walletId === w.id || payment.toLowerCase() === w.name.toLowerCase();
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => {
+                      setWalletId(w.id);
+                      setPayment(w.name);
+                    }}
+                    className={`p-2 rounded-lg text-left text-xs font-bold border-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'border-[#111827] dark:border-white bg-[#00DF81] text-[#111827] shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]'
+                        : 'border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A] text-neutral-700 dark:text-neutral-300'
+                    }`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0 border border-[#111827]"
+                      style={{ backgroundColor: w.color }}
+                    />
+                    <span className="truncate">{w.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

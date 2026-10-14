@@ -2,9 +2,8 @@
 
 import React, { useTransition } from 'react';
 import { Calendar, Edit2, Trash2, Power, CheckCircle, Clock } from 'lucide-react';
-import { useCategories } from '@/components/providers/ReferenceDataProvider';
-import { PAYMENT_METHOD_THEMES } from '@/constants/payment-methods';
-import { formatCurrency } from '@/lib/utils';
+import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
+import { formatCurrency, getContrastTextColor } from '@/lib/utils';
 import {
   RecurringRuleItem,
   toggleRecurringRuleStatusAction,
@@ -23,10 +22,13 @@ interface RecurringCardProps {
 export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: RecurringCardProps) {
   const [isPending, startTransition] = useTransition();
   const { getCategoryColor } = useCategories();
+  const { getWalletColor } = useWallets();
 
   const isDueThisMonth = rule.isActive && rule.lastProcessedMonth !== currentMonth;
   const catColor = getCategoryColor(rule.category);
-  const paymentTheme = PAYMENT_METHOD_THEMES[rule.payment] || { bg: '#E0E0E0', text: '#000000' };
+  const walletBg = getWalletColor(rule.payment);
+  const walletText = getContrastTextColor(walletBg);
+  const paymentTheme = { bg: walletBg, text: walletText };
 
   const handleToggle = () => {
     startTransition(async () => {

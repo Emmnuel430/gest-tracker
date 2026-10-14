@@ -5,13 +5,16 @@ import { PaymentMethodBreakdown } from '@/types/statistics';
 import { formatCurrency } from '@/constants/config';
 import { Card } from '@/components/ui/Card';
 import { CreditCard, Wallet, Smartphone, Landmark } from 'lucide-react';
-import { PAYMENT_METHOD_THEMES } from '@/constants/payment-methods';
+import { useWallets } from '@/components/providers/ReferenceDataProvider';
+import { getContrastTextColor } from '@/lib/utils';
 
 interface PaymentMethodChartProps {
   breakdown: PaymentMethodBreakdown[];
 }
 
 export function PaymentMethodChart({ breakdown }: PaymentMethodChartProps) {
+  const { getWalletColor } = useWallets();
+
   if (breakdown.length === 0) return null;
 
   const getMethodIcon = (method: string) => {
@@ -46,10 +49,9 @@ export function PaymentMethodChart({ breakdown }: PaymentMethodChartProps) {
 
       <div className="space-y-3">
         {breakdown.map((item) => {
-          const theme = PAYMENT_METHOD_THEMES[item.method] || {
-            bg: '#EFF6FF',
-            text: '#111827',
-          };
+          const bg = getWalletColor(item.method);
+          const text = getContrastTextColor(bg);
+          const theme = { bg, text };
 
           return (
             <div key={item.method} className="space-y-1">
