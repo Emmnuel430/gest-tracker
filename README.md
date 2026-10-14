@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.6.1)
+# GEST TRACKER — Documentation Complète (v2.7.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -57,7 +57,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (142 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (161 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -199,6 +199,7 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 - **Gestionnaire de Catégories Personnalisées (`CategoryManagerModal`) :**
   - Bouton dédié **"Catégories"** sur la vue `/budgets`.
   - Liste filtrable par type (`Toutes`, `Dépenses`, `Revenus`, `Mixtes / Both`).
+  - **Unicité stricte des couleurs (v2.7.0) :** Contrôle côté serveur (`upsertCategoryAction`) et neutralisation visuelle côté client des teintes déjà attribuées à d'autres catégories, tant à la création qu'à l'édition.
   - Palette néobrutaliste contrôlée de 20 couleurs contrastées ou saisie d'un code hexadécimal libre.
   - Calcul dynamique de luminance W3C pour assurer un contraste de texte optimal (`#111827` sur fond clair, `#FFFFFF` sur fond sombre).
   - Prévisualisation dynamique du badge avant enregistrement.
@@ -233,6 +234,11 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 - **Virements Internes (Transfers) :**
   - Déplacement d'argent entre deux comptes (ex: Retrait Banque vers Wave ou Wave vers Espèces).
   - **Stricte Neutralité Comptable :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés mais n'impacte ni les revenus ni les dépenses globales de l'utilisateur.
+  - **Auto-sélection contextuelle du compte source (v2.7.0) :** Cliquer sur *"Faire un virement depuis ce compte"* ouvre `TransferModal` avec ce compte immédiatement sélectionné en émetteur et un compte récepteur distinct pré-choisi automatiquement.
+- **Ergonomie & Validation (v2.7.0) :**
+  - Éradication des pop-ups `alert()` / `confirm()` du navigateur au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.
+  - Pré-remplissage complet garanti de `WalletModal` en modification (`name`, `type`, `initialBalance`, `color`, `isDefault`).
+  - Unicité de la couleur des portefeuilles par utilisateur avec pastilles indisponibles marquées dans la palette.
 
 ### 4.8 Dettes & Créances (`/dettes`)
 
