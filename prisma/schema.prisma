@@ -22,6 +22,32 @@ enum WalletType {
   SAVINGS
 }
 
+enum CategoryKind {
+  INCOME
+  EXPENSE
+  BOTH
+}
+
+model Category {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  name       String
+  kind       CategoryKind
+  color      String
+  isArchived Boolean      @default(false) @map("is_archived")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  transactions   Transaction[]
+  budgets        Budget[]
+  recurringRules RecurringRule[]
+
+  @@unique([userId, name])
+  @@index([userId, kind])
+  @@index([userId])
+  @@map("categories")
+}
+
 model Transaction {
   id             String          @id @default(uuid())
   type           TransactionType
@@ -30,6 +56,10 @@ model Transaction {
   payment        String
   note           String?
   date           DateTime        @default(now())
+
+  // Catégorie reliée (Optionnelle pour expand/contract)
+  categoryId     String?         @map("category_id")
+  categoryRel    Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   // Authentification Supabase
   userId         String?         @map("user_id")
@@ -48,6 +78,7 @@ model Transaction {
   @@index([date(sort: Desc)])
   @@index([type])
   @@index([category])
+  @@index([categoryId])
   @@index([payment])
   @@index([date, type])
   @@index([userId])
@@ -74,16 +105,19 @@ model Wallet {
 }
 
 model Budget {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  category  String
-  amount    Decimal  @db.Decimal(12, 2)
-  month     String   // Format YYYY-MM (ex: "2026-10")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  category    String
+  categoryId  String?   @map("category_id")
+  categoryRel Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  amount      Decimal   @db.Decimal(12, 2)
+  month       String    // Format YYYY-MM (ex: "2026-10")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@unique([userId, category, month])
   @@index([userId, month])
+  @@index([categoryId])
   @@map("budgets")
 }
 
@@ -99,6 +133,8 @@ model RecurringRule {
   type               TransactionType
   amount             Decimal             @db.Decimal(12, 2)
   category           String
+  categoryId         String?             @map("category_id")
+  categoryRel        Category?           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   payment            String
   dayOfMonth         Int                 @map("day_of_month") // Jour de l'échéance (1 à 31)
   frequency          RecurrenceFrequency @default(MONTHLY)
@@ -109,6 +145,7 @@ model RecurringRule {
   updatedAt          DateTime            @updatedAt @map("updated_at")
 
   @@index([userId, isActive])
+  @@index([categoryId])
   @@map("recurring_rules")
 }
 
