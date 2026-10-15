@@ -27,6 +27,7 @@ Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRA
    - [Synchronisation Base de Données (Local vs Prod)](#synchronisation-base-de-données-local-vs-prod)
    - [Rattachement des Transactions (Backfill)](#rattachement-des-transactions-backfill)
 7. [Tests Automatisés & Qualité de Code](#7-tests-automatisés--qualité-de-code)
+8. [Écosystème d'Agents & Auditeur UX / Logique Métier](#8-écosystème-dagents--auditeur-ux--logique-métier)
 
 ---
 
@@ -561,4 +562,37 @@ pnpm test
 pnpm lint
 ```
 
-_Résultat garanti : 142 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+_Résultat garanti : 161 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+
+---
+
+## 8. Écosystème d'Agents & Auditeur UX / Logique Métier
+
+Le développement et la maintenance de **Gest Tracker** s'appuient sur un collège d'agents spécialisés coordonnés par l'Architecte (`.agent/agents/`) :
+
+- **Lead Software Architect (`architecte.md`) :** Garant de l'architecture, du respect de la roadmap et de la gouvernance de livraison.
+- **Senior Frontend (`frontend.md`) :** Composants UI néobrutalistes et ergonomie mobile (< 5s).
+- **Senior Backend (`backend.md`) :** Server Actions, validations Zod et calculs financiers.
+- **Database Administrator (`database.md`) :** Schéma Prisma, migrations versionnées et isolation des données.
+- **Lead Application Security (`security.md`) :** Authentification Supabase Auth, middleware SSR et politiques RLS.
+- **UX & Logic Auditor (`ux-logic-auditor.md`) :** Audit holistique des parcours réels, cohérence cross-pages, étanchéité de la logique financière, accessibilité et validation ciblée après correctifs.
+- **QA Lead (`qa.md`) :** Suites de tests automatisés (161 tests unitaires), typage strict et validation de la Definition of Done.
+
+### 8.1 Rôle et Compétences de UX_LOGIC_AUDITOR
+
+L'agent `UX_LOGIC_AUDITOR` est conçu pour répondre à la question directrice :  
+> *« Un utilisateur qui découvre Gest Tracker peut-il comprendre chaque page, savoir quoi faire, effectuer ses actions sans blocage et comprendre le résultat obtenu ? »*
+
+Il opère selon 6 compétences clés :
+1. **User Journey & Flow Analysis :** Parcours complets d'onboarding, création/modification/suppression d'opérations, budgets, portefeuilles et récurrences.
+2. **UX Heuristic Evaluation :** Visibilité des états, clarté des libellés, prévention des erreurs (désactivation des CTA pendant la soumission, `ConfirmDialog.tsx` obligatoire sans alertes natives).
+3. **Cross-Page & Navigation Audit :** Traçabilité entre le hub `/gestion`, le tableau de bord `/`, l'historique et les formulaires, persistance du contexte et absence de routes orphelines.
+4. **Business Logic & Edge Cases :** Neutralité stricte des transferts entre portefeuilles, calculs financiers sans approximations flottantes, résolutions calendaires des fins de mois (29/30/31).
+5. **Accessibility & Responsive Audit :** Conformité des contrastes W3C (`getContrastTextColor`), navigation au clavier, focus trap dans les modales, accessibilité tactile à 375px et interdiction des emojis.
+6. **Exploratory Testing :** Scénarios aux limites (première connexion sans donnée, montants extrêmes, déconnexions réseau, double-clics).
+
+### 8.2 Modes d'Intervention et Flux de Livraison
+
+- **Mode AUDIT :** Analyse non-destructive produisant un rapport d'audit détaillé avec anomalies classées de P0 (critique) à P3 (mineur).
+- **Mode VALIDATION :** Rejeu ciblé des scénarios après correctifs appliqués par l'équipe de développement.
+- **Discipline Git :** Développement exclusif sur branche dédiée (`feat/...`, `fix/...`), interdiction absolue de merge vers `main`, push sur la branche de travail et délégation de la Pull Request à l'utilisateur humain.
