@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { Calendar, Trash2, CheckCircle, Clock, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { formatCurrency } from '@/constants/config';
 import { DebtItem, deleteDebtAction } from '@/actions/debts';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface DebtCardProps {
   debt: DebtItem;
@@ -13,15 +14,18 @@ interface DebtCardProps {
 
 export function DebtCard({ debt, onRepay, onRefresh }: DebtCardProps) {
   const [isPending, startTransition] = useTransition();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isLent = debt.type === 'LENT';
   const isSettled = debt.status === 'SETTLED';
 
-  const handleDelete = () => {
-    if (!confirm(`Supprimer définitivement ce dossier avec "${debt.personName}" ?`)) return;
+  const confirmDelete = () => {
     startTransition(async () => {
       const res = await deleteDebtAction(debt.id);
-      if (res.success) onRefresh();
+      if (res.success) {
+        setShowDeleteConfirm(false);
+        onRefresh();
+      }
     });
   };
 
@@ -74,7 +78,7 @@ export function DebtCard({ debt, onRepay, onRefresh }: DebtCardProps) {
 
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setShowDeleteConfirm(true)}
           disabled={isPending}
           title="Supprimer"
           className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-red-500 hover:text-white text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
@@ -151,6 +155,19 @@ export function DebtCard({ debt, onRepay, onRefresh }: DebtCardProps) {
           Enregistrer un remboursement
         </button>
       )}
+
+      {/* Boîte de dialogue de confirmation de suppression */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Supprimer ce dossier de dette ?"
+        message={`Êtes-vous certain de vouloir supprimer définitivement le dossier avec "${debt.personName}" (${formatCurrency(debt.initialAmount)}) ? Cette action supprimera également tous les remboursements enregistrés.`}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        isLoading={isPending}
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

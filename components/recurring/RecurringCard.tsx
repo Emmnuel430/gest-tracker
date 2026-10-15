@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { Calendar, Edit2, Trash2, Power, CheckCircle, Clock, Bell, BellOff } from 'lucide-react';
 import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { formatCurrency, getContrastTextColor } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   RecurringRuleItem,
   toggleRecurringRuleStatusAction,
@@ -21,6 +22,7 @@ interface RecurringCardProps {
 
 export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: RecurringCardProps) {
   const [isPending, startTransition] = useTransition();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { getCategoryColor } = useCategories();
   const { getWalletColor } = useWallets();
 
@@ -37,11 +39,13 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
     });
   };
 
-  const handleDelete = () => {
-    if (!confirm(`Supprimer définitivement la règle récurrente "${rule.category}" ?`)) return;
+  const confirmDelete = () => {
     startTransition(async () => {
       const res = await deleteRecurringRuleAction(rule.id);
-      if (res.success) onRefresh();
+      if (res.success) {
+        setShowDeleteConfirm(false);
+        onRefresh();
+      }
     });
   };
 
@@ -107,7 +111,7 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
           </button>
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={isPending}
             title="Supprimer"
             className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-red-500 hover:text-white text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
@@ -196,6 +200,19 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
           Règle en pause (aucun rappel généré)
         </div>
       )}
+
+      {/* Boîte de dialogue de confirmation de suppression */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Supprimer cette règle récurrente ?"
+        message={`Êtes-vous certain de vouloir supprimer définitivement la règle récurrente pour "${rule.category}" (${formatCurrency(rule.amount)}) ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        isLoading={isPending}
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }
