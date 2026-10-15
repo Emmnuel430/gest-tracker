@@ -220,6 +220,7 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 - **Résolution calendaire stricte (`Africa/Abidjan`) :** Les échéances prévues les 29, 30 ou 31 du mois sont automatiquement bornées au dernier jour effectif du mois (28 ou 29 février, 30 avril/juin/septembre/novembre), calculées à midi UTC pour neutraliser tout aléa de fuseau horaire.
 - **Libellés contextuels :** Le jour 31 affiche lisiblement "Dernier jour du mois (ex: 28, 30 ou 31)".
 - Statut actif / en pause en un clic.
+- **Sécurisation des suppressions :** Boîte de dialogue néobrutaliste accessible `ConfirmDialog` pour toute suppression de règle récurrente.
 - Calcul prévisionnel mensuel automatique (dépenses fixes prévues vs rentrées prévues).
 
 ### 4.7 Portefeuilles & Virements Internes (`/portefeuilles`)
@@ -236,7 +237,7 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - **Stricte Neutralité Comptable :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés mais n'impacte ni les revenus ni les dépenses globales de l'utilisateur.
   - **Auto-sélection contextuelle du compte source (v2.7.0) :** Cliquer sur *"Faire un virement depuis ce compte"* ouvre `TransferModal` avec ce compte immédiatement sélectionné en émetteur et un compte récepteur distinct pré-choisi automatiquement.
 - **Ergonomie & Validation (v2.7.0) :**
-  - Éradication des pop-ups `alert()` / `confirm()` du navigateur au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.
+  - Éradication intégrale des pop-ups `alert()` / `confirm()` du navigateur sur l'ensemble de l'application au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.
   - Pré-remplissage complet garanti de `WalletModal` en modification (`name`, `type`, `initialBalance`, `color`, `isDefault`).
   - Unicité de la couleur des portefeuilles par utilisateur avec pastilles indisponibles marquées dans la palette.
 
@@ -246,6 +247,7 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 - **Argent emprunté (BORROWED) :** Dettes à rembourser.
 - Statuts : `PENDING` (En attente), `PARTIAL` (Partiellement remboursé), `SETTLED` (Soldé).
 - Enregistrement de remboursements partiels successifs avec déduction automatique du reste dû.
+- **Sécurisation des suppressions :** Boîte de dialogue néobrutaliste `ConfirmDialog` pour toute suppression de dossier de dette ou créance.
 
 ### 4.9 Historique, Graphiques & Import CSV (`/historique`)
 

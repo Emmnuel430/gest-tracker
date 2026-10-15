@@ -13,6 +13,9 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 - **budgets** : Contrôle d'unicité de la couleur des catégories par utilisateur dans `upsertCategoryAction` (à la création comme à l'édition) et marquage direct des teintes indisponibles dans `CategoryManagerModal` avec infobulle contextuelle et adaptation du générateur aléatoire.
 - **tests** : Nouvelle suite de tests automatisés (`tests/v270-ux-wallets-budgets.test.ts`) validant les règles d'unicité de couleurs, l'isolation multi-utilisateurs et la logique d'auto-sélection des virements, portant la suite globale à 161 tests réussis à 100 %.
 
+### Fixes
+- **ui** : Éradication définitive de tous les appels résiduels à `window.confirm()` / `confirm()` natifs dans l'application (`RecurringCard`, `DebtCard`) au profit systématique du composant modal néobrutaliste accessible `ConfirmDialog`.
+
 ---
 
 ## [2.6.1] - 2026-10-14
