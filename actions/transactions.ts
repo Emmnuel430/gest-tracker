@@ -16,6 +16,7 @@ import { getAuthenticatedUser } from '@/lib/auth';
 import { Transaction } from '@/types/transaction';
 import { FinancialSummary, CategoryBreakdown, PaymentMethodBreakdown } from '@/types/statistics';
 import { buildPeriodComparison, PeriodComparisonData } from '@/lib/comparisons';
+import { getWalletBalancesForUser } from '@/lib/services/wallet-balances';
 
 export type ActionResponse<T = unknown> =
   | { success: true; data: T; message?: string }
@@ -428,33 +429,33 @@ export async function getDashboardDataAction(): Promise<ActionResponse<Dashboard
     const monthRange = getDateRangeForPeriod('month');
     const yearRange = getDateRangeForPeriod('year');
 
-    // 1. Calcul du Solde Global uniquement sur l'utilisateur actif
-    const allTxs = await prisma.transaction.findMany({
-      where: { userId: user.id },
-      select: { type: true, amount: true },
-    });
-
-    let totalAllIncome = 0;
-    let totalAllExpense = 0;
-    for (const t of allTxs) {
-      const amt = Number(t.amount);
-      if (t.type === 'INCOME') totalAllIncome += amt;
-      else if (t.type === 'EXPENSE') totalAllExpense += amt;
-    }
-    const globalBalance = totalAllIncome - totalAllExpense;
-
-    // 2. Transactions de l'année pour dériver yearSummary, monthSummary, todaySummary
-    const yearTransactions = await prisma.transaction.findMany({
-      where: {
-        userId: user.id,
-        date: {
-          gte: yearRange.from,
-          lte: yearRange.to,
+    // 1. Calcul du Solde Global via le service unique de portefeuilles (patrimoine net)
+    const [walletSummary, allTxs, yearTransactions, recentTransactions] = await Promise.all([
+      getWalletBalancesForUser(user.id),
+      prisma.transaction.findMany({
+        where: { userId: user.id },
+        select: { type: true, amount: true },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          userId: user.id,
+          date: {
+            gte: yearRange.from,
+            lte: yearRange.to,
+          },
         },
-      },
-      orderBy: { date: 'desc' },
-    });
+        orderBy: { date: 'desc' },
+      }),
+      prisma.transaction.findMany({
+        where: { userId: user.id },
+        take: 5,
+        orderBy: { date: 'desc' },
+      }),
+    ]);
 
+    const globalBalance = walletSummary.netWorth;
+
+    // 2. Dérivation des résumés yearSummary, monthSummary, todaySummary
     const serializedYearTxs = yearTransactions.map(serializeTransaction);
     const yearSummary = calculateFinancialSummary(serializedYearTxs);
 
@@ -469,13 +470,6 @@ export async function getDashboardDataAction(): Promise<ActionResponse<Dashboard
       return d >= todayRange.from && d <= todayRange.to;
     });
     const todaySummary = calculateFinancialSummary(todayTxs);
-
-    // 3. 5 dernières transactions de l'utilisateur
-    const recentTransactions = await prisma.transaction.findMany({
-      where: { userId: user.id },
-      take: 5,
-      orderBy: { date: 'desc' },
-    });
 
     return {
       success: true,
