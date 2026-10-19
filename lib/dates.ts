@@ -164,3 +164,32 @@ export function formatPeriodLabel(period: PeriodType, range: DateRange): string 
       return `${format(range.from, 'dd MMMM yyyy', { locale: fr })} au ${format(range.to, 'dd MMMM yyyy', { locale: fr })}`;
   }
 }
+
+/**
+ * Formatage lisible et sans ambiguïté de la période pour les rapports d'export (PDF, CSV).
+ * Remplace les identifiants techniques (WEEK, TODAY) par des dates précises au format dd/MM/yyyy.
+ */
+export function formatExportPeriodLabel(period: PeriodType, range: DateRange): string {
+  const fromStr = format(range.from, 'dd/MM/yyyy');
+  const toStr = format(range.to, 'dd/MM/yyyy');
+
+  switch (period) {
+    case 'today':
+      return fromStr;
+    case 'week':
+      return `du ${fromStr} au ${toStr}`;
+    case 'month': {
+      const monthName = format(range.from, 'MMMM yyyy', { locale: fr });
+      return `du ${fromStr} au ${toStr} (${monthName})`;
+    }
+    case 'year': {
+      const yearStr = format(range.from, 'yyyy');
+      return `du ${fromStr} au ${toStr} (année ${yearStr})`;
+    }
+    case 'custom':
+      return fromStr === toStr ? fromStr : `du ${fromStr} au ${toStr}`;
+    default:
+      return fromStr === toStr ? fromStr : `du ${fromStr} au ${toStr}`;
+  }
+}
+

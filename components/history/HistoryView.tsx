@@ -328,7 +328,11 @@ export function HistoryView({
           <a
             href={`/api/export/pdf?period=${period}&type=${typeFilter}&category=${encodeURIComponent(
               categoryFilter
-            )}&payment=${encodeURIComponent(paymentFilter)}`}
+            )}&payment=${encodeURIComponent(paymentFilter)}${
+              period === 'custom'
+                ? `&start=${appliedCustomDates.start}&end=${appliedCustomDates.end}`
+                : ''
+            }`}
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 border-2 border-[#111827] dark:border-[#334155] rounded-lg bg-white dark:bg-[#1E293B] shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] hover:bg-[#DBEAFE] dark:hover:bg-[#1E3A8A] transition-all cursor-pointer flex items-center gap-1 font-black text-xs text-[#111827] dark:text-white"

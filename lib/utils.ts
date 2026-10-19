@@ -58,3 +58,17 @@ export function getContrastTextColor(hexColor: string): '#111827' | '#FFFFFF' {
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return yiq >= 145 ? '#111827' : '#FFFFFF';
 }
+
+/**
+ * Assainit une chaîne de caractères pour un rendu HTML sécurisé (protection injection XSS)
+ */
+export function escapeHtml(str: string | null | undefined): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
