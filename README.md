@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.7.1)
+# GEST TRACKER — Documentation Complète (v2.8.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -232,8 +232,13 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - **Mobile Money** (Wave, Orange Money)
   - **Compte bancaire**
   - **Épargne**
-- **Calcul du solde en temps réel :**
-  $$\text{Solde actuel} = \text{Solde initial} + \text{Revenus} - \text{Dépenses} + \text{Virements entrants} - \text{Virements sortants}$$
+- **Solde Actuel Déclaré à T0 (v2.8.0) :**
+  - **Repère initial sans perte d'historique :** Permet à l'utilisateur d'ajuster le solde réel actuellement présent sur son compte (`declaredBalance` à l'instant `declaredAt`).
+  - **Formule de calcul financière :**
+    $$\text{Solde effectif} = \text{Solde déclaré } (T_0) + \sum \text{Mouvements postérieurs à } T_0$$
+  - Si aucun solde déclaré n'est renseigné (comportement d'origine), le calcul s'opère sur la base du `initialBalance` et de l'historique complet.
+  - **Conservation absolue de l'historique :** Les transactions antérieures à la déclaration restent intégralement consultables dans l'historique, les statistiques et les graphiques de flux sans altérer le solde physique constaté.
+  - **Repère temporel sur les cartes :** Badge indiquant la date du dernier ajustement (`Ajusté le DD MMM`).
 - **Règle d'or du patrimoine total (v2.7.1, ADR-02 / Q10) :**
   - Le patrimoine total correspond fidèlement à la somme de tous les comptes, **archivés inclus**.
   - Si des comptes archivés disposent d'un solde non nul, une mention explicite le précise automatiquement (`dont X FCFA sur des comptes archivés`).
@@ -242,10 +247,11 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - Déplacement d'argent entre deux comptes (ex: Retrait Banque vers Wave ou Wave vers Espèces).
   - **Stricte Neutralité Comptable :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés mais n'impacte ni les revenus ni les dépenses globales de l'utilisateur.
   - **Auto-sélection contextuelle du compte source (v2.7.0) :** Cliquer sur *"Faire un virement depuis ce compte"* ouvre `TransferModal` avec ce compte immédiatement sélectionné en émetteur et un compte récepteur distinct pré-choisi automatiquement.
-- **Ergonomie & Validation (v2.7.0 / v2.7.1) :**
+- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0) :**
+  - **Solde Total Disponible sur l'Accueil (v2.8.0) :** L'écran d'accueil affiche le solde total disponible synchronisé avec les portefeuilles et met en valeur le flux net de la période sélectionnée (entrées, sorties, épargne nette).
   - **Portail de modales (`createPortal`) (v2.7.1) :** Rendu direct de `ConfirmDialog` et `Modal` à la racine de `document.body`, empêchant tout affadissement de backdrop causé par l'opacité des conteneurs parents (comme les comptes archivés `opacity-80`).
   - Éradication intégrale des pop-ups `alert()` / `confirm()` du navigateur sur l'ensemble de l'application au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.
-  - Pré-remplissage complet garanti de `WalletModal` en modification (`name`, `type`, `initialBalance`, `color`, `isDefault`).
+  - Pré-remplissage complet garanti de `WalletModal` en modification (`name`, `type`, `balanceInput`, `color`, `isDefault`).
   - Unicité de la couleur des portefeuilles par utilisateur avec pastilles indisponibles marquées dans la palette.
 
 ### 4.8 Dettes & Créances (`/dettes`)
