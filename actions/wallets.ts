@@ -7,6 +7,8 @@ import { WalletSchema, TransferSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
 import { getErrorMessage } from '@/lib/utils';
 
+import { getWalletBalancesForUser } from '@/lib/services/wallet-balances';
+
 export interface WalletItem {
   id: string;
   name: string;
@@ -23,6 +25,41 @@ export interface WalletItem {
   createdAt: string;
 }
 
+export interface NetWorthSummary {
+  netWorth: number;
+  activeBalance: number;
+  archivedBalance: number;
+  unassignedBalance: number;
+  walletCount: number;
+}
+
+/**
+ * Récupère le patrimoine net total de l'utilisateur (somme de tous les portefeuilles, archivés inclus)
+ */
+export async function getNetWorthAction(): Promise<ActionResponse<NetWorthSummary>> {
+  try {
+    const user = await getAuthenticatedUser();
+    const summary = await getWalletBalancesForUser(user.id);
+
+    return {
+      success: true,
+      data: {
+        netWorth: summary.netWorth,
+        activeBalance: summary.activeBalance,
+        archivedBalance: summary.archivedBalance,
+        unassignedBalance: summary.unassignedBalance,
+        walletCount: summary.walletCount,
+      },
+    };
+  } catch (error: unknown) {
+    console.error('Erreur getNetWorthAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Impossible de calculer le patrimoine net',
+    };
+  }
+}
+
 /**
  * Récupère tous les portefeuilles de l'utilisateur avec leurs soldes calculés en temps réel
  */
@@ -31,113 +68,15 @@ export async function getWalletsAction(options?: {
 }): Promise<ActionResponse<WalletItem[]>> {
   try {
     const user = await getAuthenticatedUser();
+    const summary = await getWalletBalancesForUser(user.id);
 
-    if (!prisma?.wallet?.findMany) {
-      return { success: true, data: [] };
-    }
-
-    const whereClause: { userId: string; isArchived?: boolean } = { userId: user.id };
-    if (!options?.includeArchived) {
-      // Par défaut on peut récupérer tous les portefeuilles ou filtrer selon option
-    }
-
-    let wallets = await prisma.wallet.findMany({
-      where: whereClause,
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-    });
-
-    // Initialisation automatique de portefeuilles par défaut pour les nouveaux utilisateurs
-    if (wallets.length === 0) {
-      await prisma.wallet.createMany({
-        data: [
-          {
-            userId: user.id,
-            name: 'Espèces',
-            type: 'CASH',
-            initialBalance: 0,
-            color: '#52B788',
-            isDefault: true,
-            isArchived: false,
-          },
-          {
-            userId: user.id,
-            name: 'Wave',
-            type: 'MOBILE_MONEY',
-            initialBalance: 0,
-            color: '#1DC4F2',
-            isDefault: false,
-            isArchived: false,
-          },
-          {
-            userId: user.id,
-            name: 'Compte bancaire',
-            type: 'BANK',
-            initialBalance: 0,
-            color: '#B8C0FF',
-            isDefault: false,
-            isArchived: false,
-          },
-        ],
-      });
-
-      wallets = await prisma.wallet.findMany({
-        where: whereClause,
-        orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-      });
-    }
-
-    // Récupération de toutes les transactions de l'utilisateur pour calculer les soldes de chaque compte
-    const transactions = await prisma.transaction.findMany({
-      where: { userId: user.id },
-      select: {
-        amount: true,
-        type: true,
-        walletId: true,
-        targetWalletId: true,
-      },
-    });
-
-    const result: WalletItem[] = wallets.map((w) => {
-      const initial = Number(w.initialBalance);
-      let income = 0;
-      let expense = 0;
-      let transferIn = 0;
-      let transferOut = 0;
-
-      for (const t of transactions) {
-        const amt = Number(t.amount);
-        if (t.walletId === w.id) {
-          if (t.type === 'INCOME') income += amt;
-          else if (t.type === 'EXPENSE') expense += amt;
-          else if (t.type === 'TRANSFER') transferOut += amt;
-        }
-        if (t.targetWalletId === w.id && t.type === 'TRANSFER') {
-          transferIn += amt;
-        }
-      }
-
-      const currentBalance = initial + income - expense + transferIn - transferOut;
-
-      return {
-        id: w.id,
-        name: w.name,
-        type: w.type,
-        initialBalance: initial,
-        currentBalance,
-        color: w.color,
-        isDefault: w.isDefault,
-        isArchived: w.isArchived,
-        totalIncome: income,
-        totalExpense: expense,
-        totalTransferIn: transferIn,
-        totalTransferOut: transferOut,
-        createdAt: w.createdAt.toISOString(),
-      };
-    });
+    const data = options?.includeArchived
+      ? summary.wallets
+      : summary.wallets.filter((w) => !w.isArchived);
 
     return {
       success: true,
-      data: options?.includeArchived ? result : result.filter((w) => !w.isArchived),
+      data,
     };
   } catch (error: unknown) {
     console.error('Erreur getWalletsAction :', error);

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -12,6 +13,12 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -30,15 +37,22 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+  const content = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150"
+    >
       <div
         className={`bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl w-full ${maxWidth} p-6 shadow-[8px_8px_0px_0px_#111827] dark:shadow-[8px_8px_0px_0px_#000000] relative max-h-[90vh] overflow-y-auto`}
       >
         <div className="flex items-center justify-between pb-4 mb-4 border-b-2 border-[#111827] dark:border-[#334155]">
-          <h2 className="text-xl font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">{title}</h2>
+          <h2 id="modal-title" className="text-xl font-black uppercase tracking-wider text-[#111827] dark:text-[#F8FAFC]">
+            {title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -52,4 +66,6 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

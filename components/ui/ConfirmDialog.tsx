@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
 
@@ -32,6 +33,11 @@ export function ConfirmDialog({
   variant = 'danger',
 }: ConfirmDialogProps) {
   const [typedConfirmation, setTypedConfirmation] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Réinitialiser la saisie quand la modale s'ouvre ou se ferme
   useEffect(() => {
@@ -40,7 +46,28 @@ export function ConfirmDialog({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // Gestion de la touche Échap et du verrouillage du scroll
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isLoading) {
+        onCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, isLoading, onCancel]);
+
+  if (!isOpen || !mounted) return null;
 
   const isConfirmationMatched = requiredConfirmationText
     ? typedConfirmation.trim() === requiredConfirmationText.trim()
@@ -48,8 +75,13 @@ export function ConfirmDialog({
 
   const isConfirmDisabled = isLoading || !isConfirmationMatched;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+  const content = (
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150"
+    >
       <div className="w-full max-w-sm bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center gap-3 mb-4">
           <div
@@ -63,7 +95,10 @@ export function ConfirmDialog({
           >
             <AlertTriangle className="w-6 h-6 stroke-2.5" />
           </div>
-          <h3 className="text-lg font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
+          <h3
+            id="confirm-dialog-title"
+            className="text-lg font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]"
+          >
             {title}
           </h3>
         </div>
@@ -117,4 +152,6 @@ export function ConfirmDialog({
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

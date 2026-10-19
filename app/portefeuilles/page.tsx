@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Layers } from 'lucide-react';
-import { WalletItem, getWalletsAction } from '@/actions/wallets';
+import { WalletItem, NetWorthSummary, getWalletsAction, getNetWorthAction } from '@/actions/wallets';
 import { WalletCard } from '@/components/wallets/WalletCard';
 import { WalletModal } from '@/components/wallets/WalletModal';
 import { TransferModal } from '@/components/wallets/TransferModal';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 
 export default function PortefeuillesPage() {
   const [wallets, setWallets] = useState<WalletItem[]>([]);
+  const [netWorthData, setNetWorthData] = useState<NetWorthSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -21,9 +22,16 @@ export default function PortefeuillesPage() {
 
   const loadWallets = useCallback(async (includeArchived = showArchived) => {
     setLoading(true);
-    const res = await getWalletsAction({ includeArchived });
-    if (res.success && res.data) {
-      setWallets(res.data);
+    const [walletsRes, netWorthRes] = await Promise.all([
+      getWalletsAction({ includeArchived }),
+      getNetWorthAction(),
+    ]);
+
+    if (walletsRes.success && walletsRes.data) {
+      setWallets(walletsRes.data);
+    }
+    if (netWorthRes.success && netWorthRes.data) {
+      setNetWorthData(netWorthRes.data);
     }
     setLoading(false);
   }, [showArchived]);
@@ -47,8 +55,10 @@ export default function PortefeuillesPage() {
     setTransferModalOpen(true);
   };
 
-  // Calcul du solde total cumulé de tous les portefeuilles
-  const totalWealth = wallets.reduce((sum, w) => sum + w.currentBalance, 0);
+  // Patrimoine net total immuable calculé côté serveur (conformément à ADR-02 et Q10)
+  const totalWealth = netWorthData
+    ? netWorthData.netWorth
+    : wallets.reduce((sum, w) => sum + w.currentBalance, 0);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#111827] dark:text-[#F8FAFC] pb-24 transition-colors">
@@ -102,14 +112,24 @@ export default function PortefeuillesPage() {
               Patrimoine Total Réuni
             </span>
             <span className="text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded">
-              {wallets.length} compte(s)
+              {netWorthData ? netWorthData.walletCount : wallets.length} compte(s)
             </span>
           </div>
           <div className="text-3xl font-black text-[#FFE600] tracking-tight">
             {formatCurrency(totalWealth)}
           </div>
           <p className="text-[11px] text-neutral-400 font-medium">
-            Somme nette calculée en direct sur l’ensemble de vos portefeuilles.
+            Somme des soldes de vos {netWorthData ? netWorthData.walletCount : wallets.length} comptes.
+            {netWorthData && netWorthData.archivedBalance > 0 && (
+              <span className="block mt-0.5 text-neutral-300 font-bold">
+                (dont {formatCurrency(netWorthData.archivedBalance)} sur des comptes archivés)
+              </span>
+            )}
+            {netWorthData && netWorthData.unassignedBalance !== 0 && (
+              <span className="block mt-0.5 text-[#FBBF24] font-bold">
+                Opérations sans compte rattaché : {formatCurrency(netWorthData.unassignedBalance)}
+              </span>
+            )}
           </p>
         </div>
 

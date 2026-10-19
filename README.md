@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.7.0)
+# GEST TRACKER — Documentation Complète (v2.7.1)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -150,8 +150,8 @@ my-app/
 
 ### 4.2 Tableau de Bord Principal (`/`)
 
-- **Résumé du Solde :**
-  - Solde global en temps réel.
+- **Résumé du Solde (v2.7.1) :**
+  - **Solde global unifié (Patrimoine net) :** Issu du service centralisé `getWalletBalancesForUser`, le solde global affiché en haut de l'accueil correspond rigoureusement à la somme de tous les comptes de l'utilisateur (soldes initiaux et mouvements réels inclus).
   - Cartes synthétiques des flux pour 3 périodes clés : **Aujourd'hui**, **Mois en cours** et **Année**.
 - **Bannière d'Alerte Récurrente :**
   - Détecte automatiquement les charges du mois qui n'ont pas encore été validées (loyer, abonnements).
@@ -165,6 +165,7 @@ my-app/
 ### 4.3 Bilan & Conseils Financiers (Moteur d'Insights & Carrousel)
 
 - Situé sur la page d'accueil juste après les boutons d'actions rapides.
+- **Interface épurée (v2.7.1) :** Suppression du titre textuel redondant "Bilan & Conseils Financiers" ; l'icône néobrutaliste en bloc jaune est positionnée élégamment sur le flanc gauche et le carrousel interactif occupe tout l'espace utile.
 - **Tri déterministe par sévérité :** Les conseils sont ordonnés par niveau de priorité décroissant (`danger` > `warning` > `info` > `success`) afin que les alertes budgétaires critiques et risques de déficit soient immédiatement présentés.
 - **Carrousel interactif néobrutaliste (`InsightsCarousel`) :**
   - Affichage épuré d'une alerte à la fois avec hauteur calibrée anti-décalage de mise en page.
@@ -233,11 +234,16 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - **Épargne**
 - **Calcul du solde en temps réel :**
   $$\text{Solde actuel} = \text{Solde initial} + \text{Revenus} - \text{Dépenses} + \text{Virements entrants} - \text{Virements sortants}$$
+- **Règle d'or du patrimoine total (v2.7.1, ADR-02 / Q10) :**
+  - Le patrimoine total correspond fidèlement à la somme de tous les comptes, **archivés inclus**.
+  - Si des comptes archivés disposent d'un solde non nul, une mention explicite le précise automatiquement (`dont X FCFA sur des comptes archivés`).
+  - La valeur affichée est immuable et ne varie plus selon le filtre d'affichage des comptes archivés.
 - **Virements Internes (Transfers) :**
   - Déplacement d'argent entre deux comptes (ex: Retrait Banque vers Wave ou Wave vers Espèces).
   - **Stricte Neutralité Comptable :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés mais n'impacte ni les revenus ni les dépenses globales de l'utilisateur.
   - **Auto-sélection contextuelle du compte source (v2.7.0) :** Cliquer sur *"Faire un virement depuis ce compte"* ouvre `TransferModal` avec ce compte immédiatement sélectionné en émetteur et un compte récepteur distinct pré-choisi automatiquement.
-- **Ergonomie & Validation (v2.7.0) :**
+- **Ergonomie & Validation (v2.7.0 / v2.7.1) :**
+  - **Portail de modales (`createPortal`) (v2.7.1) :** Rendu direct de `ConfirmDialog` et `Modal` à la racine de `document.body`, empêchant tout affadissement de backdrop causé par l'opacité des conteneurs parents (comme les comptes archivés `opacity-80`).
   - Éradication intégrale des pop-ups `alert()` / `confirm()` du navigateur sur l'ensemble de l'application au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.
   - Pré-remplissage complet garanti de `WalletModal` en modification (`name`, `type`, `initialBalance`, `color`, `isDefault`).
   - Unicité de la couleur des portefeuilles par utilisateur avec pastilles indisponibles marquées dans la palette.

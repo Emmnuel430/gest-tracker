@@ -4,6 +4,7 @@ import { getDateRangeForPeriod, formatDisplayDate } from '@/lib/dates';
 import { serializeTransaction } from '@/lib/utils';
 import { PeriodType } from '@/types/period';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { format } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,8 +12,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get('period') as PeriodType) || 'month';
+    const start = searchParams.get('start');
+    const end = searchParams.get('end');
 
-    const range = getDateRangeForPeriod(period);
+    const range =
+      period === 'custom' && start && end
+        ? getDateRangeForPeriod('custom', start, end)
+        : getDateRangeForPeriod(period);
 
     const transactions = await prisma.transaction.findMany({
       where: {
@@ -29,16 +35,22 @@ export async function GET(request: NextRequest) {
 
     // En-têtes CSV avec point-virgule (compatible Excel FR)
     const headers = ['ID', 'Date', 'Type', 'Montant', 'Devise', 'Catégorie', 'Moyen de paiement', 'Note'];
-    const rows = serializedTxs.map((t) => [
-      `"${t.id}"`,
-      `"${formatDisplayDate(t.date, 'yyyy-MM-dd HH:mm')}"`,
-      `"${t.type === 'INCOME' ? 'REVENU' : 'DÉPENSE'}"`,
-      t.amount,
-      '"FCFA"',
-      `"${t.category.replace(/"/g, '""')}"`,
-      `"${t.payment.replace(/"/g, '""')}"`,
-      `"${(t.note || '').replace(/"/g, '""')}"`,
-    ]);
+    const rows = serializedTxs.map((t) => {
+      let typeLabel = 'DÉPENSE';
+      if (t.type === 'INCOME') typeLabel = 'REVENU';
+      else if (t.type === 'TRANSFER') typeLabel = 'VIREMENT';
+
+      return [
+        `"${t.id}"`,
+        `"${formatDisplayDate(t.date, 'yyyy-MM-dd HH:mm')}"`,
+        `"${typeLabel}"`,
+        t.amount,
+        '"FCFA"',
+        `"${(t.category || '').replace(/"/g, '""')}"`,
+        `"${(t.payment || '').replace(/"/g, '""')}"`,
+        `"${(t.note || '').replace(/"/g, '""')}"`,
+      ];
+    });
 
     const csvContent = [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\r\n');
 
@@ -46,10 +58,14 @@ export async function GET(request: NextRequest) {
     const bom = '\uFEFF';
     const body = bom + csvContent;
 
+    const fromDateStr = format(range.from, 'yyyy-MM-dd');
+    const toDateStr = format(range.to, 'yyyy-MM-dd');
+    const filename = `gest-tracker_${fromDateStr}_au_${toDateStr}.csv`;
+
     return new NextResponse(body, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="gest-tracker-${period}-${Date.now()}.csv"`,
+        'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
   } catch (error: unknown) {

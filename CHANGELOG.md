@@ -3,6 +3,21 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2026-10-19
+
+### Fixes
+- **wallets** : Unification de la source de calcul du solde global (Accueil) et du patrimoine total (`/portefeuilles`) via le service centralisé `getWalletBalancesForUser` (`lib/services/wallet-balances.ts`). Le solde de l'accueil intègre désormais fidèlement les soldes initiaux et les mouvements réels de tous les comptes.
+- **wallets** : Règle d'or du patrimoine (ADR-02 / Q10) : le patrimoine total somme désormais tous les comptes de l'utilisateur, archivés compris, avec mention explicite du montant détenu sur les comptes archivés (`dont X FCFA sur des comptes archivés`) et calcul immuable indépendant du filtre d'affichage.
+- **ui** : Correction du backdrop délavé lors de la confirmation de désarchivage : déport de `ConfirmDialog` et `Modal` hors des conteneurs parents soumis à des filtres d'opacité (tels que `opacity-80` des cartes archivées) via `createPortal(..., document.body)`, avec blocage du défilement du body et accessibilité ARIA complète (`role="alertdialog"` / `role="dialog"`).
+- **export** : Période d'export affichée en dates calendaires complètes et explicites (`formatExportPeriodLabel`) au lieu des codes techniques `WEEK` ou `TODAY` (ex: `du 01/09/2026 au 07/09/2026`, `05/09/2026`).
+- **export** : Encadré descriptif des filtres appliqués dans le rapport PDF (`describeExportFilters`), adaptation dynamique des cartes de synthèse selon le type d'opération sélectionné (masquage des totaux hors périmètre) et transmission de `start`/`end` pour les périodes personnalisées depuis l'historique.
+- **export** : Typage et affichage conformes des virements internes (`TRANSFER`) : libellés comme `VIREMENT` (et non plus `DÉPENSE`) dans le PDF et le CSV, montants sans signe négatif indu, et ajout d'une note d'information sur la neutralité financière des virements.
+- **security** : Assainissement XSS systématique (`escapeHtml`) de toutes les données textuelles saisies par l'utilisateur (catégories, notes, moyens) avant injection dans le gabarit d'impression PDF.
+
+### Style
+- **accueil** : Épuration visuelle de la carte Bilan Financier (`FinancialInsightsCard`) : suppression du titre textuel redondant "Bilan & Conseils Financiers" et alignement moderne de l'icône néobrutaliste à gauche avec le carrousel interactif occupant l'espace restant.
+
+
 ## [2.7.0] - 2026-10-14
 
 ### Features
