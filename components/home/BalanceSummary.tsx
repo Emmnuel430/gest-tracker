@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Wallet, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowDownLeft, ArrowUpRight, Wallet, ChevronDown, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/constants/config';
 import { FinancialSummary } from '@/types/statistics';
 
@@ -28,14 +29,16 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
     year: 'Année en cours',
   };
 
+  const isNetPositive = currentSummary.balance >= 0;
+
   return (
     <div className="w-full space-y-3.5">
-      {/* 1. Carte Principale du Solde Global (Section 11) */}
+      {/* 1. Carte Principale du Solde Total Disponible (Section 11) */}
       <div className="bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-[5px_5px_0px_0px_#111827] dark:shadow-[5px_5px_0px_0px_#000000] relative overflow-hidden transition-colors">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-widest text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
             <Wallet className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
-            Solde Global
+            Solde Total Disponible
           </span>
 
           {/* Sélecteur de Période (Section 10.1) */}
@@ -58,8 +61,8 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
           </div>
         </div>
 
-        {/* Montant du Solde Global */}
-        <div className="flex items-baseline gap-2">
+        {/* Montant du Solde Global & Lien vers Portefeuilles */}
+        <div className="flex items-baseline justify-between gap-2 flex-wrap">
           <h2
             className={`text-3xl sm:text-4xl font-black tracking-tight ${
               isPositiveGlobalBalance
@@ -69,6 +72,13 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
           >
             {formatCurrency(globalBalance)}
           </h2>
+          <Link
+            href="/portefeuilles"
+            className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 hover:text-[#2563EB] dark:hover:text-[#60A5FA] flex items-center gap-1 transition-colors"
+          >
+            <span>Répartition comptes</span>
+            <ArrowRight className="w-3.5 h-3.5 stroke-2.5" />
+          </Link>
         </div>
       </div>
 
@@ -109,6 +119,21 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
             -{formatCurrency(currentSummary.totalExpense)}
           </p>
         </div>
+      </div>
+
+      {/* 3. Synthèse du flux net de la période */}
+      <div className="w-full text-center text-[11px] font-bold py-1.5 px-3 rounded-xl border-2 border-[#111827] dark:border-[#334155] bg-white dark:bg-[#1E293B] shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] flex items-center justify-between">
+        <span className="text-neutral-600 dark:text-neutral-400 uppercase text-[10px] font-black">
+          Flux net ({periodLabels[selectedPeriod].toLowerCase()})
+        </span>
+        <span
+          className={`font-black text-xs ${
+            isNetPositive ? 'text-[#16A34A]' : 'text-[#DC2626]'
+          }`}
+        >
+          {isNetPositive ? '+' : ''}
+          {formatCurrency(currentSummary.balance)}
+        </span>
       </div>
     </div>
   );

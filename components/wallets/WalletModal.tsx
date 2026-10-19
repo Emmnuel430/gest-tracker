@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useTransition } from 'react';
 import { X, Sparkles, Wallet as WalletIcon, Ban } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
-import { parseAmountInput } from '@/constants/config';
+import { parseAmountInput, formatCurrency } from '@/constants/config';
 import { WalletItem, upsertWalletAction } from '@/actions/wallets';
 
 interface WalletModalProps {
@@ -63,9 +63,9 @@ export function WalletModal({
   const [type, setType] = useState<'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS'>(
     initialData?.type || 'CASH'
   );
-  const [initialBalance, setInitialBalance] = useState<string>(
-    initialData?.initialBalance !== undefined && initialData?.initialBalance !== null
-      ? initialData.initialBalance.toString()
+  const [balanceInput, setBalanceInput] = useState<string>(
+    initialData
+      ? (initialData.currentBalance ?? 0).toString()
       : '0'
   );
   const [color, setColor] = useState<string>(initialData?.color || '#2563EB');
@@ -78,17 +78,13 @@ export function WalletModal({
       if (initialData) {
         setName(initialData.name || '');
         setType(initialData.type || 'CASH');
-        setInitialBalance(
-          initialData.initialBalance !== undefined && initialData.initialBalance !== null
-            ? initialData.initialBalance.toString()
-            : '0'
-        );
+        setBalanceInput((initialData.currentBalance ?? 0).toString());
         setColor(initialData.color || '#2563EB');
         setIsDefault(initialData.isDefault || false);
       } else {
         setName('');
         setType('CASH');
-        setInitialBalance('0');
+        setBalanceInput('0');
         // Trouver la première couleur disponible
         const availableColor =
           PRESET_COLORS.find((c) => !usedColorsMap.has(c.toLowerCase())) || '#2563EB';
@@ -118,14 +114,20 @@ export function WalletModal({
       return;
     }
 
-    const numericBalance = parseAmountInput(initialBalance);
+    const numericBalance = parseAmountInput(balanceInput);
+    const parsedAmt = isNaN(numericBalance) ? 0 : numericBalance;
+    const hasBalanceChanged = initialData
+      ? Math.round(parsedAmt) !== Math.round(initialData.currentBalance)
+      : false;
 
     startTransition(async () => {
       const res = await upsertWalletAction({
         id: initialData?.id,
         name: name.trim(),
         type,
-        initialBalance: isNaN(numericBalance) ? 0 : numericBalance,
+        initialBalance: initialData ? initialData.initialBalance : parsedAmt,
+        declaredBalance: parsedAmt,
+        adjustCurrentBalance: hasBalanceChanged,
         color,
         isDefault,
       });
@@ -199,19 +201,32 @@ export function WalletModal({
             </div>
           </div>
 
-          {/* Solde de départ */}
+          {/* Solde de départ en création OU Solde actuel constaté en édition */}
           <div>
             <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1">
-              Solde initial (FCFA)
+              {initialData ? 'Solde actuel constaté (FCFA)' : 'Solde initial (FCFA)'}
             </label>
             <CurrencyInput
-              value={initialBalance}
-              onChange={setInitialBalance}
+              value={balanceInput}
+              onChange={setBalanceInput}
               placeholder="0"
             />
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Montant déjà présent sur ce compte au moment de la création.
-            </p>
+            {initialData ? (
+              <div className="mt-1 space-y-1">
+                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-medium">
+                  Saisissez le montant exact présent sur ce compte aujourd’hui. Vos prochaines opérations ajusteront ce solde. Votre historique passé est intégralement préservé.
+                </p>
+                {initialData.declaredAt && (
+                  <p className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-[#131C31] px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700">
+                    Dernière référence : {formatCurrency(initialData.declaredBalance ?? 0)} le {new Date(initialData.declaredAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                Montant actuellement présent sur ce compte au moment de la création.
+              </p>
+            )}
           </div>
 
           {/* Couleur */}

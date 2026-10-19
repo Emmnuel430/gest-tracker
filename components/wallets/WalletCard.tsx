@@ -174,11 +174,18 @@ export function WalletCard({
         >
           {formatCurrency(wallet.currentBalance)}
         </div>
-        {sharePercentage > 0 && (
-          <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400">
-            Représente {sharePercentage}% de votre solde global
-          </span>
-        )}
+        <div className="flex items-center justify-between gap-1 flex-wrap mt-0.5">
+          {sharePercentage > 0 && (
+            <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400">
+              Représente {sharePercentage}% du patrimoine total
+            </span>
+          )}
+          {wallet.declaredAt && (
+            <span className="text-[9px] font-bold text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-[#131C31] px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-700">
+              Ajusté le {new Date(wallet.declaredAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Détail entrées / sorties */}
