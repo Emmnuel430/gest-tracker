@@ -93,6 +93,8 @@ model Wallet {
   name               String          // Ex: "Mon Wave", "Cash Portefeuille", "Compte BOA"
   type               WalletType
   initialBalance     Decimal         @default(0) @map("initial_balance") @db.Decimal(12, 2)
+  declaredBalance    Decimal?        @map("declared_balance") @db.Decimal(12, 2)
+  declaredAt         DateTime?       @map("declared_at")
   color              String          @default("#2563EB")
   isDefault          Boolean         @default(false) @map("is_default")
   isArchived         Boolean         @default(false) @map("is_archived")

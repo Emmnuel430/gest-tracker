@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { WalletSchema, TransferSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
@@ -14,6 +15,8 @@ export interface WalletItem {
   name: string;
   type: 'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS';
   initialBalance: number;
+  declaredBalance?: number | null;
+  declaredAt?: string | null;
   currentBalance: number;
   color: string;
   isDefault: boolean;
@@ -88,7 +91,7 @@ export async function getWalletsAction(options?: {
 }
 
 /**
- * Enregistre ou met à jour un portefeuille avec propagation atomique du nom
+ * Enregistre ou met à jour un portefeuille avec propagation atomique du nom et gestion du solde déclaré T0
  */
 export async function upsertWalletAction(rawData: unknown): Promise<ActionResponse> {
   try {
@@ -102,7 +105,17 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
       };
     }
 
-    const { id, name, type, initialBalance, color, isDefault, isArchived } = parseResult.data;
+    const {
+      id,
+      name,
+      type,
+      initialBalance,
+      declaredBalance,
+      adjustCurrentBalance,
+      color,
+      isDefault,
+      isArchived,
+    } = parseResult.data;
 
     // Contrôle d'unicité de la couleur par utilisateur (insensible à la casse)
     const duplicateColor = await prisma.wallet.findFirst({
@@ -138,19 +151,31 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
         return { success: false, error: 'Portefeuille introuvable' };
       }
 
+      // Si l'utilisateur ajuste le solde actuel constaté
+      let nextDeclaredBalance = existing.declaredBalance;
+      let nextDeclaredAt = existing.declaredAt;
+
+      if (adjustCurrentBalance && declaredBalance !== undefined && declaredBalance !== null) {
+        nextDeclaredBalance = new Prisma.Decimal(declaredBalance);
+        nextDeclaredAt = new Date();
+      }
+
+      const updateData = {
+        name,
+        type,
+        declaredBalance: nextDeclaredBalance,
+        declaredAt: nextDeclaredAt,
+        color,
+        isDefault,
+        isArchived: isArchived ?? existing.isArchived,
+      };
+
       // Si le nom a changé, propager atomiquement le nouveau libellé vers transactions et récurrences
       if (existing.name !== name) {
         const [updatedWallet] = await prisma.$transaction([
           prisma.wallet.update({
             where: { id },
-            data: {
-              name,
-              type,
-              initialBalance,
-              color,
-              isDefault,
-              isArchived: isArchived ?? existing.isArchived,
-            },
+            data: updateData,
           }),
           prisma.transaction.updateMany({
             where: { userId: user.id, walletId: id },
@@ -165,23 +190,22 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
       } else {
         saved = await prisma.wallet.update({
           where: { id },
-          data: {
-            name,
-            type,
-            initialBalance,
-            color,
-            isDefault,
-            isArchived: isArchived ?? existing.isArchived,
-          },
+          data: updateData,
         });
       }
     } else {
+      const now = new Date();
+      const initialAmt = initialBalance ?? 0;
+      const declAmt = declaredBalance !== undefined && declaredBalance !== null ? declaredBalance : initialAmt;
+
       saved = await prisma.wallet.create({
         data: {
           userId: user.id,
           name,
           type,
-          initialBalance,
+          initialBalance: initialAmt,
+          declaredBalance: declAmt,
+          declaredAt: now,
           color,
           isDefault,
           isArchived: isArchived ?? false,

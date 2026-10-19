@@ -1,12 +1,19 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { computeWalletBalance, computeNetWorth } from '@/lib/wallet-balance';
+import {
+  computeWalletBalance,
+  computeNetWorth,
+  isTransactionAfterDeclaration,
+  calculateEffectiveWalletBalance,
+} from '@/lib/wallet-balance';
 
 export interface CalculatedWalletData {
   id: string;
   name: string;
   type: 'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS';
   initialBalance: number;
+  declaredBalance: number | null;
+  declaredAt: string | null;
   currentBalance: number;
   color: string;
   isDefault: boolean;
@@ -40,6 +47,7 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
 
   // Initialisation automatique par défaut si premier accès
   if (wallets.length === 0) {
+    const now = new Date();
     await prisma.wallet.createMany({
       data: [
         {
@@ -47,6 +55,8 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
           name: 'Espèces',
           type: 'CASH',
           initialBalance: 0,
+          declaredBalance: 0,
+          declaredAt: now,
           color: '#52B788',
           isDefault: true,
           isArchived: false,
@@ -56,6 +66,8 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
           name: 'Wave',
           type: 'MOBILE_MONEY',
           initialBalance: 0,
+          declaredBalance: 0,
+          declaredAt: now,
           color: '#1DC4F2',
           isDefault: false,
           isArchived: false,
@@ -65,6 +77,8 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
           name: 'Compte bancaire',
           type: 'BANK',
           initialBalance: 0,
+          declaredBalance: 0,
+          declaredAt: now,
           color: '#B8C0FF',
           isDefault: false,
           isArchived: false,
@@ -86,17 +100,33 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
       type: true,
       walletId: true,
       targetWalletId: true,
+      date: true,
+      createdAt: true,
     },
   });
 
-  // Calcul des mouvements par portefeuille
-  const walletMovementsMap = new Map<
+  // Calcul des mouvements par portefeuille (historiques complets + mouvements post-déclaration)
+  const walletHistoricalMap = new Map<
     string,
     { income: Prisma.Decimal; expense: Prisma.Decimal; transferIn: Prisma.Decimal; transferOut: Prisma.Decimal }
   >();
 
+  const walletPostDeclarationMap = new Map<
+    string,
+    { income: Prisma.Decimal; expense: Prisma.Decimal; transferIn: Prisma.Decimal; transferOut: Prisma.Decimal }
+  >();
+
+  const walletMap = new Map(wallets.map((w) => [w.id, w]));
+
   for (const w of wallets) {
-    walletMovementsMap.set(w.id, {
+    walletHistoricalMap.set(w.id, {
+      income: new Prisma.Decimal(0),
+      expense: new Prisma.Decimal(0),
+      transferIn: new Prisma.Decimal(0),
+      transferOut: new Prisma.Decimal(0),
+    });
+
+    walletPostDeclarationMap.set(w.id, {
       income: new Prisma.Decimal(0),
       expense: new Prisma.Decimal(0),
       transferIn: new Prisma.Decimal(0),
@@ -111,51 +141,84 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
     const amt = t.amount;
     const isTransfer = t.type === 'TRANSFER';
 
-    if (t.walletId && walletMovementsMap.has(t.walletId)) {
-      const mov = walletMovementsMap.get(t.walletId)!;
+    if (t.walletId && walletHistoricalMap.has(t.walletId)) {
+      const hist = walletHistoricalMap.get(t.walletId)!;
+      const targetW = walletMap.get(t.walletId);
+      const isPost = targetW?.declaredAt
+        ? isTransactionAfterDeclaration(t, targetW.declaredAt)
+        : true;
+      const post = walletPostDeclarationMap.get(t.walletId)!;
+
       if (t.type === 'INCOME') {
-        mov.income = mov.income.plus(amt);
+        hist.income = hist.income.plus(amt);
+        if (isPost) post.income = post.income.plus(amt);
       } else if (t.type === 'EXPENSE') {
-        mov.expense = mov.expense.plus(amt);
+        hist.expense = hist.expense.plus(amt);
+        if (isPost) post.expense = post.expense.plus(amt);
       } else if (isTransfer) {
-        mov.transferOut = mov.transferOut.plus(amt);
+        hist.transferOut = hist.transferOut.plus(amt);
+        if (isPost) post.transferOut = post.transferOut.plus(amt);
       }
     } else if (!t.walletId) {
       if (t.type === 'INCOME') unassignedIncome = unassignedIncome.plus(amt);
       else if (t.type === 'EXPENSE') unassignedExpense = unassignedExpense.plus(amt);
     }
 
-    if (isTransfer && t.targetWalletId && walletMovementsMap.has(t.targetWalletId)) {
-      const targetMov = walletMovementsMap.get(t.targetWalletId)!;
-      targetMov.transferIn = targetMov.transferIn.plus(amt);
+    if (isTransfer && t.targetWalletId && walletHistoricalMap.has(t.targetWalletId)) {
+      const histTarget = walletHistoricalMap.get(t.targetWalletId)!;
+      histTarget.transferIn = histTarget.transferIn.plus(amt);
+
+      const targetW = walletMap.get(t.targetWalletId);
+      const isPostTarget = targetW?.declaredAt
+        ? isTransactionAfterDeclaration(t, targetW.declaredAt)
+        : true;
+      if (isPostTarget) {
+        const postTarget = walletPostDeclarationMap.get(t.targetWalletId)!;
+        postTarget.transferIn = postTarget.transferIn.plus(amt);
+      }
     }
   }
 
   const unassignedBalance = unassignedIncome.minus(unassignedExpense).toNumber();
 
   const calculatedWallets: CalculatedWalletData[] = wallets.map((w) => {
-    const mov = walletMovementsMap.get(w.id) || {
+    const hist = walletHistoricalMap.get(w.id) || {
       income: new Prisma.Decimal(0),
       expense: new Prisma.Decimal(0),
       transferIn: new Prisma.Decimal(0),
       transferOut: new Prisma.Decimal(0),
     };
 
-    const currentBalance = computeWalletBalance(w.initialBalance, mov);
+    const post = walletPostDeclarationMap.get(w.id) || {
+      income: new Prisma.Decimal(0),
+      expense: new Prisma.Decimal(0),
+      transferIn: new Prisma.Decimal(0),
+      transferOut: new Prisma.Decimal(0),
+    };
+
+    const currentBalance = calculateEffectiveWalletBalance({
+      initialBalance: w.initialBalance,
+      declaredBalance: w.declaredBalance,
+      declaredAt: w.declaredAt,
+      movements: hist,
+      postDeclarationMovements: post,
+    });
 
     return {
       id: w.id,
       name: w.name,
       type: w.type,
       initialBalance: Number(w.initialBalance),
+      declaredBalance: w.declaredBalance !== null ? Number(w.declaredBalance) : null,
+      declaredAt: w.declaredAt ? w.declaredAt.toISOString() : null,
       currentBalance,
       color: w.color,
       isDefault: w.isDefault,
       isArchived: w.isArchived,
-      totalIncome: mov.income.toNumber(),
-      totalExpense: mov.expense.toNumber(),
-      totalTransferIn: mov.transferIn.toNumber(),
-      totalTransferOut: mov.transferOut.toNumber(),
+      totalIncome: hist.income.toNumber(),
+      totalExpense: hist.expense.toNumber(),
+      totalTransferIn: hist.transferIn.toNumber(),
+      totalTransferOut: hist.transferOut.toNumber(),
       createdAt: w.createdAt.toISOString(),
     };
   });
