@@ -45,7 +45,7 @@ export function ReferenceDataProvider({
 
   const fetchWallets = useCallback(async () => {
     try {
-      const res = await getWalletsAction({ includeArchived: true });
+      const res = await getWalletsAction({ includeArchived: true, includeDeleted: true });
       if (res.success && res.data) {
         setWallets(res.data);
       }
@@ -151,17 +151,28 @@ export function useCategories(
   };
 }
 
-export function useWallets(options?: { includeArchived?: boolean }) {
+export function useWallets(options?: {
+  includeArchived?: boolean;
+  includeDeleted?: boolean;
+}) {
   const { wallets, isLoading, refreshWallets, getWalletColor } = useReferenceData();
   const includeArchived = options?.includeArchived;
+  const includeDeleted = options?.includeDeleted;
 
   const filteredWallets = useMemo(() => {
-    if (includeArchived) return wallets;
-    return wallets.filter((w) => !w.isArchived);
-  }, [wallets, includeArchived]);
+    return wallets.filter((w) => {
+      if (!includeDeleted && w.isDeleted) return false;
+      if (!includeArchived && w.isArchived) return false;
+      return true;
+    });
+  }, [wallets, includeArchived, includeDeleted]);
 
   const defaultWallet = useMemo(() => {
-    return wallets.find((w) => w.isDefault && !w.isArchived) || wallets.find((w) => !w.isArchived) || null;
+    return (
+      wallets.find((w) => w.isDefault && !w.isArchived && !w.isDeleted) ||
+      wallets.find((w) => !w.isArchived && !w.isDeleted) ||
+      null
+    );
   }, [wallets]);
 
   return {

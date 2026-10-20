@@ -5,7 +5,15 @@ import { X, Sparkles, Wallet as WalletIcon, Ban } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput, formatCurrency } from '@/constants/config';
-import { WalletItem, upsertWalletAction } from '@/actions/wallets';
+import { WalletItem, upsertWalletAction, restoreWalletAction } from '@/actions/wallets';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+
+interface DeletedMatchData {
+  id: string;
+  name: string;
+  deletedAt: string | null;
+  transactionCount: number;
+}
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -71,6 +79,8 @@ export function WalletModal({
   const [color, setColor] = useState<string>(initialData?.color || '#2563EB');
   const [isDefault, setIsDefault] = useState<boolean>(initialData?.isDefault || false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [deletedMatch, setDeletedMatch] = useState<DeletedMatchData | null>(null);
+  const [showRestoreDialog, setShowRestoreDialog] = useState<boolean>(false);
 
   // Synchronisation systématique de l'état avec initialData à l'ouverture ou modification de la sélection
   useEffect(() => {
@@ -92,10 +102,27 @@ export function WalletModal({
         setIsDefault(false);
       }
       setErrorMessage(null);
+      setDeletedMatch(null);
+      setShowRestoreDialog(false);
     }
   }, [isOpen, initialData, usedColorsMap]);
 
   if (!isOpen) return null;
+
+  const handleConfirmRestore = () => {
+    if (!deletedMatch) return;
+    startTransition(async () => {
+      const res = await restoreWalletAction(deletedMatch.id, color, type);
+      if (res.success) {
+        setShowRestoreDialog(false);
+        onSuccess();
+        onClose();
+      } else {
+        setShowRestoreDialog(false);
+        setErrorMessage(res.error);
+      }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +163,11 @@ export function WalletModal({
         onSuccess();
         onClose();
       } else {
+        if (res.code === 'DELETED_WALLET_MATCH' && res.data) {
+          setDeletedMatch(res.data as DeletedMatchData);
+          setShowRestoreDialog(true);
+          return;
+        }
         setErrorMessage(res.error);
       }
     });
@@ -322,6 +354,28 @@ export function WalletModal({
           </div>
         </form>
       </div>
+
+      {/* Boîte de dialogue de proposition de restauration */}
+      <ConfirmDialog
+        isOpen={showRestoreDialog && !!deletedMatch}
+        title="Restaurer le compte existant ?"
+        message={`Un compte "${deletedMatch?.name}" supprimé${
+          deletedMatch?.deletedAt
+            ? ` le ${new Date(deletedMatch.deletedAt).toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })}`
+            : ''
+        } contient ${deletedMatch?.transactionCount ?? 0} opération(s). Le restaurer les remettra à leur place.`}
+        confirmLabel="Restaurer le compte"
+        cancelLabel="Annuler"
+        variant="warning"
+        isLoading={isPending}
+        loadingLabel="Restauration..."
+        onCancel={() => setShowRestoreDialog(false)}
+        onConfirm={handleConfirmRestore}
+      />
     </div>
   );
 }

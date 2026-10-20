@@ -14,6 +14,8 @@ export interface Transaction {
   userId?: string | null;
   walletId?: string | null;
   targetWalletId?: string | null;
+  linkedTransferId?: string | null;
+  feePercent?: number | null;
   createdAt: string;
   updatedAt: string;
 }

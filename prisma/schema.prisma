@@ -35,6 +35,7 @@ model Category {
   kind       CategoryKind
   color      String
   isArchived Boolean      @default(false) @map("is_archived")
+  systemKey  String?      @map("system_key")
   createdAt  DateTime     @default(now()) @map("created_at")
   updatedAt  DateTime     @updatedAt @map("updated_at")
 
@@ -43,6 +44,7 @@ model Category {
   recurringRules RecurringRule[]
 
   @@unique([userId, name])
+  @@unique([userId, systemKey])
   @@index([userId, kind])
   @@index([userId])
   @@map("categories")
@@ -72,6 +74,12 @@ model Transaction {
   targetWalletId String?         @map("target_wallet_id")
   targetWallet   Wallet?         @relation("TargetWallet", fields: [targetWalletId], references: [id], onDelete: SetNull)
 
+  // Frais de virement et liaison (Sprint 2.10.0)
+  linkedTransferId String?         @unique @map("linked_transfer_id")
+  feePercent       Decimal?        @map("fee_percent") @db.Decimal(5, 2)
+  linkedTransfer   Transaction?    @relation("TransferFees", fields: [linkedTransferId], references: [id], onDelete: Cascade)
+  linkedFee        Transaction?    @relation("TransferFees")
+
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
@@ -84,6 +92,7 @@ model Transaction {
   @@index([userId])
   @@index([userId, date(sort: Desc), id])
   @@index([walletId])
+  @@index([linkedTransferId])
   @@map("transactions")
 }
 
@@ -98,6 +107,7 @@ model Wallet {
   color              String          @default("#2563EB")
   isDefault          Boolean         @default(false) @map("is_default")
   isArchived         Boolean         @default(false) @map("is_archived")
+  deletedAt          DateTime?       @map("deleted_at")
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
@@ -107,6 +117,7 @@ model Wallet {
 
   @@index([userId])
   @@index([userId, isArchived])
+  @@index([userId, deletedAt])
   @@map("wallets")
 }
 

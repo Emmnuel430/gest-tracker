@@ -248,11 +248,22 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - Le patrimoine total correspond fidèlement à la somme de tous les comptes, **archivés inclus**.
   - Si des comptes archivés disposent d'un solde non nul, une mention explicite le précise automatiquement (`dont X FCFA sur des comptes archivés`).
   - La valeur affichée est immuable et ne varie plus selon le filtre d'affichage des comptes archivés.
-- **Virements Internes (Transfers) :**
+- **Virements Internes & Frais de Virement (v2.10.0, ADR-04 / D9) :**
   - Déplacement d'argent entre deux comptes (ex: Retrait Banque vers Wave ou Wave vers Espèces).
-  - **Stricte Neutralité Comptable :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés mais n'impacte ni les revenus ni les dépenses globales de l'utilisateur.
+  - **Stricte Neutralité Comptable du Transfert :** Le type `TRANSFER` met à jour les soldes des portefeuilles concernés sans impacter les revenus ni les dépenses globales.
+  - **Frais de Virement Optionnels :** Saisie en montant fixe (FCFA) ou en pourcentage (%), avec arrondi au FCFA supérieur et prévisualisation instantanée.
+  - **Règle financière (Q11) :** Le montant saisi est le montant reçu/crédité sur le compte cible ; les frais sont débités en sus du compte source.
+  - **Imputation Comptable :** Les frais sont automatiquement enregistrés sous forme d'une dépense (`EXPENSE`) rattachée (`linkedTransferId`) dans la catégorie système *"Frais de transfert"* (`systemKey = 'TRANSFER_FEE'`).
+  - **Protection des opérations :** Les frais ne peuvent être modifiés ou supprimés isolément (message d'information invitant à modifier/supprimer le virement parent) et sont supprimés en cascade avec le virement.
   - **Auto-sélection contextuelle du compte source (v2.7.0) :** Cliquer sur *"Faire un virement depuis ce compte"* ouvre `TransferModal` avec ce compte immédiatement sélectionné en émetteur et un compte récepteur distinct pré-choisi automatiquement.
-- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0) :**
+- **Suppression Réversible et Restauration des Portefeuilles (v2.10.0, ADR-05 / D10 / C7) :**
+  - **Soft-Delete (`deletedAt`) :** La suppression d'un portefeuille ne détruit aucune transaction existante. L'historique et les libellés sont intégralement préservés.
+  - **Exclusion du Patrimoine :** Les comptes supprimés sont immédiatement exclus du calcul du patrimoine net, des listes actives et des sélecteurs de saisie.
+  - **Règles Récurrentes :** Les règles récurrentes actives rattachées au compte supprimé sont automatiquement mises en pause (`isActive = false`).
+  - **Protection du Compte Principal :** Interdiction stricte de supprimer le compte par défaut (l'utilisateur doit d'abord désigner un autre compte principal).
+  - **Modale d'Impact Chiffré :** `ConfirmDialog` affiche le nombre d'opérations préservées dans l'historique, le solde exclu et le nombre de règles récurrentes mises en pause.
+  - **Détection et Restauration Automatique :** Recréer un compte portant le même nom détecte le compte supprimé et propose sa restauration immédiate avec réassignation de toutes ses transactions d'origine.
+- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0 / v2.10.0) :**
   - **Solde Total Disponible sur l'Accueil (v2.8.0) :** L'écran d'accueil affiche le solde total disponible synchronisé avec les portefeuilles et met en valeur le flux net de la période sélectionnée (entrées, sorties, épargne nette).
   - **Portail de modales (`createPortal`) (v2.7.1) :** Rendu direct de `ConfirmDialog` et `Modal` à la racine de `document.body`, empêchant tout affadissement de backdrop causé par l'opacité des conteneurs parents (comme les comptes archivés `opacity-80`).
   - Éradication intégrale des pop-ups `alert()` / `confirm()` du navigateur sur l'ensemble de l'application au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.

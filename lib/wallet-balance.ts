@@ -93,6 +93,7 @@ export function calculateEffectiveWalletBalance(
 export interface WalletBalanceItem {
   id: string;
   isArchived: boolean;
+  isDeleted?: boolean;
   currentBalance: number;
 }
 
@@ -106,6 +107,7 @@ export interface NetWorthCalculationResult {
 /**
  * Calcule le patrimoine total (somme de tous les portefeuilles, archivés inclus selon règle Q10)
  * et isole la part des portefeuilles archivés.
+ * Les portefeuilles supprimés logiquement (soft-deleted) sont strictement exclus du patrimoine.
  */
 export function computeNetWorth(
   wallets: WalletBalanceItem[]
@@ -113,8 +115,11 @@ export function computeNetWorth(
   let netWorthDecimal = new Prisma.Decimal(0);
   let activeDecimal = new Prisma.Decimal(0);
   let archivedDecimal = new Prisma.Decimal(0);
+  let count = 0;
 
   for (const w of wallets) {
+    if (w.isDeleted) continue;
+    count++;
     const bal = new Prisma.Decimal(w.currentBalance || 0);
     netWorthDecimal = netWorthDecimal.plus(bal);
     if (w.isArchived) {
@@ -128,6 +133,6 @@ export function computeNetWorth(
     netWorth: netWorthDecimal.toNumber(),
     activeBalance: activeDecimal.toNumber(),
     archivedBalance: archivedDecimal.toNumber(),
-    walletCount: wallets.length,
+    walletCount: count,
   };
 }
