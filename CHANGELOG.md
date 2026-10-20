@@ -3,6 +3,17 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.1] - 2026-10-20
+
+### Bug Fixes
+- **wallets** : Réconciliation fiable du solde de référence ($B_0$ à $T_0$) et du Solde Total Disponible :
+  - Suppression de l'auto-initialisation forcée à zéro (`declaredBalance: 0` et `declaredAt: now`) lors de la création paresseuse des portefeuilles par défaut dans `lib/services/wallet-balances.ts`. Les comptes sans déclaration explicite opèrent sous l'équation financière naturelle basée sur l'historique complet ($B(t) = \text{initialBalance} + \sum \Delta_i$).
+  - Intégration du solde des anciennes opérations sans compte rattaché (`unassignedBalance`) dans le calcul du patrimoine net (`computeNetWorth`) et du Solde Total Disponible sur l'accueil (`getDashboardDataAction`), garantissant qu'aucune opération passée ne disparaît de la trésorerie globale.
+  - Normalisation de la comparaison de dates dans `isTransactionAfterDeclaration` (`lib/wallet-balance.ts`) via une extraction calendaire stricte `YYYY-MM-DD`, éliminant les biais de fuseau horaire et les ruptures d'heures UTC.
+  - Clarification du texte d'aide dans `WalletModal.tsx` explicitant le rôle de jalon de référence du solde déclaré pour les calculs futurs, sans altération des opérations passées.
+
+---
+
 ## [2.10.0] - 2026-10-20
 
 ### Features
