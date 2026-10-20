@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.8.0)
+# GEST TRACKER — Documentation Complète (v2.9.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -150,9 +150,11 @@ my-app/
 
 ### 4.2 Tableau de Bord Principal (`/`)
 
-- **Résumé du Solde (v2.7.1) :**
-  - **Solde global unifié (Patrimoine net) :** Issu du service centralisé `getWalletBalancesForUser`, le solde global affiché en haut de l'accueil correspond rigoureusement à la somme de tous les comptes de l'utilisateur (soldes initiaux et mouvements réels inclus).
-  - Cartes synthétiques des flux pour 3 périodes clés : **Aujourd'hui**, **Mois en cours** et **Année**.
+- **Résumé du Solde & Périodes (v2.8.0 / v2.9.0) :**
+  - **Solde Total Disponible (Patrimoine net) :** Issu du service centralisé `getWalletBalancesForUser`, le solde global affiché en haut de l'accueil correspond rigoureusement à la somme des portefeuilles (soldes déclarés $T_0$ et mouvements postérieurs compris).
+  - **Sélecteur de Période à 4 Vues (v2.9.0) :** Choix dynamique entre **Aujourd'hui**, **Semaine en cours**, **Mois en cours** et **Année en cours**.
+  - **Vue "Semaine en cours" (v2.9.0) :** Calcule les entrées et dépenses du lundi au dimanche (`weekStartsOn: 1`). Borne dynamiquement les requêtes serveur (`min(week.from, year.from)`) pour capturer fidèlement les jours de fin d'année précédente (ex: lundi 29 décembre) lors d'une semaine à cheval sur deux années civiles (C5). La plage textuelle `du DD/MM au DD/MM` est affichée lisiblement sous les cartes.
+  - **Flux net de la période :** Indicateur de synthèse reflétant la différence stricte entre entrées et sorties de la sélection.
 - **Bannière d'Alerte Récurrente :**
   - Détecte automatiquement les charges du mois qui n'ont pas encore été validées (loyer, abonnements).
   - Permet de valider (créant la transaction réelle) ou d'ignorer en un clic.
@@ -160,7 +162,10 @@ my-app/
   - Bouton **ENTRANT** vert néobrutaliste (`/entrant`) pour enregistrer un revenu.
   - Bouton **SORTANT** rouge néobrutaliste (`/sortant`) pour enregistrer une dépense.
   - Bouton **HISTORIQUE** bleu néobrutaliste (`/historique`) pour explorer les archives.
-- **Dernières Opérations :** Liste compacte des transactions récentes avec affichage de la catégorie, moyen de paiement, portefeuille et date.
+- **Dernières Opérations Cliquables (v2.9.0) :**
+  - Composant unique compact `TransactionListItem` : bouton interactif pleine largeur avec icône de type (`ArrowDownLeft`, `ArrowUpRight`, `ArrowRightLeft`), pastille de catégorie, date/heure et montant.
+  - Les virements internes (`TRANSFER`) sont affichés avec une stricte neutralité comptable (sans signe négatif indu et en teinte neutre, C4).
+  - Un clic ouvre la modale complète `TransactionDetailsModal`.
 
 ### 4.3 Bilan & Conseils Financiers (Moteur d'Insights & Carrousel)
 
@@ -273,6 +278,10 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
 - **Filtres dépendants & URL Source de Vérité :**
   - Sélecteur de catégorie inactif avec indication visuelle *"Choisissez d'abord un type"* tant que le type n'est pas sélectionné (`INCOME` ou `EXPENSE`).
   - Synchronisation bidirectionnelle continue dans l'URL (`?period=...&type=...&category=...&payment=...&tab=...`) via `window.history.replaceState` sans rechargement de page.
+- **Liste des Opérations Cliquables & Modale de Détail (v2.9.0) :**
+  - Items d'opérations épurés `TransactionListItem` : bouton accessible avec icône contextuelle, pastille de catégorie, horodatage et montant.
+  - Modale de détail `TransactionDetailsModal` : présente l'opération complète (catégorie et statut d'archivage, portefeuille et moyen de paiement, compte source et cible pour les virements, date longue en français, commentaire multiligne sans troncature et dates de création/modification).
+  - Actions intégrées : modification directe (`EditTransactionModal`) ou suppression irréversible sécurisée (`ConfirmDialog`).
 - **Pagination Serveur par Curseur :**
   - Requêtes indexées ultra-performantes (`idx_transactions_user_date_id`) sur `[user_id, date DESC, id DESC]`.
   - Bouton néobrutaliste *"Charger plus"* avec indicateur d'avancement et conservation de la position de scroll.

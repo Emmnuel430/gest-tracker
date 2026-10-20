@@ -20,7 +20,8 @@ import { CategoryRanking } from './ExpenseRanking';
 import { CategoryChart } from './ExpenseChart';
 import { PaymentMethodChart } from './PaymentMethodChart';
 import { PeriodComparison } from './PeriodComparison';
-import { TransactionItem } from './TransactionItem';
+import { TransactionListItem } from '@/components/transactions/TransactionListItem';
+import { TransactionDetailsModal } from '@/components/transactions/TransactionDetailsModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatCurrency } from '@/constants/config';
 import {
@@ -90,6 +91,7 @@ export function HistoryView({
   const [isLoadingPage, setIsLoadingPage] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [serverStats, setServerStats] = useState<HistoryStatsResult | null>(initialStats);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   // Dates personnalisées saisies
   const [customStartDate, setCustomStartDate] = useState<string>('2026-09-01');
@@ -572,11 +574,10 @@ export function HistoryView({
           ) : (
             <div className="space-y-2.5">
               {transactions.map((tx) => (
-                <TransactionItem
+                <TransactionListItem
                   key={tx.id}
                   transaction={tx}
-                  onDeleted={handleTransactionDeleted}
-                  onUpdated={handleTransactionUpdated}
+                  onClick={(clickedTx) => setSelectedTransaction(clickedTx)}
                 />
               ))}
 
@@ -598,6 +599,21 @@ export function HistoryView({
               )}
             </div>
           )}
+
+          {/* Modal unique de détail pour l'historique */}
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            isOpen={Boolean(selectedTransaction)}
+            onClose={() => setSelectedTransaction(null)}
+            onDeleted={(deletedId) => {
+              setSelectedTransaction(null);
+              handleTransactionDeleted(deletedId);
+            }}
+            onUpdated={(updatedTx) => {
+              setSelectedTransaction(null);
+              handleTransactionUpdated(updatedTx);
+            }}
+          />
         </div>
       )}
 

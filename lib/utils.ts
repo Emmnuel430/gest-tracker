@@ -21,6 +21,8 @@ export interface RawTransactionInput {
   note?: string | null;
   date: Date | string;
   userId?: string | null;
+  walletId?: string | null;
+  targetWalletId?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
@@ -37,6 +39,8 @@ export function serializeTransaction(tx: RawTransactionInput): Transaction {
     note: tx.note ?? null,
     date: tx.date instanceof Date ? tx.date.toISOString() : String(tx.date),
     userId: tx.userId ?? null,
+    walletId: tx.walletId ?? null,
+    targetWalletId: tx.targetWalletId ?? null,
     createdAt: tx.createdAt instanceof Date ? tx.createdAt.toISOString() : String(tx.createdAt || ''),
     updatedAt: tx.updatedAt instanceof Date ? tx.updatedAt.toISOString() : String(tx.updatedAt || ''),
   };
