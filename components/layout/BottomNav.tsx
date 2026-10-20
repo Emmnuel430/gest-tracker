@@ -9,8 +9,14 @@ import { cn } from '@/lib/utils';
 export function BottomNav() {
   const pathname = usePathname();
 
-  // Ne pas afficher sur les pages d'authentification
-  if (pathname === '/login' || pathname === '/register') {
+  // Ne pas afficher sur les pages d'authentification ou d'onboarding
+  if (
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname.startsWith('/mot-de-passe-oublie') ||
+    pathname === '/bienvenue' ||
+    pathname.startsWith('/bienvenue')
+  ) {
     return null;
   }
 

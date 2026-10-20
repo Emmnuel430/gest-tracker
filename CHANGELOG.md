@@ -12,6 +12,7 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
   - **Initialisation paresseuse conditionnée** : Restriction de la création automatique des portefeuilles et catégories par défaut aux seuls utilisateurs ayant validé ou passé l'onboarding (`onboardingCompletedAt != null`).
   - **Stepper néobrutaliste** : Interface en 4 étapes fluides (Bienvenue, Mes comptes, Mes catégories, Récapitulatif) avec persistance locale en temps réel (`sessionStorage`), validation interactive instantanée, et option de démarrage rapide "Configurer plus tard".
   - **Server Actions atomiques** : `completeOnboardingAction` et `skipOnboardingAction` encapsulées dans des transactions Prisma isolées créant simultanément comptes, catégories et profil utilisateur.
+  - **Navigation & immersion** : Masquage automatique de la barre de navigation (`BottomNav`) sur `/bienvenue` et `/mot-de-passe-oublie` pour isoler le flux d'accueil sans distraction.
 
 ### Tests
 - **tests** : Suite automatisée (`tests/v2110-onboarding.test.ts`) validant les schémas Zod, l'intégrité SQL/RLS, l'absence stricte d'emojis et le respect de la charte néobrutaliste.

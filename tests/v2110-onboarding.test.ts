@@ -175,4 +175,15 @@ describe('Version 2.11.0 — Onboarding premier login', () => {
     assert.ok(sql.includes('ENABLE ROW LEVEL SECURITY'), 'RLS activée');
     assert.ok(sql.includes('ON CONFLICT (user_id) DO NOTHING'), 'Backfill idempotent des utilisateurs existants');
   });
+
+  test('Navigation: BottomNav est désactivée sur la page /bienvenue', () => {
+    const bottomNavPath = path.resolve(process.cwd(), 'components/layout/BottomNav.tsx');
+    assert.ok(fs.existsSync(bottomNavPath), 'components/layout/BottomNav.tsx doit exister');
+    const content = fs.readFileSync(bottomNavPath, 'utf8');
+
+    assert.ok(
+      content.includes("pathname === '/bienvenue'") || content.includes("pathname.startsWith('/bienvenue')"),
+      'BottomNav doit explicitement masquer la barre de navigation sur /bienvenue'
+    );
+  });
 });
