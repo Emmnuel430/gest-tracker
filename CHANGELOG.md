@@ -3,6 +3,23 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-10-20
+
+### Features
+- **transactions** : Nouveau composant unifié et compact d'item d'opération `TransactionListItem` (`components/transactions/TransactionListItem.tsx`), partagé entre l'Accueil (`RecentTransactionsList`) et l'Historique (`HistoryView`), conçu comme un bouton interactif accessible avec `aria-label` descriptif complet.
+- **transactions** : Nouvelle modale accessible et détaillée `TransactionDetailsModal` (`components/transactions/TransactionDetailsModal.tsx`) présentant la totalité des attributs d'une opération (catégorie et statut d'archivage, portefeuille et moyen de paiement, trajet source vers cible pour les virements, horodatage complet en français, note intégrale sans restriction de hauteur et métadonnées techniques de création et modification).
+- **transactions** : Actions de modification directe (`EditTransactionModal`) et de suppression irréversible (`ConfirmDialog`) centralisées dans `TransactionDetailsModal` (une seule instance par liste parente).
+- **accueil** : Ajout de la vue "Semaine en cours" dans le sélecteur de périodes de l'accueil (`BalanceSummary`), calculée rigoureusement du lundi au dimanche (`weekStartsOn: 1`) et affichant la plage textuelle sous les cartes de synthèse (ex: `du 12/10 au 18/10`).
+- **accueil** : Résolution du constat technique C5 dans `getDashboardDataAction` (`actions/transactions.ts`) : extension dynamique de la borne de requête (`min(week.from, year.from)`) pour intégrer fidèlement les transactions de fin d'année civile précédente lors d'une semaine à cheval sur deux années (ex: 29 décembre 2025 pour la semaine du 1er janvier 2026).
+
+### Fixes
+- **transactions** : Correction du constat C4 et respect strict de la Règle 5 : les virements internes (`TRANSFER`) ne sont plus jamais assimilés à des dépenses ni affichés avec un signe négatif ou un badge rouge. Ils bénéficient d'un logo dédié (`ArrowRightLeft`), d'un montant neutre et de la mention explicite des comptes source et cible.
+
+### Tests
+- **tests** : Nouvelle suite de tests automatisés (`tests/v290-transaction-details-week-view.test.ts`) validant les calculs calendaires de la semaine, les semaines à cheval sur deux années, le respect des bornes de début et fin de semaine, et la stricte neutralité financière des virements dans les résumés.
+
+---
+
 ## [2.8.0] - 2026-10-20
 
 ### Features

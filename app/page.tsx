@@ -36,6 +36,7 @@ export default async function HomePage() {
       ? result.data.summaries
       : {
           today: emptySummary,
+          week: emptySummary,
           month: result.success ? result.data.summary : emptySummary,
           year: emptySummary,
         };

@@ -1,17 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowDownLeft, ArrowUpRight, Wallet, ChevronDown, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { formatCurrency } from '@/constants/config';
 import { FinancialSummary } from '@/types/statistics';
+import { getDateRangeForPeriod } from '@/lib/dates';
 
-type HomePeriod = 'today' | 'month' | 'year';
+type HomePeriod = 'today' | 'week' | 'month' | 'year';
 
 interface BalanceSummaryProps {
   globalBalance: number;
   summaries: {
     today: FinancialSummary;
+    week: FinancialSummary;
     month: FinancialSummary;
     year: FinancialSummary;
   };
@@ -23,8 +26,14 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
   const currentSummary = summaries[selectedPeriod] || summaries.month;
   const isPositiveGlobalBalance = globalBalance >= 0;
 
+  const weekRangeLabel = useMemo(() => {
+    const range = getDateRangeForPeriod('week');
+    return `du ${format(range.from, 'dd/MM')} au ${format(range.to, 'dd/MM')}`;
+  }, []);
+
   const periodLabels: Record<HomePeriod, string> = {
     today: "Aujourd'hui",
+    week: 'Semaine en cours',
     month: 'Mois en cours',
     year: 'Année en cours',
   };
@@ -53,6 +62,7 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
                 className="appearance-none bg-[#DBEAFE] dark:bg-[#1E3A8A] text-[#111827] dark:text-white font-black text-xs uppercase pl-2.5 pr-7 py-1 border-2 border-[#111827] dark:border-[#334155] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] cursor-pointer focus:outline-none"
               >
                 <option value="today">Aujourd'hui</option>
+                <option value="week">Semaine en cours</option>
                 <option value="month">Mois en cours</option>
                 <option value="year">Année en cours</option>
               </select>
@@ -94,7 +104,7 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
               <span>Entrées</span>
             </div>
             <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 hidden sm:inline">
-              ({periodLabels[selectedPeriod]})
+              ({selectedPeriod === 'week' ? weekRangeLabel : periodLabels[selectedPeriod]})
             </span>
           </div>
           <p className="text-lg sm:text-xl font-black text-[#16A34A] truncate">
@@ -112,7 +122,7 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
               <span>Sorties</span>
             </div>
             <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 hidden sm:inline">
-              ({periodLabels[selectedPeriod]})
+              ({selectedPeriod === 'week' ? weekRangeLabel : periodLabels[selectedPeriod]})
             </span>
           </div>
           <p className="text-lg sm:text-xl font-black text-[#DC2626] truncate">
@@ -121,10 +131,17 @@ export function BalanceSummary({ globalBalance, summaries }: BalanceSummaryProps
         </div>
       </div>
 
+      {/* Mention textuelle explicite pour la semaine sous les cartes */}
+      {selectedPeriod === 'week' && (
+        <div className="text-center text-[11px] font-bold text-neutral-500 dark:text-neutral-400 -mt-1">
+          Semaine {weekRangeLabel}
+        </div>
+      )}
+
       {/* 3. Synthèse du flux net de la période */}
       <div className="w-full text-center text-[11px] font-bold py-1.5 px-3 rounded-xl border-2 border-[#111827] dark:border-[#334155] bg-white dark:bg-[#1E293B] shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] flex items-center justify-between">
         <span className="text-neutral-600 dark:text-neutral-400 uppercase text-[10px] font-black">
-          Flux net ({periodLabels[selectedPeriod].toLowerCase()})
+          Flux net ({selectedPeriod === 'week' ? weekRangeLabel : periodLabels[selectedPeriod].toLowerCase()})
         </span>
         <span
           className={`font-black text-xs ${

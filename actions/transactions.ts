@@ -27,6 +27,7 @@ export interface DashboardData {
   transactionCount: number;
   summaries: {
     today: FinancialSummary;
+    week: FinancialSummary;
     month: FinancialSummary;
     year: FinancialSummary;
   };
@@ -426,11 +427,16 @@ export async function getDashboardDataAction(): Promise<ActionResponse<Dashboard
     const user = await getAuthenticatedUser();
 
     const todayRange = getDateRangeForPeriod('today');
+    const weekRange = getDateRangeForPeriod('week');
     const monthRange = getDateRangeForPeriod('month');
     const yearRange = getDateRangeForPeriod('year');
 
     // 1. Calcul du Solde Global via le service unique de portefeuilles (patrimoine net)
-    const [walletSummary, allTxs, yearTransactions, recentTransactions] = await Promise.all([
+    // Borne étendue pour inclure la semaine si elle commence sur l'année précédente (Constat C5)
+    const queryFromDate = weekRange.from < yearRange.from ? weekRange.from : yearRange.from;
+    const queryToDate = weekRange.to > yearRange.to ? weekRange.to : yearRange.to;
+
+    const [walletSummary, allTxs, candidateTransactions, recentTransactions] = await Promise.all([
       getWalletBalancesForUser(user.id),
       prisma.transaction.findMany({
         where: { userId: user.id },
@@ -440,8 +446,8 @@ export async function getDashboardDataAction(): Promise<ActionResponse<Dashboard
         where: {
           userId: user.id,
           date: {
-            gte: yearRange.from,
-            lte: yearRange.to,
+            gte: queryFromDate,
+            lte: queryToDate,
           },
         },
         orderBy: { date: 'desc' },
@@ -455,17 +461,28 @@ export async function getDashboardDataAction(): Promise<ActionResponse<Dashboard
 
     const globalBalance = walletSummary.netWorth;
 
-    // 2. Dérivation des résumés yearSummary, monthSummary, todaySummary
-    const serializedYearTxs = yearTransactions.map(serializeTransaction);
-    const yearSummary = calculateFinancialSummary(serializedYearTxs);
+    // 2. Dérivation des résumés yearSummary, monthSummary, weekSummary, todaySummary
+    const serializedCandidateTxs = candidateTransactions.map(serializeTransaction);
 
-    const monthTxs = serializedYearTxs.filter((tx) => {
+    const yearTxs = serializedCandidateTxs.filter((tx) => {
+      const d = new Date(tx.date);
+      return d >= yearRange.from && d <= yearRange.to;
+    });
+    const yearSummary = calculateFinancialSummary(yearTxs);
+
+    const monthTxs = serializedCandidateTxs.filter((tx) => {
       const d = new Date(tx.date);
       return d >= monthRange.from && d <= monthRange.to;
     });
     const monthSummary = calculateFinancialSummary(monthTxs);
 
-    const todayTxs = monthTxs.filter((tx) => {
+    const weekTxs = serializedCandidateTxs.filter((tx) => {
+      const d = new Date(tx.date);
+      return d >= weekRange.from && d <= weekRange.to;
+    });
+    const weekSummary = calculateFinancialSummary(weekTxs);
+
+    const todayTxs = serializedCandidateTxs.filter((tx) => {
       const d = new Date(tx.date);
       return d >= todayRange.from && d <= todayRange.to;
     });
@@ -478,6 +495,7 @@ export async function getDashboardDataAction(): Promise<ActionResponse<Dashboard
         transactionCount: allTxs.length,
         summaries: {
           today: todaySummary,
+          week: weekSummary,
           month: monthSummary,
           year: yearSummary,
         },

@@ -1,13 +1,12 @@
 'use client';
 
-import React from "react";
-import Link from "next/link";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Sparkles } from "lucide-react";
-import { Transaction } from "@/types/transaction";
-import { formatCurrency } from "@/constants/config";
-import { formatDisplayDate, formatTime } from "@/lib/dates";
-import { useCategories, useWallets } from "@/components/providers/ReferenceDataProvider";
-import { getContrastTextColor } from "@/lib/utils";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { Transaction } from '@/types/transaction';
+import { TransactionListItem } from '@/components/transactions/TransactionListItem';
+import { TransactionDetailsModal } from '@/components/transactions/TransactionDetailsModal';
 
 interface RecentTransactionsListProps {
   transactions: Transaction[];
@@ -16,8 +15,8 @@ interface RecentTransactionsListProps {
 export function RecentTransactionsList({
   transactions,
 }: RecentTransactionsListProps) {
-  const { getCategoryColor } = useCategories();
-  const { getWalletColor } = useWallets();
+  const router = useRouter();
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   if (!transactions || transactions.length === 0) {
     return (
@@ -35,6 +34,16 @@ export function RecentTransactionsList({
     );
   }
 
+  const handleDeleted = () => {
+    setSelectedTransaction(null);
+    router.refresh();
+  };
+
+  const handleUpdated = () => {
+    setSelectedTransaction(null);
+    router.refresh();
+  };
+
   return (
     <div className="w-full mt-6">
       <div className="flex items-center justify-between mb-3">
@@ -51,81 +60,23 @@ export function RecentTransactionsList({
       </div>
 
       <div className="space-y-2.5">
-        {transactions.map((tx) => {
-          const isIncome = tx.type === "INCOME";
-          const catColor = getCategoryColor(tx.category);
-          const walletBg = getWalletColor(tx.payment);
-          const walletText = getContrastTextColor(walletBg);
-          const paymentTheme = {
-            bg: walletBg,
-            text: walletText,
-          };
-
-          return (
-            <div
-              key={tx.id}
-              className="bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] rounded-xl p-3.5 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] flex items-center justify-between transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* Logo */}
-                <div
-                  className={`w-9 h-9 border-2 border-[#111827] dark:border-white rounded-lg flex items-center justify-center shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000] shrink-0 ${
-                    isIncome
-                      ? "bg-[#16A34A] text-white"
-                      : "bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626]"
-                  }`}
-                >
-                  {isIncome ? (
-                    <ArrowDownLeft className="w-5 h-5 text-white stroke-3" />
-                  ) : (
-                    <ArrowUpRight className="w-5 h-5 text-[#DC2626] stroke-3" />
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {/* Badge Catégorie utilisant explicitement catColor */}
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-[#111827] dark:border-white text-xs font-black shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000] bg-white dark:bg-[#131C31]">
-                      <span
-                        className="w-2 h-2 rounded-full border border-[#111827] dark:border-white"
-                        style={{ backgroundColor: catColor }}
-                      />
-                      <span className="text-[#111827] dark:text-[#F8FAFC]">
-                        {tx.category}
-                      </span>
-                    </span>
-
-                    {/* Badge Moyen de paiement avec son thème */}
-                    <span
-                      className="text-[10px] font-black px-1.5 py-0.5 border border-[#111827] dark:border-white rounded shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]"
-                      style={{
-                        backgroundColor: paymentTheme.bg,
-                        color: paymentTheme.text,
-                      }}
-                    >
-                      {tx.payment}
-                    </span>
-                  </div>
-                  <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 mt-1 truncate">
-                    {formatDisplayDate(tx.date, "dd MMM yyyy")} ·{" "}
-                    {formatTime(tx.date)}
-                    {tx.note ? ` • ${tx.note}` : ""}
-                  </p>
-                </div>
-              </div>
-
-              <span
-                className={`font-black text-sm sm:text-base shrink-0 ml-2 ${
-                  isIncome ? "text-[#16A34A]" : "text-[#DC2626]"
-                }`}
-              >
-                {isIncome ? "+" : "-"}{" "}
-                {formatCurrency(Math.abs(Number(tx.amount)))}
-              </span>
-            </div>
-          );
-        })}
+        {transactions.map((tx) => (
+          <TransactionListItem
+            key={tx.id}
+            transaction={tx}
+            onClick={(clickedTx) => setSelectedTransaction(clickedTx)}
+          />
+        ))}
       </div>
+
+      {/* Modal unique de détail des opérations pour l'accueil */}
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        isOpen={Boolean(selectedTransaction)}
+        onClose={() => setSelectedTransaction(null)}
+        onDeleted={handleDeleted}
+        onUpdated={handleUpdated}
+      />
     </div>
   );
 }
