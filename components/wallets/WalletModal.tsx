@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useTransition } from 'react';
-import { X, Sparkles, Wallet as WalletIcon, Ban } from 'lucide-react';
+import { X, Sparkles, Wallet as WalletIcon, Ban, Clock } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput, formatCurrency } from '@/constants/config';
 import { WalletItem, upsertWalletAction, restoreWalletAction } from '@/actions/wallets';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 interface DeletedMatchData {
   id: string;
@@ -235,30 +236,30 @@ export function WalletModal({
 
           {/* Solde de départ en création OU Solde actuel constaté en édition */}
           <div>
-            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1">
-              {initialData ? 'Solde actuel constaté (FCFA)' : 'Solde initial (FCFA)'}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="flex items-center gap-1.5 text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
+                <span>{initialData ? 'Solde actuel constaté (FCFA)' : 'Solde initial (FCFA)'}</span>
+                <InfoTooltip
+                  title={initialData ? 'Solde de référence' : 'Solde initial'}
+                  content={
+                    initialData
+                      ? 'Montant réel disponible servant de référence pour les mouvements futurs, sans modifier vos opérations passées.'
+                      : 'Montant disponible dans ce compte lors de sa création.'
+                  }
+                />
+              </label>
+              {initialData?.declaredAt && (
+                <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Réf. {new Date(initialData.declaredAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                </span>
+              )}
+            </div>
             <CurrencyInput
               value={balanceInput}
               onChange={setBalanceInput}
               placeholder="0"
             />
-            {initialData ? (
-              <div className="mt-1 space-y-1">
-                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-medium">
-                  Saisissez le montant réellement disponible sur ce compte aujourd’hui. Il servira de jalon de référence pour vos calculs futurs. Vos opérations antérieures restent préservées dans l’historique sans altérer ce montant.
-                </p>
-                {initialData.declaredAt && (
-                  <p className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-[#131C31] px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700">
-                    Dernière référence : {formatCurrency(initialData.declaredBalance ?? 0)} le {new Date(initialData.declaredAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Montant actuellement présent sur ce compte au moment de la création.
-              </p>
-            )}
           </div>
 
           {/* Couleur */}

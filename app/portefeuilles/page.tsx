@@ -9,6 +9,7 @@ import { WalletModal } from '@/components/wallets/WalletModal';
 import { TransferModal } from '@/components/wallets/TransferModal';
 import { formatCurrency } from '@/constants/config';
 import { Button } from '@/components/ui/Button';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 export default function PortefeuillesPage() {
   const [wallets, setWallets] = useState<WalletItem[]>([]);
@@ -95,42 +96,52 @@ export default function PortefeuillesPage() {
           </div>
         </div>
 
-        {/* Titre & Description */}
+        {/* Titre épuré */}
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
-            Portefeuilles & Comptes
+            Portefeuilles
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mt-1">
-            Suivez la répartition réelle de votre argent (Espèces, Wave, Banque) et effectuez des virements internes.
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
+            Répartition de votre trésorerie et virements internes.
           </p>
         </div>
 
         {/* Synthèse du Patrimoine Total */}
-        <div className="p-5 bg-[#111827] dark:bg-[#1E293B] text-white border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[5px_5px_0px_0px_#2563EB] space-y-1">
+        <div className="p-5 bg-[#111827] dark:bg-[#1E293B] text-white border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[5px_5px_0px_0px_#2563EB] space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
-              Patrimoine Total Réuni
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-black uppercase tracking-wider text-neutral-300">
+                Patrimoine Total
+              </span>
+              <InfoTooltip
+                title="Patrimoine Total"
+                content="Somme de l'ensemble de vos comptes actifs, archivés et opérations historiques conservées."
+              />
+            </div>
             <span className="text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded">
               {netWorthData ? netWorthData.walletCount : wallets.length} compte(s)
             </span>
           </div>
+
           <div className="text-3xl font-black text-[#FFE600] tracking-tight">
             {formatCurrency(totalWealth)}
           </div>
-          <p className="text-[11px] text-neutral-400 font-medium">
-            Somme des soldes de vos {netWorthData ? netWorthData.walletCount : wallets.length} comptes.
-            {netWorthData && netWorthData.archivedBalance > 0 && (
-              <span className="block mt-0.5 text-neutral-300 font-bold">
-                (dont {formatCurrency(netWorthData.archivedBalance)} sur des comptes archivés)
-              </span>
-            )}
-            {netWorthData && netWorthData.unassignedBalance !== 0 && (
-              <span className="block mt-0.5 text-[#FBBF24] font-bold">
-                Opérations sans compte rattaché : {formatCurrency(netWorthData.unassignedBalance)}
-              </span>
-            )}
-          </p>
+
+          {/* Badges contextuels discrets uniquement si nécessaire */}
+          {netWorthData && (netWorthData.archivedBalance > 0 || netWorthData.unassignedBalance !== 0) && (
+            <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-white/10 text-[10px] font-bold">
+              {netWorthData.archivedBalance > 0 && (
+                <span className="px-2 py-0.5 rounded bg-white/10 text-neutral-300">
+                  Archivés : {formatCurrency(netWorthData.archivedBalance)}
+                </span>
+              )}
+              {netWorthData.unassignedBalance !== 0 && (
+                <span className="px-2 py-0.5 rounded bg-[#FBBF24]/20 text-[#FBBF24]">
+                  Sans compte : {formatCurrency(netWorthData.unassignedBalance)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Liste des comptes */}

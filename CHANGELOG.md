@@ -3,6 +3,30 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.2] - 2026-10-20
+
+### Features
+- **ui** : Règle de concision visuelle et hiérarchie de l'information ajoutée à la charte et aux directives prioritaires (`.agent/rules/rules.md`). Élimination de la surcharge cognitive et des blocs de texte verbeux au profit d'une interface épurée et immédiatement lisible.
+- **ui** : Nouveau composant accessible d'infobulle contextuelle `InfoTooltip` (`components/ui/InfoTooltip.tsx`) au style néobrutaliste conforme, activable au survol sur desktop et au tap/clic sur mobile, avec fermeture au clic extérieur et touche Échap, compatible lecteurs d'écran (`role="tooltip"`).
+- **wallets** : Refonte UI/UX complète des cartes de portefeuilles (`components/wallets/WalletCard.tsx`) :
+  - Hiérarchie visuelle épurée : mise en valeur forte du solde disponible (`text-2xl sm:text-3xl font-black`) avec typographie percutante.
+  - Remplacement des phrases verbeuses ("Représente X% du patrimoine total") par une mini-jauge de progression élégante avec pourcentage direct et infobulle contextuelle.
+  - Déport des explications techniques d'ajustement ($B_0$ et $T_0$) dans une `InfoTooltip` discrète avec pastille d'horodatage compacte.
+  - Synthèse Entrées/Sorties épurée sous forme de capsules compactes avec icônes subtiles `ArrowDownLeft` et `ArrowUpRight`.
+  - Boutons d'action rapides néobrutalistes stylisés (virement, édition, archivage, suppression) avec gestion soignée du contraste clair/sombre.
+- **pages** : Concision visuelle appliquée aux écrans clés :
+  - `/portefeuilles` : Allègement de la synthèse du Patrimoine Total, remplacement des paragraphes touffus par des badges contextuels nets et une `InfoTooltip` dédiée.
+  - `WalletModal` : Remplacement du pavé explicatif sur le solde déclaré par un libellé clair enrichi d'une `InfoTooltip`.
+  - `BalanceSummary` (Accueil) : Infobulle explicative sur le "Solde Total Disponible" et suppression des redondances.
+  - `/dettes` : Description condensée et infobulle explicative sur la "Position nette".
+  - `/recurrences` : Description condensée et infobulle sur le "Reste net" mensuel prévisionnel.
+  - `/budgets` : Description condensée et infobulle sur la "Consommation Globale".
+
+### Tests
+- **tests** : Nouvelle suite de tests automatisés (`tests/v2102-visual-concision-tooltip.test.ts`) vérifiant l'absence d'emojis, l'accessibilité d'InfoTooltip et la sécurité des calculs de part de patrimoine.
+
+---
+
 ## [2.10.1] - 2026-10-20
 
 ### Bug Fixes

@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.10.1)
+# GEST TRACKER — Documentation Complète (v2.10.2)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -263,7 +263,9 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - **Protection du Compte Principal :** Interdiction stricte de supprimer le compte par défaut (l'utilisateur doit d'abord désigner un autre compte principal).
   - **Modale d'Impact Chiffré :** `ConfirmDialog` affiche le nombre d'opérations préservées dans l'historique, le solde exclu et le nombre de règles récurrentes mises en pause.
   - **Détection et Restauration Automatique :** Recréer un compte portant le même nom détecte le compte supprimé et propose sa restauration immédiate avec réassignation de toutes ses transactions d'origine.
-- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0 / v2.10.0 / v2.10.1) :**
+- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0 / v2.10.0 / v2.10.1 / v2.10.2) :**
+  - **Concision Visuelle & InfoTooltip Accessible (v2.10.2) :** Directives prioritaires mises à jour pour éliminer la surcharge cognitive et les pavés de texte verbeux. Intégration d'un composant néobrutaliste accessible d'infobulle contextuelle `InfoTooltip` (`components/ui/InfoTooltip.tsx`), opérant au survol sur desktop et au tap sur mobile, avec fermeture au clic extérieur et touche Échap (`role="tooltip"`).
+  - **Refonte UI/UX des Cartes de Portefeuilles (`WalletCard`) (v2.10.2) :** Épuration visuelle complète : solde disponible mis en avant avec typographie percutante, jauge compacte de part du patrimoine, déport des informations techniques de référence ($B_0$ et $T_0$) dans une infobulle dédiée, synthèse Entrées/Sorties sous forme de capsules compactes, et barre d'actions rapides fluide (virement, édition, archivage, suppression).
   - **Réconciliation du Solde de Référence & Trésorerie Globale (v2.10.1) :** Calcul rigoureux des portefeuilles selon la logique du jalon de référence ($B(t) = B_0 + \sum_{T_0 < d_i \le t} \Delta_i$). Tout compte sans déclaration explicite conserve son équation historique intégrale ($B(t) = \text{initialBalance} + \sum \Delta_i$). Le Solde Total Disponible sur l'Accueil réconcilie l'ensemble des portefeuilles et intègre les opérations sans compte rattaché (`unassignedBalance`) pour garantir une exactitude mathématique absolue.
   - **Solde Total Disponible sur l'Accueil (v2.8.0) :** L'écran d'accueil affiche le solde total disponible synchronisé avec les portefeuilles et met en valeur le flux net de la période sélectionnée (entrées, sorties, épargne nette).
   - **Portail de modales (`createPortal`) (v2.7.1) :** Rendu direct de `ConfirmDialog` et `Modal` à la racine de `document.body`, empêchant tout affadissement de backdrop causé par l'opacité des conteneurs parents (comme les comptes archivés `opacity-80`).

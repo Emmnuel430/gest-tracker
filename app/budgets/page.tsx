@@ -23,6 +23,7 @@ import {
 import { BudgetCard } from "@/components/budgets/BudgetCard";
 import { BudgetModal } from "@/components/budgets/BudgetModal";
 import { CategoryManagerModal } from "@/components/budgets/CategoryManagerModal";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -120,8 +121,8 @@ export default function BudgetsPage() {
           <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
             Budgets Mensuels
           </h1>
-          <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400 mt-1">
-            Définissez vos plafonds de dépenses pour maîtriser chaque euro/FCFA
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">
+            Plafonds de dépenses par catégorie.
           </p>
         </div>
 
@@ -183,9 +184,15 @@ export default function BudgetsPage() {
       {data && data.items.length > 0 && (
         <Card className="p-5 bg-linear-to-br from-white to-[#F8FAFC] dark:from-[#1E293B] dark:to-[#0F172A]">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-300">
-              Consommation Globale du Budget
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-xs font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-300">
+                Consommation Globale
+              </h3>
+              <InfoTooltip
+                title="Consommation Globale"
+                content="Proportion totale des dépenses réelles par rapport au cumul de vos budgets mensuels."
+              />
+            </div>
             <span
               className={`text-xs font-black px-2 py-0.5 rounded border-2 border-[#111827] dark:border-white shadow-[1px_1px_0px_0px_#111827] ${
                 data.overallPercentage >= 100

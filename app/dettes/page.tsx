@@ -9,6 +9,7 @@ import { DebtModal } from '@/components/debts/DebtModal';
 import { RepaymentModal } from '@/components/debts/RepaymentModal';
 import { formatCurrency } from '@/constants/config';
 import { Button } from '@/components/ui/Button';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 export default function DettesPage() {
   const [summary, setSummary] = useState<DebtsSummary>({
@@ -78,8 +79,8 @@ export default function DettesPage() {
           <h1 className="text-2xl font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
             Dettes & Créances
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 font-medium mt-1">
-            Gardez une trace claire de l’argent prêté à des proches et de vos emprunts avec remboursements échelonnés.
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-0.5">
+            Suivi des prêts accordés et emprunts en cours.
           </p>
         </div>
 
@@ -104,9 +105,15 @@ export default function DettesPage() {
           </div>
 
           <div className="p-3 bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000]">
-            <span className="text-[10px] font-black uppercase text-neutral-500 dark:text-neutral-400 block mb-1">
-              Position nette
-            </span>
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-[10px] font-black uppercase text-neutral-500 dark:text-neutral-400">
+                Position nette
+              </span>
+              <InfoTooltip
+                title="Position nette"
+                content="Différence entre ce qui vous est dû et ce que vous devez rembourser."
+              />
+            </div>
             <span
               className={`text-sm font-black ${
                 summary.netDebtPosition >= 0 ? 'text-[#00DF81]' : 'text-[#FF3366]'
