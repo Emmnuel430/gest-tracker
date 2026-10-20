@@ -30,22 +30,30 @@ export async function getCategoriesAction(
     });
 
     // Initialisation paresseuse si aucune catégorie n'existe pour cet utilisateur
+    // Règle 2.11.0 (C8) : Réservée aux profils dont l'onboarding est validé
     if (categories.length === 0) {
-      await prisma.category.createMany({
-        data: DEFAULT_CATEGORIES.map((cat) => ({
-          userId: user.id,
-          name: cat.name,
-          kind: cat.kind,
-          color: cat.color,
-          isArchived: false,
-        })),
-        skipDuplicates: true,
+      const profile = await prisma.userProfile.findUnique({
+        where: { userId: user.id },
+        select: { onboardingCompletedAt: true },
       });
 
-      categories = await prisma.category.findMany({
-        where: { userId: user.id },
-        orderBy: { name: 'asc' },
-      });
+      if (profile?.onboardingCompletedAt != null) {
+        await prisma.category.createMany({
+          data: DEFAULT_CATEGORIES.map((cat) => ({
+            userId: user.id,
+            name: cat.name,
+            kind: cat.kind,
+            color: cat.color,
+            isArchived: false,
+          })),
+          skipDuplicates: true,
+        });
+
+        categories = await prisma.category.findMany({
+          where: { userId: user.id },
+          orderBy: { name: 'asc' },
+        });
+      }
     }
 
     // Filtrage optionnel côté serveur

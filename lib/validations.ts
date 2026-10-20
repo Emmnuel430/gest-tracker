@@ -342,3 +342,93 @@ export const DebtSchema = z.object({
 
 export type DebtFormValues = z.infer<typeof DebtSchema>;
 
+export const OnboardingWalletSchema = z.object({
+  name: z.string().trim().min(1, { message: 'Le nom du compte est requis' }).max(40, { message: 'Le nom ne peut pas dépasser 40 caractères' }),
+  type: z.enum(['CASH', 'MOBILE_MONEY', 'BANK', 'SAVINGS'] as const, {
+    message: 'Type de compte invalide',
+  }),
+  balance: z.coerce.number().min(0, { message: 'Le solde de départ doit être positif ou nul' }),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, { message: 'Format de couleur hexadécimal invalide' }),
+  isDefault: z.boolean().default(false),
+});
+
+export const OnboardingCategorySchema = z.object({
+  name: z.string().trim().min(1, { message: 'Le nom de la catégorie est requis' }).max(40, { message: 'Le nom ne peut pas dépasser 40 caractères' }),
+  kind: z.enum(['INCOME', 'EXPENSE', 'BOTH'] as const, {
+    message: 'Type de catégorie invalide',
+  }),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, { message: 'Format de couleur hexadécimal invalide' }),
+});
+
+export const OnboardingSchema = z.object({
+  wallets: z.array(OnboardingWalletSchema).min(1, { message: 'Veuillez configurer au moins un compte' }),
+  categories: z.array(OnboardingCategorySchema).min(2, { message: 'Veuillez sélectionner au moins deux catégories' }),
+}).superRefine((data, ctx) => {
+  // 1. Exactement un compte principal
+  const defaultWallets = data.wallets.filter((w) => w.isDefault);
+  if (defaultWallets.length !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Veuillez désigner exactement un compte principal',
+      path: ['wallets'],
+    });
+  }
+
+  // 2. Unicité des noms de portefeuilles (insensible à la casse)
+  const walletNames = new Set<string>();
+  for (const w of data.wallets) {
+    const lower = w.name.trim().toLowerCase();
+    if (walletNames.has(lower)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Le nom de compte "${w.name}" est déjà utilisé`,
+        path: ['wallets'],
+      });
+    }
+    walletNames.add(lower);
+  }
+
+  // 3. Unicité des couleurs de portefeuilles
+  const walletColors = new Set<string>();
+  for (const w of data.wallets) {
+    const lowerColor = w.color.toLowerCase();
+    if (walletColors.has(lowerColor)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `La couleur "${w.color}" est déjà attribuée à un autre compte`,
+        path: ['wallets'],
+      });
+    }
+    walletColors.add(lowerColor);
+  }
+
+  // 4. Au moins une catégorie dépense et une catégorie entrée
+  const hasExpense = data.categories.some((c) => c.kind === 'EXPENSE' || c.kind === 'BOTH');
+  const hasIncome = data.categories.some((c) => c.kind === 'INCOME' || c.kind === 'BOTH');
+  if (!hasExpense || !hasIncome) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Au moins une catégorie compatible dépenses et une compatible revenus sont requises',
+      path: ['categories'],
+    });
+  }
+
+  // 5. Unicité des noms de catégories (insensible à la casse)
+  const categoryNames = new Set<string>();
+  for (const c of data.categories) {
+    const lower = c.name.trim().toLowerCase();
+    if (categoryNames.has(lower)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `La catégorie "${c.name}" est en double`,
+        path: ['categories'],
+      });
+    }
+    categoryNames.add(lower);
+  }
+});
+
+export type OnboardingWalletValues = z.infer<typeof OnboardingWalletSchema>;
+export type OnboardingCategoryValues = z.infer<typeof OnboardingCategorySchema>;
+export type OnboardingFormValues = z.infer<typeof OnboardingSchema>;
+

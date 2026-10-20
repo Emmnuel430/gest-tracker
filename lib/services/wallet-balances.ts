@@ -54,54 +54,62 @@ export async function getWalletBalancesForUser(
   });
 
   // Initialisation automatique par défaut si premier accès absolu (aucun portefeuille, même supprimé)
+  // Règle 2.11.0 (C8) : Réservée aux profils dont l'onboarding est validé
   if (wallets.length === 0) {
     const existingCount = await prisma.wallet.count({ where: { userId } });
     if (existingCount === 0) {
-      await prisma.wallet.createMany({
-        data: [
-          {
-            userId,
-            name: 'Espèces',
-            type: 'CASH',
-            initialBalance: 0,
-            declaredBalance: null,
-            declaredAt: null,
-            color: '#52B788',
-            isDefault: true,
-            isArchived: false,
-          },
-          {
-            userId,
-            name: 'Wave',
-            type: 'MOBILE_MONEY',
-            initialBalance: 0,
-            declaredBalance: null,
-            declaredAt: null,
-            color: '#1DC4F2',
-            isDefault: false,
-            isArchived: false,
-          },
-          {
-            userId,
-            name: 'Compte bancaire',
-            type: 'BANK',
-            initialBalance: 0,
-            declaredBalance: null,
-            declaredAt: null,
-            color: '#B8C0FF',
-            isDefault: false,
-            isArchived: false,
-          },
-        ],
+      const profile = await prisma.userProfile.findUnique({
+        where: { userId },
+        select: { onboardingCompletedAt: true },
       });
 
-      wallets = await prisma.wallet.findMany({
-        where: {
-          userId,
-          ...(options?.includeDeleted ? {} : { deletedAt: null }),
-        },
-        orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-      });
+      if (profile?.onboardingCompletedAt != null) {
+        await prisma.wallet.createMany({
+          data: [
+            {
+              userId,
+              name: 'Espèces',
+              type: 'CASH',
+              initialBalance: 0,
+              declaredBalance: null,
+              declaredAt: null,
+              color: '#52B788',
+              isDefault: true,
+              isArchived: false,
+            },
+            {
+              userId,
+              name: 'Wave',
+              type: 'MOBILE_MONEY',
+              initialBalance: 0,
+              declaredBalance: null,
+              declaredAt: null,
+              color: '#1DC4F2',
+              isDefault: false,
+              isArchived: false,
+            },
+            {
+              userId,
+              name: 'Compte bancaire',
+              type: 'BANK',
+              initialBalance: 0,
+              declaredBalance: null,
+              declaredAt: null,
+              color: '#B8C0FF',
+              isDefault: false,
+              isArchived: false,
+            },
+          ],
+        });
+
+        wallets = await prisma.wallet.findMany({
+          where: {
+            userId,
+            ...(options?.includeDeleted ? {} : { deletedAt: null }),
+          },
+          orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+        });
+      }
     }
   }
 
