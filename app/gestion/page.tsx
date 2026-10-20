@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import {
@@ -13,8 +11,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { requireOnboarding } from "@/lib/onboarding";
 
-export default function GestionPage() {
+export default async function GestionPage() {
+  await requireOnboarding();
+
   const modules = [
     {
       title: "Budgets & Plafonds",

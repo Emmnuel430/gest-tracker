@@ -6,10 +6,13 @@ import { HomeActions } from "@/components/home/HomeActions";
 import { RecentTransactionsList } from "@/components/home/RecentTransactionsList";
 import { RecurringAlertBanner } from "@/components/recurring/RecurringAlertBanner";
 import { FinancialInsightsCard } from "@/components/insights/FinancialInsightsCard";
+import { requireOnboarding } from "@/lib/onboarding";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  await requireOnboarding();
+
   const [result, dueRulesRes, insightsRes] = await Promise.all([
     getDashboardDataAction(),
     getDueRecurringRulesAction(),
