@@ -3,6 +3,26 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-10-20
+
+### Features
+- **wallets** : Ajustement du solde réel déclaré à T0 (`declaredBalance` & `declaredAt`) pour chaque portefeuille, permettant aux utilisateurs d'aligner le solde de leur compte sur la réalité physique sans fausser ni réécrire l'historique comptable passé.
+- **wallets** : Formule de solde dynamique et rétrocompatible : Solde effectif = Solde déclaré (T0) + Somme des mouvements postérieurs à T0. En l'absence de solde déclaré, le calcul préserve le fonctionnement classique (`initialBalance` + historique complet).
+- **wallets** : Refonte de `WalletModal` avec bascule entre "Solde initial" (création) et "Solde actuel sur ce compte" (modification), avec mention explicite du rôle de référence dans le sous-titre et validation Zod (`declaredBalance`).
+- **wallets** : Ajout d'un badge temporel sur les cartes de portefeuilles (`WalletCard`) indiquant la date du dernier ajustement (`Ajusté le DD MMM`) lorsque le solde a été déclaré.
+- **accueil** : Synchronisation sémantique et financière de l'accueil (`BalanceSummary`) :
+  - La carte principale affiche désormais explicitement "Solde Total Disponible" (cohérent avec le patrimoine total des portefeuilles).
+  - La carte de flux affiche "Flux net de la période" (différence entre les entrées et les sorties réelles sur la période sélectionnée) pour éviter toute confusion entre flux périodique et solde global cumulé.
+- **tooling** : Ajout du script npm `"clean"` dans `package.json` pour purger les caches `.next` en cas de conflit entre builds de production et serveur Turbopack.
+
+### Database
+- **migration** : Ajout des colonnes additives `declared_balance` (NUMERIC(12, 2)) et `declared_at` (TIMESTAMPTZ) sur la table `wallets` (`prisma/migrations/migration_v2_8_0.sql`), avec mise à jour du schéma Prisma (`prisma/schema.prisma`).
+
+### Tests
+- **tests** : Nouvelle suite de tests automatisés (`tests/wallet-declared-balance.test.ts`) validant l'étanchéité des mouvements antérieurs/postérieurs à T0, les soldes négatifs, les virements inter-comptes et la réconciliation globale, portant la suite globale à 186 tests réussis à 100 %.
+
+---
+
 ## [2.7.1] - 2026-10-19
 
 ### Fixes
