@@ -53,7 +53,7 @@ export function BalanceSummary({
   return (
     <div className="w-full space-y-3.5">
       {/* 1. Carte Principale du Solde Total Disponible (Section 11) */}
-      <div className="bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-[5px_5px_0px_0px_#111827] dark:shadow-[5px_5px_0px_0px_#000000] relative overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-5 sm:p-6 shadow-[5px_5px_0px_0px_#111827] dark:shadow-[5px_5px_0px_0px_#000000] relative transition-colors">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-widest text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
             <Wallet className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
