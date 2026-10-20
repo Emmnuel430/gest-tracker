@@ -31,6 +31,65 @@ export function computeWalletBalance(
   return balance.toNumber();
 }
 
+/**
+ * Détermine si une transaction doit être prise en compte dans le solde après déclaration à T0.
+ * Une transaction compte si :
+ * 1. Elle a été créée après la déclaration et sa date métier est >= au jour de la déclaration.
+ * 2. Ou sa date métier est strictement postérieure à l'instant de la déclaration.
+ */
+export function isTransactionAfterDeclaration(
+  tx: { date: Date | string; createdAt?: Date | string },
+  declaredAt: Date | string
+): boolean {
+  const declDate = new Date(declaredAt);
+  const txDate = new Date(tx.date);
+  const txCreatedAt = tx.createdAt ? new Date(tx.createdAt) : txDate;
+
+  // Si la transaction a été créée après la déclaration dans l'application
+  if (txCreatedAt.getTime() > declDate.getTime()) {
+    // Ne compte que si la date métier est sur le même jour calendaire ou ultérieure
+    const startOfDeclDay = new Date(declDate.getFullYear(), declDate.getMonth(), declDate.getDate()).getTime();
+    const startOfTxDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate()).getTime();
+    return startOfTxDay >= startOfDeclDay;
+  }
+
+  // Si la transaction a été créée avant ou à l'instant T0, elle ne compte que si sa date métier est postérieure
+  return txDate.getTime() > declDate.getTime();
+}
+
+export interface WalletBalanceCalculationParams {
+  initialBalance: number | Prisma.Decimal;
+  declaredBalance?: number | Prisma.Decimal | null;
+  declaredAt?: Date | string | null;
+  movements: WalletMovements;
+  postDeclarationMovements?: WalletMovements | null;
+}
+
+/**
+ * Calcule le solde disponible effectif d'un portefeuille :
+ * - Si un solde a été déclaré à T0 : prend declaredBalance + mouvements postérieurs.
+ * - Sinon : prend initialBalance + mouvements globaux.
+ */
+export function calculateEffectiveWalletBalance(
+  params: WalletBalanceCalculationParams
+): number {
+  if (
+    params.declaredBalance !== undefined &&
+    params.declaredBalance !== null &&
+    params.declaredAt
+  ) {
+    const postMov = params.postDeclarationMovements || {
+      income: 0,
+      expense: 0,
+      transferIn: 0,
+      transferOut: 0,
+    };
+    return computeWalletBalance(params.declaredBalance, postMov);
+  }
+
+  return computeWalletBalance(params.initialBalance, params.movements);
+}
+
 export interface WalletBalanceItem {
   id: string;
   isArchived: boolean;
