@@ -31,6 +31,17 @@ export function computeWalletBalance(
   return balance.toNumber();
 }
 
+function toCalendarDateStr(d: Date | string): string {
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) {
+    return d.substring(0, 10);
+  }
+  const dateObj = typeof d === 'string' ? new Date(d) : d;
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /**
  * Détermine si une transaction doit être prise en compte dans le solde après déclaration à T0.
  * Une transaction compte si :
@@ -48,9 +59,9 @@ export function isTransactionAfterDeclaration(
   // Si la transaction a été créée après la déclaration dans l'application
   if (txCreatedAt.getTime() > declDate.getTime()) {
     // Ne compte que si la date métier est sur le même jour calendaire ou ultérieure
-    const startOfDeclDay = new Date(declDate.getFullYear(), declDate.getMonth(), declDate.getDate()).getTime();
-    const startOfTxDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate()).getTime();
-    return startOfTxDay >= startOfDeclDay;
+    const declDayStr = toCalendarDateStr(declDate);
+    const txDayStr = toCalendarDateStr(txDate);
+    return txDayStr >= declDayStr;
   }
 
   // Si la transaction a été créée avant ou à l'instant T0, elle ne compte que si sa date métier est postérieure
@@ -107,10 +118,13 @@ export interface NetWorthCalculationResult {
 /**
  * Calcule le patrimoine total (somme de tous les portefeuilles, archivés inclus selon règle Q10)
  * et isole la part des portefeuilles archivés.
+ * Intègre les opérations historiques sans portefeuille rattaché (unassignedBalance) pour réconcilier
+ * l'intégralité de la trésorerie réelle de l'utilisateur.
  * Les portefeuilles supprimés logiquement (soft-deleted) sont strictement exclus du patrimoine.
  */
 export function computeNetWorth(
-  wallets: WalletBalanceItem[]
+  wallets: WalletBalanceItem[],
+  unassignedBalance: number = 0
 ): NetWorthCalculationResult {
   let netWorthDecimal = new Prisma.Decimal(0);
   let activeDecimal = new Prisma.Decimal(0);
@@ -127,6 +141,13 @@ export function computeNetWorth(
     } else {
       activeDecimal = activeDecimal.plus(bal);
     }
+  }
+
+  // Intégrer les opérations historiques sans compte dans le solde disponible actif
+  if (unassignedBalance) {
+    const unassignedDec = new Prisma.Decimal(unassignedBalance);
+    netWorthDecimal = netWorthDecimal.plus(unassignedDec);
+    activeDecimal = activeDecimal.plus(unassignedDec);
   }
 
   return {
