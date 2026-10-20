@@ -23,6 +23,8 @@ export interface RawTransactionInput {
   userId?: string | null;
   walletId?: string | null;
   targetWalletId?: string | null;
+  linkedTransferId?: string | null;
+  feePercent?: number | { toNumber: () => number } | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
@@ -41,6 +43,12 @@ export function serializeTransaction(tx: RawTransactionInput): Transaction {
     userId: tx.userId ?? null,
     walletId: tx.walletId ?? null,
     targetWalletId: tx.targetWalletId ?? null,
+    linkedTransferId: tx.linkedTransferId ?? null,
+    feePercent: tx.feePercent !== undefined && tx.feePercent !== null
+      ? (typeof tx.feePercent === 'object' && 'toNumber' in tx.feePercent
+          ? tx.feePercent.toNumber()
+          : Number(tx.feePercent))
+      : null,
     createdAt: tx.createdAt instanceof Date ? tx.createdAt.toISOString() : String(tx.createdAt || ''),
     updatedAt: tx.updatedAt instanceof Date ? tx.updatedAt.toISOString() : String(tx.updatedAt || ''),
   };

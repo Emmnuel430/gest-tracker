@@ -58,7 +58,7 @@ export function HistoryView({
 }: HistoryViewProps) {
   const searchParams = useSearchParams();
   const { categories, getCategoryColor } = useCategories();
-  const { wallets } = useWallets({ includeArchived: true });
+  const { wallets } = useWallets({ includeArchived: true, includeDeleted: true });
 
   // Initialisation à partir des query params ou valeurs par défaut
   const initialPeriod = (searchParams.get('period') as PeriodType) || 'month';
@@ -157,6 +157,14 @@ export function HistoryView({
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [wallets, initialTransactions]);
+
+  const walletStatusMap = useMemo(() => {
+    const map = new Map<string, { isDeleted?: boolean; isArchived?: boolean }>();
+    for (const w of wallets) {
+      map.set(w.name.toLowerCase(), { isDeleted: w.isDeleted, isArchived: w.isArchived });
+    }
+    return map;
+  }, [wallets]);
 
   // Matrice de visibilité (Section 6.2)
   const visibility = useMemo(() => {
@@ -456,11 +464,19 @@ export function HistoryView({
                 className="w-full bg-[#EFF6FF] dark:bg-[#131C31] border-2 border-[#111827] dark:border-[#334155] rounded-lg p-2 text-xs font-bold text-[#111827] dark:text-white shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000]"
               >
                 <option value="all">Tous les canaux</option>
-                {availablePayments.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
+                {availablePayments.map((p) => {
+                  const status = walletStatusMap.get(p.toLowerCase());
+                  const suffix = status?.isDeleted
+                    ? ' (supprimé)'
+                    : status?.isArchived
+                      ? ' (archivé)'
+                      : '';
+                  return (
+                    <option key={p} value={p}>
+                      {p}{suffix}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>

@@ -519,23 +519,42 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
   try {
     const user = await getAuthenticatedUser();
 
-    // Suppression sécurisée uniquement si id ET userId correspondent
-    const deleteResult = await prisma.transaction.deleteMany({
+    // Vérifier l'existence et l'appartenance
+    const existing = await prisma.transaction.findFirst({
       where: {
         id,
         userId: user.id,
       },
     });
 
-    if (deleteResult.count === 0) {
+    if (!existing) {
       return {
         success: false,
         error: 'Transaction introuvable ou non autorisée',
       };
     }
 
+    // Protection des frais de virement : interdire la suppression directe (ADR-04)
+    if (existing.linkedTransferId) {
+      return {
+        success: false,
+        error: 'Cette dépense correspond à des frais de virement. Modifiez ou supprimez le virement d’origine.',
+      };
+    }
+
+    // Suppression sécurisée : si virement, suppression en cascade de ses frais associés
+    await prisma.$transaction([
+      prisma.transaction.deleteMany({
+        where: { linkedTransferId: id, userId: user.id },
+      }),
+      prisma.transaction.delete({
+        where: { id },
+      }),
+    ]);
+
     revalidatePath('/');
     revalidatePath('/historique');
+    revalidatePath('/portefeuilles');
 
     return {
       success: true,
@@ -547,6 +566,34 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
     return {
       success: false,
       error: getErrorMessage(error) || 'Erreur lors de la suppression de la transaction',
+    };
+  }
+}
+
+/**
+ * Récupère les frais associés à un virement donné s'ils existent
+ */
+export async function getLinkedTransferFeeAction(
+  transferId: string
+): Promise<ActionResponse<Transaction | null>> {
+  try {
+    const user = await getAuthenticatedUser();
+    const feeTx = await prisma.transaction.findFirst({
+      where: {
+        userId: user.id,
+        linkedTransferId: transferId,
+      },
+    });
+
+    return {
+      success: true,
+      data: feeTx ? serializeTransaction(feeTx) : null,
+    };
+  } catch (error: unknown) {
+    console.error('Erreur getLinkedTransferFeeAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Impossible de charger les frais du virement',
     };
   }
 }
@@ -581,6 +628,14 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
       return {
         success: false,
         error: 'Transaction introuvable ou vous ne disposez pas des droits requis',
+      };
+    }
+
+    // Protection des frais de virement : interdire la modification directe (ADR-04)
+    if (existing.linkedTransferId) {
+      return {
+        success: false,
+        error: 'Cette dépense correspond à des frais de virement. Modifiez ou supprimez le virement d’origine.',
       };
     }
 

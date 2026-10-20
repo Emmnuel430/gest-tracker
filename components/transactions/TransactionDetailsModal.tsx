@@ -21,7 +21,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EditTransactionModal } from "@/components/transactions/EditTransactionModal";
-import { deleteTransactionAction } from "@/actions/transactions";
+import { deleteTransactionAction, getLinkedTransferFeeAction } from "@/actions/transactions";
 import {
   useCategories,
   useWallets,
@@ -47,15 +47,32 @@ export function TransactionDetailsModal({
   const [showEdit, setShowEdit] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [linkedFee, setLinkedFee] = useState<Transaction | null>(null);
 
   const { categories, getCategoryColor } = useCategories();
-  const { wallets, getWalletColor } = useWallets();
+  const { wallets, getWalletColor } = useWallets({ includeArchived: true, includeDeleted: true });
+
+  // Récupérer les frais associés si l'opération est un virement
+  React.useEffect(() => {
+    if (isOpen && transaction && transaction.type === "TRANSFER") {
+      getLinkedTransferFeeAction(transaction.id).then((res) => {
+        if (res.success && res.data) {
+          setLinkedFee(res.data);
+        } else {
+          setLinkedFee(null);
+        }
+      });
+    } else {
+      setLinkedFee(null);
+    }
+  }, [isOpen, transaction]);
 
   if (!transaction) return null;
 
   const isIncome = transaction.type === "INCOME";
   const isTransfer = transaction.type === "TRANSFER";
   const isExpense = transaction.type === "EXPENSE";
+  const isTransferFee = !!transaction.linkedTransferId;
 
   // Recherche de la catégorie et de son statut archivé
   const catItem = categories.find(
@@ -114,7 +131,9 @@ export function TransactionDetailsModal({
     ? "Entrée"
     : isTransfer
       ? "Virement interne"
-      : "Dépense";
+      : isTransferFee
+        ? "Frais de virement"
+        : "Dépense";
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -212,21 +231,47 @@ export function TransactionDetailsModal({
 
             {/* Portefeuille / Moyen de paiement ou Trajet de virement */}
             {isTransfer ? (
-              <div className="flex items-start justify-between py-2 border-b border-neutral-200 dark:border-neutral-800">
-                <dt className="font-bold text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-                  <CreditCard className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
-                  Comptes
-                </dt>
-                <dd className="font-black text-right text-[#111827] dark:text-[#F8FAFC]">
-                  <span>De </span>
-                  <span className="underline decoration-2">
-                    {sourceWallet?.name || transaction.payment}
-                  </span>
-                  <span> vers </span>
-                  <span className="underline decoration-2">
-                    {targetWallet?.name || "Compte cible"}
-                  </span>
-                </dd>
+              <div className="flex flex-col gap-1 py-2 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-start justify-between">
+                  <dt className="font-bold text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+                    <CreditCard className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
+                    Comptes
+                  </dt>
+                  <dd className="font-black text-right text-[#111827] dark:text-[#F8FAFC]">
+                    <span>De </span>
+                    <span className="underline decoration-2">
+                      {sourceWallet?.name || transaction.payment}
+                    </span>
+                    {sourceWallet?.isDeleted ? (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-400 text-red-500 bg-red-50 dark:bg-red-950/40 ml-1">
+                        supprimé
+                      </span>
+                    ) : sourceWallet?.isArchived ? (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-neutral-400 text-neutral-500 bg-neutral-100 dark:bg-neutral-800 ml-1">
+                        archivé
+                      </span>
+                    ) : null}
+                    <span> vers </span>
+                    <span className="underline decoration-2">
+                      {targetWallet?.name || "Compte cible"}
+                    </span>
+                    {targetWallet?.isDeleted ? (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-400 text-red-500 bg-red-50 dark:bg-red-950/40 ml-1">
+                        supprimé
+                      </span>
+                    ) : targetWallet?.isArchived ? (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-neutral-400 text-neutral-500 bg-neutral-100 dark:bg-neutral-800 ml-1">
+                        archivé
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
+                {linkedFee && (
+                  <div className="mt-1 p-2 bg-[#FFFBEB] dark:bg-[#2C2108] border border-[#FFE600] rounded-lg text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
+                    Frais associés : {formatCurrency(linkedFee.amount)}
+                    {linkedFee.feePercent ? ` (${linkedFee.feePercent} %)` : ""} · Débit total de {sourceWallet?.name || "la source"} : {formatCurrency(Math.abs(Number(transaction.amount)) + linkedFee.amount)}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-start justify-between py-2 border-b border-neutral-200 dark:border-neutral-800">
@@ -234,7 +279,7 @@ export function TransactionDetailsModal({
                   <CreditCard className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
                   Portefeuille
                 </dt>
-                <dd className="font-black text-right">
+                <dd className="font-black text-right flex items-center gap-1">
                   <span
                     className="inline-flex items-center text-xs font-black px-2 py-0.5 border border-[#111827] dark:border-white rounded-md shadow-[1px_1px_0px_0px_#111827] dark:shadow-[1px_1px_0px_0px_#000000]"
                     style={{
@@ -244,6 +289,15 @@ export function TransactionDetailsModal({
                   >
                     {transaction.payment}
                   </span>
+                  {sourceWallet?.isDeleted ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-400 text-red-500 bg-red-50 dark:bg-red-950/40">
+                      supprimé
+                    </span>
+                  ) : sourceWallet?.isArchived ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-neutral-400 text-neutral-500 bg-neutral-100 dark:bg-neutral-800">
+                      archivé
+                    </span>
+                  ) : null}
                 </dd>
               </div>
             )}
@@ -293,7 +347,7 @@ export function TransactionDetailsModal({
             )}
           </dl>
 
-          {/* 3. Actions : Modifier (si non transfert), Supprimer, Fermer */}
+          {/* 3. Actions : Modifier (si non transfert et non frais), Supprimer (si non frais), Fermer */}
           <div className="pt-2 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
             <Button
               type="button"
@@ -305,30 +359,36 @@ export function TransactionDetailsModal({
               Fermer
             </Button>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              {/* Le bouton Modifier est masqué pour les virements internes */}
-              {!isTransfer && (
+            {isTransferFee ? (
+              <div className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-300 dark:border-amber-700">
+                Modifiez ou supprimez le virement d&apos;origine pour ajuster ces frais.
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                {/* Le bouton Modifier est masqué pour les virements internes */}
+                {!isTransfer && (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => setShowEdit(true)}
+                    className="flex-1 sm:flex-none justify-center"
+                  >
+                    <Pencil className="w-4 h-4 mr-1.5" />
+                    Modifier
+                  </Button>
+                )}
+
                 <Button
                   type="button"
-                  variant="primary"
-                  onClick={() => setShowEdit(true)}
+                  variant="danger"
+                  onClick={() => setShowConfirmDelete(true)}
                   className="flex-1 sm:flex-none justify-center"
                 >
-                  <Pencil className="w-4 h-4 mr-1.5" />
-                  Modifier
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Supprimer
                 </Button>
-              )}
-
-              <Button
-                type="button"
-                variant="danger"
-                onClick={() => setShowConfirmDelete(true)}
-                className="flex-1 sm:flex-none justify-center"
-              >
-                <Trash2 className="w-4 h-4 mr-1.5" />
-                Supprimer
-              </Button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </Modal>

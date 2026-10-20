@@ -3,6 +3,31 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0] - 2026-10-20
+
+### Features
+- **wallets** : Frais de virement internes (ADR-04 & D9) :
+  - Support de frais optionnels configurables lors d'un virement dans `TransferModal`, sous forme de montant fixe (FCFA) ou de pourcentage (%).
+  - Calcul pur et partagé `computeTransferFee` dans `lib/transfer-fees.ts` (arrondi au FCFA, demi vers le haut) avec prévisualisation en direct du montant total débité et crédité.
+  - Règle financière Q11 respectée : le montant saisi est le montant crédité sur le compte cible ; les frais sont débités en supplément du compte source.
+  - Persistance transactionnelle atomique : création conjointe du virement (`TRANSFER`) et d'une dépense de frais (`EXPENSE`) liée (`linkedTransferId`), classée automatiquement dans la catégorie système "Frais de transfert" (`systemKey = 'TRANSFER_FEE'`).
+  - Suppression et modification protégées des frais de virement dans `actions/transactions.ts` avec message pédagogique orientant vers le virement d'origine, et suppression en cascade automatique des frais lors de la suppression du virement.
+  - Affichage des frais associés dans la modale de détails (`TransactionDetailsModal`).
+- **wallets** : Suppression réversible et restauration des portefeuilles (ADR-05, D10 & C7) :
+  - Soft-delete via la colonne `deletedAt` sur les portefeuilles, remplaçant le blocage strict antérieur en cas d'opérations existantes.
+  - Conservation intégrale de l'historique : les transactions passées conservent leur rattachement et libellé d'origine sans altération.
+  - Exclusion automatique des comptes supprimés des listes actives, sélecteurs de saisie, virements et du patrimoine net (règle ADR-05).
+  - Protection du compte principal : interdiction absolue de suppression du compte par défaut avec invitation à en désigner un autre au préalable.
+  - Calcul d'impact préalable (`getWalletDeletionImpactAction`) alimentant la modale de confirmation `ConfirmDialog` avec le nombre d'opérations préservées, le solde exclu et les règles récurrentes mises en pause.
+  - Détection automatique à la création de compte (`upsertWalletAction`) si un portefeuille supprimé porte déjà le même nom (insensible à la casse et aux espaces).
+  - Boîte de dialogue de proposition de restauration automatique (`restoreWalletAction`) avec réactivation du compte et réassignation transparente de son historique d'opérations.
+- **history** : Mention "(supprimé)" dans le sélecteur de canal de `HistoryView` et "supprimé" dans `TransactionDetailsModal` pour identifier fidèlement les anciens comptes.
+
+### Tests
+- **tests** : Nouvelle suite de tests automatisés (`tests/v210-transfer-fees-soft-delete.test.ts`) validant les calculs de frais (montant fixe, pourcentage, arrondis, plafonnement), la stricte conservation du patrimoine net ($Patrimoine_{apres} = Patrimoine_{avant} - frais$), l'exclusion des comptes supprimés du patrimoine et les validations de schéma Zod (`TransferSchema`).
+
+---
+
 ## [2.9.0] - 2026-10-20
 
 ### Features

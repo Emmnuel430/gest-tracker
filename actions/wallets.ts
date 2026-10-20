@@ -7,7 +7,7 @@ import { getAuthenticatedUser } from '@/lib/auth';
 import { WalletSchema, TransferSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
 import { getErrorMessage } from '@/lib/utils';
-
+import { computeTransferFee } from '@/lib/transfer-fees';
 import { getWalletBalancesForUser } from '@/lib/services/wallet-balances';
 
 export interface WalletItem {
@@ -21,6 +21,8 @@ export interface WalletItem {
   color: string;
   isDefault: boolean;
   isArchived: boolean;
+  deletedAt?: string | null;
+  isDeleted?: boolean;
   totalIncome: number;
   totalExpense: number;
   totalTransferIn: number;
@@ -36,8 +38,21 @@ export interface NetWorthSummary {
   walletCount: number;
 }
 
+export interface WalletDeletionImpact {
+  id: string;
+  walletName: string;
+  currentBalance: number;
+  transactionCount: number;
+  activeRulesCount: number;
+  isDefault: boolean;
+}
+
+export type WalletActionResponse<T = unknown> =
+  | { success: true; data: T; message?: string }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]>; code?: string; data?: unknown };
+
 /**
- * Récupère le patrimoine net total de l'utilisateur (somme de tous les portefeuilles, archivés inclus)
+ * Récupère le patrimoine net total de l'utilisateur (somme de tous les portefeuilles, archivés inclus, supprimés exclus)
  */
 export async function getNetWorthAction(): Promise<ActionResponse<NetWorthSummary>> {
   try {
@@ -68,14 +83,21 @@ export async function getNetWorthAction(): Promise<ActionResponse<NetWorthSummar
  */
 export async function getWalletsAction(options?: {
   includeArchived?: boolean;
+  includeDeleted?: boolean;
 }): Promise<ActionResponse<WalletItem[]>> {
   try {
     const user = await getAuthenticatedUser();
-    const summary = await getWalletBalancesForUser(user.id);
+    const summary = await getWalletBalancesForUser(user.id, {
+      includeDeleted: options?.includeDeleted,
+    });
 
-    const data = options?.includeArchived
-      ? summary.wallets
-      : summary.wallets.filter((w) => !w.isArchived);
+    let data = summary.wallets;
+    if (!options?.includeDeleted) {
+      data = data.filter((w) => !w.isDeleted);
+    }
+    if (!options?.includeArchived) {
+      data = data.filter((w) => !w.isArchived);
+    }
 
     return {
       success: true,
@@ -91,9 +113,66 @@ export async function getWalletsAction(options?: {
 }
 
 /**
+ * Calcule l'impact d'une suppression de portefeuille pour alimenter la modal de confirmation
+ */
+export async function getWalletDeletionImpactAction(
+  id: string
+): Promise<ActionResponse<WalletDeletionImpact>> {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const wallet = await prisma.wallet.findFirst({
+      where: { id, userId: user.id, deletedAt: null },
+    });
+
+    if (!wallet) {
+      return { success: false, error: 'Portefeuille introuvable' };
+    }
+
+    const [summary, txCount, activeRulesCount] = await Promise.all([
+      getWalletBalancesForUser(user.id),
+      prisma.transaction.count({
+        where: {
+          userId: user.id,
+          OR: [{ walletId: id }, { targetWalletId: id }],
+        },
+      }),
+      prisma.recurringRule.count({
+        where: {
+          userId: user.id,
+          walletId: id,
+          isActive: true,
+        },
+      }),
+    ]);
+
+    const calculated = summary.wallets.find((w) => w.id === id);
+    const currentBalance = calculated?.currentBalance ?? 0;
+
+    return {
+      success: true,
+      data: {
+        id: wallet.id,
+        walletName: wallet.name,
+        currentBalance,
+        transactionCount: txCount,
+        activeRulesCount,
+        isDefault: wallet.isDefault,
+      },
+    };
+  } catch (error: unknown) {
+    console.error('Erreur getWalletDeletionImpactAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Impossible de calculer l’impact de la suppression',
+    };
+  }
+}
+
+/**
  * Enregistre ou met à jour un portefeuille avec propagation atomique du nom et gestion du solde déclaré T0
  */
-export async function upsertWalletAction(rawData: unknown): Promise<ActionResponse> {
+export async function upsertWalletAction(rawData: unknown): Promise<WalletActionResponse> {
   try {
     const user = await getAuthenticatedUser();
     const parseResult = WalletSchema.safeParse(rawData);
@@ -117,10 +196,11 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
       isArchived,
     } = parseResult.data;
 
-    // Contrôle d'unicité de la couleur par utilisateur (insensible à la casse)
+    // Contrôle d'unicité de la couleur par utilisateur parmi les portefeuilles actifs (insensible à la casse)
     const duplicateColor = await prisma.wallet.findFirst({
       where: {
         userId: user.id,
+        deletedAt: null,
         color: { equals: color, mode: 'insensitive' },
         ...(id ? { id: { not: id } } : {}),
       },
@@ -131,6 +211,38 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
         success: false,
         error: `Cette couleur est déjà attribuée au portefeuille "${duplicateColor.name}". Veuillez choisir une autre couleur.`,
       };
+    }
+
+    // Lors de la création, vérifier s'il existe déjà un compte supprimé portant le même nom
+    if (!id) {
+      const deletedMatch = await prisma.wallet.findFirst({
+        where: {
+          userId: user.id,
+          deletedAt: { not: null },
+          name: { equals: name.trim(), mode: 'insensitive' },
+        },
+      });
+
+      if (deletedMatch) {
+        const txCount = await prisma.transaction.count({
+          where: {
+            userId: user.id,
+            OR: [{ walletId: deletedMatch.id }, { targetWalletId: deletedMatch.id }],
+          },
+        });
+
+        return {
+          success: false,
+          code: 'DELETED_WALLET_MATCH',
+          error: `Un compte "${deletedMatch.name}" supprimé contient ${txCount} opérations enregistrées.`,
+          data: {
+            id: deletedMatch.id,
+            name: deletedMatch.name,
+            deletedAt: deletedMatch.deletedAt ? deletedMatch.deletedAt.toISOString() : null,
+            transactionCount: txCount,
+          },
+        };
+      }
     }
 
     if (isDefault) {
@@ -144,7 +256,7 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
     let saved;
     if (id) {
       const existing = await prisma.wallet.findFirst({
-        where: { id, userId: user.id },
+        where: { id, userId: user.id, deletedAt: null },
       });
 
       if (!existing) {
@@ -232,6 +344,71 @@ export async function upsertWalletAction(rawData: unknown): Promise<ActionRespon
 }
 
 /**
+ * Restaure un compte précédemment supprimé logiquement (soft-delete)
+ */
+export async function restoreWalletAction(
+  id: string,
+  newColor?: string,
+  newType?: 'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS'
+): Promise<ActionResponse> {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const wallet = await prisma.wallet.findFirst({
+      where: { id, userId: user.id, deletedAt: { not: null } },
+    });
+
+    if (!wallet) {
+      return { success: false, error: 'Compte supprimé introuvable' };
+    }
+
+    const colorToUse = newColor || wallet.color;
+
+    // Vérifier conflit de couleur avec un portefeuille actif
+    const colorConflict = await prisma.wallet.findFirst({
+      where: {
+        userId: user.id,
+        deletedAt: null,
+        color: { equals: colorToUse, mode: 'insensitive' },
+        id: { not: id },
+      },
+    });
+
+    if (colorConflict) {
+      return {
+        success: false,
+        error: `La couleur ${colorToUse} est déjà utilisée par le compte actif "${colorConflict.name}". Veuillez choisir une autre couleur pour restaurer.`,
+      };
+    }
+
+    await prisma.wallet.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        color: colorToUse,
+        ...(newType ? { type: newType } : {}),
+      },
+    });
+
+    revalidatePath('/portefeuilles');
+    revalidatePath('/');
+    revalidatePath('/historique');
+
+    return {
+      success: true,
+      data: { id: wallet.id },
+      message: `Portefeuille "${wallet.name}" restauré avec succès. Vos règles récurrentes liées restent en pause.`,
+    };
+  } catch (error: unknown) {
+    console.error('Erreur restoreWalletAction :', error);
+    return {
+      success: false,
+      error: getErrorMessage(error) || 'Erreur lors de la restauration du compte',
+    };
+  }
+}
+
+/**
  * Archive ou désarchive un portefeuille
  */
 export async function archiveWalletAction(
@@ -242,7 +419,7 @@ export async function archiveWalletAction(
     const user = await getAuthenticatedUser();
 
     const wallet = await prisma.wallet.findFirst({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, deletedAt: null },
     });
 
     if (!wallet) {
@@ -280,46 +457,47 @@ export async function archiveWalletAction(
 }
 
 /**
- * Supprime un portefeuille s'il n'est relié à aucune opération (recommande l'archivage sinon)
+ * Supprime de manière réversible un portefeuille (Soft-delete Sprint 2.10.0 - D10, C7)
+ * Conserve intactes toutes les transactions passées et met en pause les règles récurrentes actives.
  */
 export async function deleteWalletAction(id: string): Promise<ActionResponse> {
   try {
     const user = await getAuthenticatedUser();
 
     const wallet = await prisma.wallet.findFirst({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, deletedAt: null },
     });
 
     if (!wallet) {
       return { success: false, error: 'Portefeuille introuvable' };
     }
 
-    // Contrôle strict : vérifier si le portefeuille a des transactions ou des récurrences liées
-    const txCount = await prisma.transaction.count({
-      where: {
-        userId: user.id,
-        OR: [{ walletId: id }, { targetWalletId: id }],
-      },
-    });
-
-    const rulesCount = await prisma.recurringRule.count({
-      where: {
-        userId: user.id,
-        walletId: id,
-      },
-    });
-
-    if (txCount > 0 || rulesCount > 0) {
+    if (wallet.isDefault) {
       return {
         success: false,
-        error:
-          'Ce portefeuille contient des transactions ou règles enregistrées. Pour préserver l’intégrité de vos comptes, vous pouvez l’archiver au lieu de le supprimer.',
+        error: 'Désignez d’abord un autre compte principal avant de supprimer celui-ci.',
       };
     }
 
-    await prisma.wallet.delete({
-      where: { id },
-    });
+    await prisma.$transaction([
+      prisma.wallet.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          isDefault: false,
+        },
+      }),
+      prisma.recurringRule.updateMany({
+        where: {
+          userId: user.id,
+          walletId: id,
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+        },
+      }),
+    ]);
 
     revalidatePath('/portefeuilles');
     revalidatePath('/');
@@ -328,7 +506,7 @@ export async function deleteWalletAction(id: string): Promise<ActionResponse> {
     return {
       success: true,
       data: { id },
-      message: 'Portefeuille supprimé avec succès',
+      message: `Portefeuille "${wallet.name}" supprimé avec succès`,
     };
   } catch (error: unknown) {
     console.error('Erreur deleteWalletAction :', error);
@@ -340,7 +518,7 @@ export async function deleteWalletAction(id: string): Promise<ActionResponse> {
 }
 
 /**
- * Effectue un virement interne entre deux portefeuilles (Sprint 19)
+ * Effectue un virement interne entre deux portefeuilles avec gestion optionnelle des frais (Sprint 2.10.0 - D9, Q11)
  */
 export async function transferBetweenWalletsAction(rawData: unknown): Promise<ActionResponse> {
   try {
@@ -354,42 +532,108 @@ export async function transferBetweenWalletsAction(rawData: unknown): Promise<Ac
       };
     }
 
-    const { sourceWalletId, targetWalletId, amount, note, date } = parseResult.data;
+    const { sourceWalletId, targetWalletId, amount, hasFee, feeMode, feeValue, note, date } = parseResult.data;
 
-    // Récupérer les noms des deux portefeuilles
+    // Récupérer les deux portefeuilles (actifs uniquement)
     const [source, target] = await Promise.all([
-      prisma.wallet.findFirst({ where: { id: sourceWalletId, userId: user.id } }),
-      prisma.wallet.findFirst({ where: { id: targetWalletId, userId: user.id } }),
+      prisma.wallet.findFirst({ where: { id: sourceWalletId, userId: user.id, deletedAt: null } }),
+      prisma.wallet.findFirst({ where: { id: targetWalletId, userId: user.id, deletedAt: null } }),
     ]);
 
     if (!source || !target) {
-      return { success: false, error: 'Un des portefeuilles sélectionnés est introuvable' };
+      return { success: false, error: 'Un des portefeuilles sélectionnés est introuvable ou supprimé' };
     }
 
     const txDate = date ? new Date(date) : new Date();
 
-    const transferTx = await prisma.transaction.create({
-      data: {
-        userId: user.id,
-        type: 'TRANSFER',
-        amount,
-        category: 'Virement interne',
-        payment: `${source.name} -> ${target.name}`,
-        walletId: sourceWalletId,
-        targetWalletId: targetWalletId,
-        note: note || `Transfert de ${source.name} vers ${target.name}`,
-        date: txDate,
-      },
+    // Calcul sécurisé des frais côté serveur (ADR-04)
+    const computedFee =
+      hasFee && feeValue && feeValue > 0
+        ? computeTransferFee({ amount, mode: feeMode || 'AMOUNT', value: feeValue })
+        : 0;
+
+    // Résolution ou création de la catégorie système "Frais de transfert"
+    let feeCategory: { id: string; name: string } | null = null;
+    if (computedFee > 0) {
+      let cat = await prisma.category.findFirst({
+        where: { userId: user.id, systemKey: 'TRANSFER_FEE' },
+      });
+
+      if (!cat) {
+        cat = await prisma.category.findFirst({
+          where: { userId: user.id, name: { equals: 'Frais de transfert', mode: 'insensitive' } },
+        });
+
+        if (cat) {
+          cat = await prisma.category.update({
+            where: { id: cat.id },
+            data: { systemKey: 'TRANSFER_FEE' },
+          });
+        } else {
+          cat = await prisma.category.create({
+            data: {
+              userId: user.id,
+              name: 'Frais de transfert',
+              kind: 'EXPENSE',
+              color: '#EF4444',
+              systemKey: 'TRANSFER_FEE',
+            },
+          });
+        }
+      }
+      feeCategory = cat;
+    }
+
+    // Persistance dans une seule transaction atomique
+    const transferTx = await prisma.$transaction(async (tx) => {
+      const tTx = await tx.transaction.create({
+        data: {
+          userId: user.id,
+          type: 'TRANSFER',
+          amount,
+          category: 'Virement interne',
+          payment: `${source.name} -> ${target.name}`,
+          walletId: sourceWalletId,
+          targetWalletId: targetWalletId,
+          note: note || `Transfert de ${source.name} vers ${target.name}`,
+          date: txDate,
+        },
+      });
+
+      if (computedFee > 0 && feeCategory) {
+        await tx.transaction.create({
+          data: {
+            userId: user.id,
+            type: 'EXPENSE',
+            amount: computedFee,
+            category: feeCategory.name,
+            categoryId: feeCategory.id,
+            walletId: sourceWalletId,
+            payment: source.name,
+            note: note
+              ? `Frais du virement ${source.name} -> ${target.name} (${note})`
+              : `Frais du virement ${source.name} -> ${target.name}`,
+            linkedTransferId: tTx.id,
+            feePercent: feeMode === 'PERCENT' && feeValue ? new Prisma.Decimal(feeValue) : null,
+            date: txDate,
+          },
+        });
+      }
+
+      return tTx;
     });
 
     revalidatePath('/portefeuilles');
     revalidatePath('/historique');
     revalidatePath('/');
 
+    const feeNotice =
+      computedFee > 0 ? ` (dont ${computedFee.toLocaleString('fr-FR')} FCFA de frais débités)` : '';
+
     return {
       success: true,
       data: { id: transferTx.id },
-      message: `Virement de ${amount.toLocaleString('fr-FR')} FCFA effectué avec succès`,
+      message: `Virement de ${amount.toLocaleString('fr-FR')} FCFA effectué avec succès${feeNotice}`,
     };
   } catch (error: unknown) {
     console.error('Erreur transferBetweenWalletsAction :', error);

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
-import { X, ArrowRight, Zap, Info } from 'lucide-react';
+import React, { useState, useEffect, useTransition, useMemo } from 'react';
+import { X, ArrowRight, Zap, Info, ChevronDown, ChevronUp, Percent, Banknote } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput, formatCurrency } from '@/constants/config';
 import { WalletItem, transferBetweenWalletsAction } from '@/actions/wallets';
+import { computeTransferFee, formatTransferFeePreview, TransferFeeMode } from '@/lib/transfer-fees';
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -32,6 +33,13 @@ export function TransferModal({
   );
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
+
+  // Frais de virement (Sprint 2.10.0 - D9, Q11)
+  const [hasFee, setHasFee] = useState<boolean>(false);
+  const [feeMode, setFeeMode] = useState<TransferFeeMode>('AMOUNT');
+  const [feeValueInput, setFeeValueInput] = useState<string>('');
+  const [showFeeSection, setShowFeeSection] = useState<boolean>(false);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Synchronisation dynamique du portefeuille émetteur et récepteur à l'ouverture ou au changement de defaultSourceId
@@ -47,14 +55,36 @@ export function TransferModal({
       setTargetId(activeTarget);
       setAmount('');
       setNote('');
+      setHasFee(false);
+      setFeeMode('AMOUNT');
+      setFeeValueInput('');
+      setShowFeeSection(false);
       setErrorMessage(null);
     }
   }, [isOpen, defaultSourceId, wallets]);
 
-  if (!isOpen) return null;
+  const sourceWallet = useMemo(() => wallets.find((w) => w.id === sourceId), [wallets, sourceId]);
+  const targetWallet = useMemo(() => wallets.find((w) => w.id === targetId), [wallets, targetId]);
 
-  const sourceWallet = wallets.find((w) => w.id === sourceId);
-  const targetWallet = wallets.find((w) => w.id === targetId);
+  const numericAmount = useMemo(() => parseAmountInput(amount), [amount]);
+  const numericFeeValue = useMemo(() => {
+    if (feeMode === 'AMOUNT') {
+      return parseAmountInput(feeValueInput);
+    }
+    const parsed = parseFloat(feeValueInput.replace(',', '.'));
+    return isNaN(parsed) ? 0 : parsed;
+  }, [feeMode, feeValueInput]);
+
+  const computedFee = useMemo(() => {
+    if (!hasFee || isNaN(numericFeeValue) || numericFeeValue <= 0) return 0;
+    return computeTransferFee({
+      amount: numericAmount > 0 ? numericAmount : 0,
+      mode: feeMode,
+      value: numericFeeValue,
+    });
+  }, [hasFee, feeMode, numericFeeValue, numericAmount]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,10 +100,24 @@ export function TransferModal({
       return;
     }
 
-    const numericAmount = parseAmountInput(amount);
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
       setErrorMessage('Veuillez entrer un montant supérieur à 0 FCFA');
       return;
+    }
+
+    if (hasFee) {
+      if (numericFeeValue < 0) {
+        setErrorMessage('Les frais doivent être supérieurs ou égaux à 0');
+        return;
+      }
+      if (feeMode === 'PERCENT' && numericFeeValue > 100) {
+        setErrorMessage('Le pourcentage de frais ne peut pas dépasser 100 %');
+        return;
+      }
+      if (computedFee > numericAmount) {
+        setErrorMessage('Les frais ne peuvent pas dépasser le montant du transfert');
+        return;
+      }
     }
 
     startTransition(async () => {
@@ -81,6 +125,9 @@ export function TransferModal({
         sourceWalletId: sourceId,
         targetWalletId: targetId,
         amount: numericAmount,
+        hasFee,
+        feeMode: hasFee ? feeMode : 'AMOUNT',
+        feeValue: hasFee ? numericFeeValue : 0,
         note: note.trim() || undefined,
       });
 
@@ -95,7 +142,7 @@ export function TransferModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-sm bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+      <div className="w-full max-w-md bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-neutral-200 dark:border-[#334155]">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-[#FFE600] text-[#111827] border-2 border-[#111827] rounded-lg">
@@ -161,7 +208,7 @@ export function TransferModal({
             </div>
           </div>
 
-          {/* Montant */}
+          {/* Montant crédité (montant reçu) */}
           <div>
             <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-1">
               Montant à transférer (FCFA)
@@ -172,6 +219,126 @@ export function TransferModal({
               placeholder="Ex: 50 000"
               autoFocus
             />
+          </div>
+
+          {/* Section Frais de virement (D9 - repliable) */}
+          <div className="border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-neutral-50 dark:bg-[#0F172A] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setShowFeeSection(!showFeeSection);
+              }}
+              className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] cursor-pointer hover:bg-neutral-100 dark:hover:bg-[#131C31] transition-all"
+            >
+              <span className="flex items-center gap-1.5">
+                <Percent className="w-3.5 h-3.5 text-[#FFE600] shrink-0" />
+                Frais de virement (optionnel)
+                {hasFee && computedFee > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[9px] bg-[#FFE600] text-[#111827] border border-[#111827] rounded-md font-black">
+                    +{formatCurrency(computedFee)}
+                  </span>
+                )}
+              </span>
+              {showFeeSection ? (
+                <ChevronUp className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+              )}
+            </button>
+
+            {showFeeSection && (
+              <div className="p-3 pt-0 space-y-3 border-t border-neutral-200 dark:border-[#334155] mt-1">
+                {/* Interrupteur frais */}
+                <div className="flex items-center justify-between pt-2">
+                  <label htmlFor="transfer-fee-toggle" className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC] cursor-pointer">
+                    Ce virement a des frais
+                  </label>
+                  <input
+                    id="transfer-fee-toggle"
+                    type="checkbox"
+                    checked={hasFee}
+                    onChange={(e) => setHasFee(e.target.checked)}
+                    className="w-4 h-4 accent-[#FFE600] rounded cursor-pointer"
+                  />
+                </div>
+
+                {hasFee && (
+                  <div className="space-y-3 pt-1 animate-in fade-in duration-150">
+                    {/* Choix du mode : Montant ou Pourcentage */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFeeMode('AMOUNT')}
+                        className={`py-1.5 px-2 text-xs font-black uppercase rounded-lg border-2 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                          feeMode === 'AMOUNT'
+                            ? 'bg-[#111827] dark:bg-white text-white dark:text-[#111827] border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#FFE600]'
+                            : 'bg-white dark:bg-[#1E293B] text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700'
+                        }`}
+                      >
+                        <Banknote className="w-3.5 h-3.5" />
+                        Montant (FCFA)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFeeMode('PERCENT')}
+                        className={`py-1.5 px-2 text-xs font-black uppercase rounded-lg border-2 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                          feeMode === 'PERCENT'
+                            ? 'bg-[#111827] dark:bg-white text-white dark:text-[#111827] border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#FFE600]'
+                            : 'bg-white dark:bg-[#1E293B] text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700'
+                        }`}
+                      >
+                        <Percent className="w-3.5 h-3.5" />
+                        Pourcentage (%)
+                      </button>
+                    </div>
+
+                    {/* Saisie de la valeur */}
+                    <div>
+                      <label className="block text-[11px] font-black uppercase text-neutral-600 dark:text-neutral-400 mb-1">
+                        {feeMode === 'AMOUNT' ? 'Montant des frais (FCFA)' : 'Taux des frais (%)'}
+                      </label>
+                      {feeMode === 'AMOUNT' ? (
+                        <CurrencyInput
+                          value={feeValueInput}
+                          onChange={setFeeValueInput}
+                          placeholder="Ex: 100"
+                        />
+                      ) : (
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={feeValueInput}
+                            onChange={(e) => setFeeValueInput(e.target.value)}
+                            placeholder="Ex: 1 ou 1.5"
+                            className="w-full px-3 py-2 pr-8 text-xs font-bold border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-white dark:bg-[#0F172A] text-[#111827] dark:text-[#F8FAFC]"
+                          />
+                          <span className="absolute right-3 top-2.5 text-xs font-black text-neutral-400">
+                            %
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Aperçu en direct */}
+                    {numericAmount > 0 && (
+                      <div className="p-2.5 bg-[#FFFBEB] dark:bg-[#2C2108] border-2 border-[#FFE600] rounded-xl text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
+                        {formatTransferFeePreview({
+                          amount: numericAmount,
+                          fee: computedFee,
+                          sourceName: sourceWallet?.name || 'Compte source',
+                          targetName: targetWallet?.name || 'Compte cible',
+                          mode: feeMode,
+                          percentValue: feeMode === 'PERCENT' ? numericFeeValue : undefined,
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Description optionnelle */}
@@ -191,7 +358,18 @@ export function TransferModal({
           {/* Récapitulatif pédagogique */}
           <div className="p-3 bg-neutral-100 dark:bg-[#0F172A] border-2 border-dashed border-neutral-300 dark:border-[#334155] rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-400 flex items-start gap-2">
             <Info className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA] shrink-0 mt-0.5" />
-            <span>Ce mouvement est un <strong>virement interne</strong> : il n&apos;impacte ni vos revenus ni vos dépenses du mois. Votre solde net global reste inchangé.</span>
+            <span>
+              {hasFee && computedFee > 0 ? (
+                <>
+                  Le virement de {formatCurrency(numericAmount)} est neutre, mais les frais de{' '}
+                  <strong>{formatCurrency(computedFee)}</strong> seront comptabilisés comme dépense sur {sourceWallet?.name || 'le compte source'}.
+                </>
+              ) : (
+                <>
+                  Ce mouvement est un <strong>virement interne</strong> : il n&apos;impacte ni vos revenus ni vos dépenses du mois. Votre solde net global reste inchangé.
+                </>
+              )}
+            </span>
           </div>
 
           {errorMessage && (

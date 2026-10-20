@@ -14,7 +14,13 @@ import {
   ArchiveRestore,
 } from 'lucide-react';
 import { formatCurrency } from '@/constants/config';
-import { WalletItem, deleteWalletAction, archiveWalletAction } from '@/actions/wallets';
+import {
+  WalletItem,
+  deleteWalletAction,
+  archiveWalletAction,
+  getWalletDeletionImpactAction,
+  WalletDeletionImpact,
+} from '@/actions/wallets';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface WalletCardProps {
@@ -35,7 +41,25 @@ export function WalletCard({
   const [isPending, startTransition] = useTransition();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [deletionImpact, setDeletionImpact] = useState<WalletDeletionImpact | null>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
+
+  const handleDeleteClick = () => {
+    if (wallet.isDefault) {
+      setActionErrorMessage('Désignez d’abord un autre compte principal avant de supprimer celui-ci.');
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await getWalletDeletionImpactAction(wallet.id);
+      if (res.success) {
+        setDeletionImpact(res.data);
+        setIsDeleteDialogOpen(true);
+      } else {
+        setActionErrorMessage(res.error || 'Impossible de vérifier l’impact de la suppression.');
+      }
+    });
+  };
 
   const confirmDelete = () => {
     startTransition(async () => {
@@ -152,7 +176,7 @@ export function WalletCard({
           </button>
           <button
             type="button"
-            onClick={() => setIsDeleteDialogOpen(true)}
+            onClick={handleDeleteClick}
             disabled={isPending}
             title="Supprimer"
             className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-red-500 hover:text-white text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
@@ -212,12 +236,20 @@ export function WalletCard({
         </button>
       )}
 
-      {/* Modale de confirmation de suppression */}
+      {/* Modale de confirmation de suppression avec impact chiffré */}
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
-        title="Supprimer le portefeuille"
-        message={`Supprimer définitivement le portefeuille "${wallet.name}" ? Cette action est irréversible.`}
-        confirmLabel="Supprimer"
+        title={`Supprimer le compte "${wallet.name}" ?`}
+        message={`Supprimer ${wallet.name} ? Ses ${
+          deletionImpact?.transactionCount ?? 0
+        } opérations restent dans votre historique. Son solde actuel (${formatCurrency(
+          deletionImpact?.currentBalance ?? wallet.currentBalance
+        )}) ne sera plus compté dans votre patrimoine.${
+          deletionImpact && deletionImpact.activeRulesCount > 0
+            ? ` ${deletionImpact.activeRulesCount} règle(s) récurrente(s) seront mises en pause.`
+            : ''
+        } Si vous recréez un compte nommé ${wallet.name}, il sera restauré avec toutes ses opérations.`}
+        confirmLabel="Supprimer le compte"
         cancelLabel="Annuler"
         variant="danger"
         isLoading={isPending}

@@ -18,6 +18,8 @@ export interface CalculatedWalletData {
   color: string;
   isDefault: boolean;
   isArchived: boolean;
+  deletedAt: string | null;
+  isDeleted: boolean;
   totalIncome: number;
   totalExpense: number;
   totalTransferIn: number;
@@ -38,58 +40,70 @@ export interface UserWalletSummary {
  * Service centralisé pour calculer les soldes de tous les portefeuilles d'un utilisateur,
  * ainsi que le patrimoine total et les montants non assignés.
  */
-export async function getWalletBalancesForUser(userId: string): Promise<UserWalletSummary> {
+export async function getWalletBalancesForUser(
+  userId: string,
+  options?: { includeDeleted?: boolean }
+): Promise<UserWalletSummary> {
   // 1. Récupération des portefeuilles existants
   let wallets = await prisma.wallet.findMany({
-    where: { userId },
+    where: {
+      userId,
+      ...(options?.includeDeleted ? {} : { deletedAt: null }),
+    },
     orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
   });
 
-  // Initialisation automatique par défaut si premier accès
+  // Initialisation automatique par défaut si premier accès absolu (aucun portefeuille, même supprimé)
   if (wallets.length === 0) {
-    const now = new Date();
-    await prisma.wallet.createMany({
-      data: [
-        {
-          userId,
-          name: 'Espèces',
-          type: 'CASH',
-          initialBalance: 0,
-          declaredBalance: 0,
-          declaredAt: now,
-          color: '#52B788',
-          isDefault: true,
-          isArchived: false,
-        },
-        {
-          userId,
-          name: 'Wave',
-          type: 'MOBILE_MONEY',
-          initialBalance: 0,
-          declaredBalance: 0,
-          declaredAt: now,
-          color: '#1DC4F2',
-          isDefault: false,
-          isArchived: false,
-        },
-        {
-          userId,
-          name: 'Compte bancaire',
-          type: 'BANK',
-          initialBalance: 0,
-          declaredBalance: 0,
-          declaredAt: now,
-          color: '#B8C0FF',
-          isDefault: false,
-          isArchived: false,
-        },
-      ],
-    });
+    const existingCount = await prisma.wallet.count({ where: { userId } });
+    if (existingCount === 0) {
+      const now = new Date();
+      await prisma.wallet.createMany({
+        data: [
+          {
+            userId,
+            name: 'Espèces',
+            type: 'CASH',
+            initialBalance: 0,
+            declaredBalance: 0,
+            declaredAt: now,
+            color: '#52B788',
+            isDefault: true,
+            isArchived: false,
+          },
+          {
+            userId,
+            name: 'Wave',
+            type: 'MOBILE_MONEY',
+            initialBalance: 0,
+            declaredBalance: 0,
+            declaredAt: now,
+            color: '#1DC4F2',
+            isDefault: false,
+            isArchived: false,
+          },
+          {
+            userId,
+            name: 'Compte bancaire',
+            type: 'BANK',
+            initialBalance: 0,
+            declaredBalance: 0,
+            declaredAt: now,
+            color: '#B8C0FF',
+            isDefault: false,
+            isArchived: false,
+          },
+        ],
+      });
 
-    wallets = await prisma.wallet.findMany({
-      where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
-    });
+      wallets = await prisma.wallet.findMany({
+        where: {
+          userId,
+          ...(options?.includeDeleted ? {} : { deletedAt: null }),
+        },
+        orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+      });
+    }
   }
 
   // 2. Récupérer toutes les transactions de l'utilisateur pour calculer les mouvements
@@ -215,6 +229,8 @@ export async function getWalletBalancesForUser(userId: string): Promise<UserWall
       color: w.color,
       isDefault: w.isDefault,
       isArchived: w.isArchived,
+      deletedAt: w.deletedAt ? w.deletedAt.toISOString() : null,
+      isDeleted: !!w.deletedAt,
       totalIncome: hist.income.toNumber(),
       totalExpense: hist.expense.toNumber(),
       totalTransferIn: hist.transferIn.toNumber(),

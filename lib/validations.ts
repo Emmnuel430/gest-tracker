@@ -288,6 +288,9 @@ export const TransferSchema = z
     amount: z.coerce
       .number({ message: 'Le montant doit être un nombre valide' })
       .positive({ message: 'Le montant du transfert doit être supérieur à 0' }),
+    hasFee: z.boolean().optional().default(false),
+    feeMode: z.enum(['AMOUNT', 'PERCENT'] as const).optional().default('AMOUNT'),
+    feeValue: z.coerce.number().min(0, { message: 'Les frais doivent être supérieurs ou égaux à 0' }).optional().default(0),
     note: z
       .string()
       .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
@@ -298,6 +301,26 @@ export const TransferSchema = z
   .refine((data) => data.sourceWalletId !== data.targetWalletId, {
     message: 'Le portefeuille source et le portefeuille de destination doivent être différents',
     path: ['targetWalletId'],
+  })
+  .refine((data) => {
+    if (!data.hasFee) return true;
+    if (data.feeMode === 'PERCENT' && (data.feeValue ?? 0) > 100) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'Le pourcentage de frais ne peut pas dépasser 100 %',
+    path: ['feeValue'],
+  })
+  .refine((data) => {
+    if (!data.hasFee) return true;
+    const fee = data.feeMode === 'PERCENT'
+      ? Math.round((data.amount * (data.feeValue ?? 0)) / 100)
+      : Math.round(data.feeValue ?? 0);
+    return fee <= data.amount;
+  }, {
+    message: 'Les frais ne peuvent pas dépasser le montant transféré',
+    path: ['feeValue'],
   });
 
 export type TransferFormValues = z.infer<typeof TransferSchema>;
