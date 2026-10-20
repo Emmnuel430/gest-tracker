@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/constants/config";
 import { FinancialSummary } from "@/types/statistics";
 import { getDateRangeForPeriod } from "@/lib/dates";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 
 type HomePeriod = "today" | "week" | "month" | "year";
 
@@ -56,7 +57,11 @@ export function BalanceSummary({
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-widest text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
             <Wallet className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
-            Solde Total Disponible
+            <span>Solde Total Disponible</span>
+            <InfoTooltip
+              title="Solde Total Disponible"
+              content="Trésorerie consolidée de l'ensemble de vos portefeuilles (actifs, archivés et historique)."
+            />
           </span>
 
           {/* Sélecteur de Période (Section 10.1) */}
