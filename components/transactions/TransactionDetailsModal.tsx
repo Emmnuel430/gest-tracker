@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ArrowDownLeft,
   ArrowRightLeft,
@@ -13,18 +13,21 @@ import {
   Pencil,
   Trash2,
   X,
-} from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Transaction } from '@/types/transaction';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { EditTransactionModal } from '@/components/transactions/EditTransactionModal';
-import { deleteTransactionAction } from '@/actions/transactions';
-import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
-import { formatCurrency } from '@/constants/config';
-import { getContrastTextColor } from '@/lib/utils';
+} from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Transaction } from "@/types/transaction";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { EditTransactionModal } from "@/components/transactions/EditTransactionModal";
+import { deleteTransactionAction } from "@/actions/transactions";
+import {
+  useCategories,
+  useWallets,
+} from "@/components/providers/ReferenceDataProvider";
+import { formatCurrency } from "@/constants/config";
+import { getContrastTextColor } from "@/lib/utils";
 
 interface TransactionDetailsModalProps {
   transaction: Transaction | null;
@@ -50,22 +53,24 @@ export function TransactionDetailsModal({
 
   if (!transaction) return null;
 
-  const isIncome = transaction.type === 'INCOME';
-  const isTransfer = transaction.type === 'TRANSFER';
-  const isExpense = transaction.type === 'EXPENSE';
+  const isIncome = transaction.type === "INCOME";
+  const isTransfer = transaction.type === "TRANSFER";
+  const isExpense = transaction.type === "EXPENSE";
 
   // Recherche de la catégorie et de son statut archivé
   const catItem = categories.find(
-    (c) => c.name.toLowerCase() === transaction.category.toLowerCase()
+    (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
   );
   const isCategoryArchived = catItem?.isArchived ?? false;
-  const catColor = isTransfer ? '#2563EB' : getCategoryColor(transaction.category);
+  const catColor = isTransfer
+    ? "#2563EB"
+    : getCategoryColor(transaction.category);
 
   // Recherche des portefeuilles source et cible
   const sourceWallet = wallets.find(
     (w) =>
       (transaction.walletId && w.id === transaction.walletId) ||
-      w.name.toLowerCase() === transaction.payment.toLowerCase()
+      w.name.toLowerCase() === transaction.payment.toLowerCase(),
   );
   const targetWallet = transaction.targetWalletId
     ? wallets.find((w) => w.id === transaction.targetWalletId)
@@ -106,10 +111,10 @@ export function TransactionDetailsModal({
       : null;
 
   const typeTitle = isIncome
-    ? 'Entrée financière'
+    ? "Entrée"
     : isTransfer
-    ? 'Virement interne'
-    : 'Dépense financière';
+      ? "Virement interne"
+      : "Dépense";
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -148,10 +153,10 @@ export function TransactionDetailsModal({
             <div
               className={`w-12 h-12 border-2 border-[#111827] dark:border-white rounded-xl flex items-center justify-center shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] mb-2.5 ${
                 isIncome
-                  ? 'bg-[#16A34A] text-white'
+                  ? "bg-[#16A34A] text-white"
                   : isTransfer
-                  ? 'bg-[#EFF6FF] dark:bg-[#1E3A8A] text-[#2563EB] dark:text-[#93C5FD]'
-                  : 'bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626]'
+                    ? "bg-[#EFF6FF] dark:bg-[#1E3A8A] text-[#2563EB] dark:text-[#93C5FD]"
+                    : "bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626]"
               }`}
             >
               {isIncome ? (
@@ -170,13 +175,13 @@ export function TransactionDetailsModal({
             <h3
               className={`text-2xl sm:text-3xl font-black mt-1 ${
                 isIncome
-                  ? 'text-[#16A34A]'
+                  ? "text-[#16A34A]"
                   : isTransfer
-                  ? 'text-[#111827] dark:text-[#F8FAFC]'
-                  : 'text-[#DC2626]'
+                    ? "text-[#111827] dark:text-[#F8FAFC]"
+                    : "text-[#DC2626]"
               }`}
             >
-              {isIncome ? '+ ' : isTransfer ? '' : '- '}
+              {isIncome ? "+ " : isTransfer ? "" : "- "}
               {formatCurrency(Math.abs(Number(transaction.amount)))}
             </h3>
           </div>
@@ -195,7 +200,7 @@ export function TransactionDetailsModal({
                   style={{ backgroundColor: catColor }}
                 />
                 <span className="text-[#111827] dark:text-[#F8FAFC]">
-                  {isTransfer ? 'Virement interne' : transaction.category}
+                  {isTransfer ? "Virement interne" : transaction.category}
                 </span>
                 {isCategoryArchived && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-neutral-400 text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 ml-1">
@@ -219,7 +224,7 @@ export function TransactionDetailsModal({
                   </span>
                   <span> vers </span>
                   <span className="underline decoration-2">
-                    {targetWallet?.name || 'Compte cible'}
+                    {targetWallet?.name || "Compte cible"}
                   </span>
                 </dd>
               </div>
