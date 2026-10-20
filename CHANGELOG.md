@@ -3,6 +3,21 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0] - 2026-10-21
+
+### Features
+- **onboarding** : Parcours d'onboarding complet au premier login (`/bienvenue`) :
+  - **Structure de données** : Table `user_profiles` liée à `auth.users` (`user_id`, `onboarding_completed_at`, `created_at`, `updated_at`) avec RLS Supabase et migration idempotente avec backfill pour les utilisateurs existants.
+  - **Navigation guards** : `requireOnboarding()` et `redirectIfOnboardingCompleted()` protégeant l'ensemble des routes applicatives (`/`, `/entrant`, `/sortant`, `/historique`, `/portefeuilles`, `/budgets`, `/recurrences`, `/dettes`, `/gestion`, `/parametres`).
+  - **Initialisation paresseuse conditionnée** : Restriction de la création automatique des portefeuilles et catégories par défaut aux seuls utilisateurs ayant validé ou passé l'onboarding (`onboardingCompletedAt != null`).
+  - **Stepper néobrutaliste** : Interface en 4 étapes fluides (Bienvenue, Mes comptes, Mes catégories, Récapitulatif) avec persistance locale en temps réel (`sessionStorage`), validation interactive instantanée, et option de démarrage rapide "Configurer plus tard".
+  - **Server Actions atomiques** : `completeOnboardingAction` et `skipOnboardingAction` encapsulées dans des transactions Prisma isolées créant simultanément comptes, catégories et profil utilisateur.
+
+### Tests
+- **tests** : Suite automatisée (`tests/v2110-onboarding.test.ts`) validant les schémas Zod, l'intégrité SQL/RLS, l'absence stricte d'emojis et le respect de la charte néobrutaliste.
+
+---
+
 ## [2.10.2] - 2026-10-20
 
 ### Features
