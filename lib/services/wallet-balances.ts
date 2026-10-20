@@ -57,7 +57,6 @@ export async function getWalletBalancesForUser(
   if (wallets.length === 0) {
     const existingCount = await prisma.wallet.count({ where: { userId } });
     if (existingCount === 0) {
-      const now = new Date();
       await prisma.wallet.createMany({
         data: [
           {
@@ -65,8 +64,8 @@ export async function getWalletBalancesForUser(
             name: 'Espèces',
             type: 'CASH',
             initialBalance: 0,
-            declaredBalance: 0,
-            declaredAt: now,
+            declaredBalance: null,
+            declaredAt: null,
             color: '#52B788',
             isDefault: true,
             isArchived: false,
@@ -76,8 +75,8 @@ export async function getWalletBalancesForUser(
             name: 'Wave',
             type: 'MOBILE_MONEY',
             initialBalance: 0,
-            declaredBalance: 0,
-            declaredAt: now,
+            declaredBalance: null,
+            declaredAt: null,
             color: '#1DC4F2',
             isDefault: false,
             isArchived: false,
@@ -87,8 +86,8 @@ export async function getWalletBalancesForUser(
             name: 'Compte bancaire',
             type: 'BANK',
             initialBalance: 0,
-            declaredBalance: 0,
-            declaredAt: now,
+            declaredBalance: null,
+            declaredAt: null,
             color: '#B8C0FF',
             isDefault: false,
             isArchived: false,
@@ -239,7 +238,7 @@ export async function getWalletBalancesForUser(
     };
   });
 
-  const netWorthSummary = computeNetWorth(calculatedWallets);
+  const netWorthSummary = computeNetWorth(calculatedWallets, unassignedBalance);
 
   return {
     wallets: calculatedWallets,

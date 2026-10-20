@@ -246,7 +246,7 @@ export function WalletModal({
             {initialData ? (
               <div className="mt-1 space-y-1">
                 <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-medium">
-                  Saisissez le montant exact présent sur ce compte aujourd’hui. Vos prochaines opérations ajusteront ce solde. Votre historique passé est intégralement préservé.
+                  Saisissez le montant réellement disponible sur ce compte aujourd’hui. Il servira de jalon de référence pour vos calculs futurs. Vos opérations antérieures restent préservées dans l’historique sans altérer ce montant.
                 </p>
                 {initialData.declaredAt && (
                   <p className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-[#131C31] px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-700">

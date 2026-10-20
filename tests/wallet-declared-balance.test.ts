@@ -188,3 +188,42 @@ test('v2.8.0 — computeNetWorth with declared and undeclared wallets', () => {
   assert.equal(netWorthResult.archivedBalance, 20000);
   assert.equal(netWorthResult.walletCount, 3);
 });
+
+test('v2.10.1 — computeNetWorth with unassigned balance (anciennes opérations sans compte)', () => {
+  const wallets = [
+    { id: '1', isArchived: false, currentBalance: 83000 },
+    { id: '2', isArchived: false, currentBalance: 50000 },
+    { id: '3', isArchived: true, currentBalance: 20000 },
+  ];
+
+  // Cas avec unassignedBalance positif (+15 000 FCFA d'anciennes opérations sans walletId)
+  const netWorthWithOrphan = computeNetWorth(wallets, 15000);
+  assert.equal(netWorthWithOrphan.netWorth, 168000);
+  assert.equal(netWorthWithOrphan.activeBalance, 148000);
+  assert.equal(netWorthWithOrphan.archivedBalance, 20000);
+  assert.equal(netWorthWithOrphan.walletCount, 3);
+
+  // Cas avec unassignedBalance négatif (-5 000 FCFA)
+  const netWorthWithNegativeOrphan = computeNetWorth(wallets, -5000);
+  assert.equal(netWorthWithNegativeOrphan.netWorth, 148000);
+  assert.equal(netWorthWithNegativeOrphan.activeBalance, 128000);
+});
+
+test('v2.10.1 — isTransactionAfterDeclaration with ISO string formats', () => {
+  const declaredAt = '2026-10-20T14:30:00.000Z';
+
+  // Transaction créée après la déclaration avec date du même jour au format string YYYY-MM-DD
+  const sameDayTx = {
+    date: '2026-10-20',
+    createdAt: '2026-10-20T16:00:00.000Z',
+  };
+  assert.equal(isTransactionAfterDeclaration(sameDayTx, declaredAt), true);
+
+  // Transaction passée (antérieure au jour de la déclaration)
+  const pastTx = {
+    date: '2026-10-15',
+    createdAt: '2026-10-20T16:00:00.000Z',
+  };
+  assert.equal(isTransactionAfterDeclaration(pastTx, declaredAt), false);
+});
+

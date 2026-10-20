@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.9.0)
+# GEST TRACKER — Documentation Complète (v2.10.1)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -263,7 +263,8 @@ Accessible directement depuis l'onglet central de la barre de navigation (avec r
   - **Protection du Compte Principal :** Interdiction stricte de supprimer le compte par défaut (l'utilisateur doit d'abord désigner un autre compte principal).
   - **Modale d'Impact Chiffré :** `ConfirmDialog` affiche le nombre d'opérations préservées dans l'historique, le solde exclu et le nombre de règles récurrentes mises en pause.
   - **Détection et Restauration Automatique :** Recréer un compte portant le même nom détecte le compte supprimé et propose sa restauration immédiate avec réassignation de toutes ses transactions d'origine.
-- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0 / v2.10.0) :**
+- **Ergonomie & Validation (v2.7.0 / v2.7.1 / v2.8.0 / v2.10.0 / v2.10.1) :**
+  - **Réconciliation du Solde de Référence & Trésorerie Globale (v2.10.1) :** Calcul rigoureux des portefeuilles selon la logique du jalon de référence ($B(t) = B_0 + \sum_{T_0 < d_i \le t} \Delta_i$). Tout compte sans déclaration explicite conserve son équation historique intégrale ($B(t) = \text{initialBalance} + \sum \Delta_i$). Le Solde Total Disponible sur l'Accueil réconcilie l'ensemble des portefeuilles et intègre les opérations sans compte rattaché (`unassignedBalance`) pour garantir une exactitude mathématique absolue.
   - **Solde Total Disponible sur l'Accueil (v2.8.0) :** L'écran d'accueil affiche le solde total disponible synchronisé avec les portefeuilles et met en valeur le flux net de la période sélectionnée (entrées, sorties, épargne nette).
   - **Portail de modales (`createPortal`) (v2.7.1) :** Rendu direct de `ConfirmDialog` et `Modal` à la racine de `document.body`, empêchant tout affadissement de backdrop causé par l'opacité des conteneurs parents (comme les comptes archivés `opacity-80`).
   - Éradication intégrale des pop-ups `alert()` / `confirm()` du navigateur sur l'ensemble de l'application au profit de boîtes de dialogue néobrutalistes `ConfirmDialog`.
