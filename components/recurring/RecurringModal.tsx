@@ -27,8 +27,19 @@ export function RecurringModal({
   const [type, setType] = useState<'EXPENSE' | 'INCOME'>(
     initialData?.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
-  const { categories: userCategories, getCategoryColor } = useCategories(type);
-  const { wallets: userWallets, defaultWallet } = useWallets();
+  const { categories: userCategories, getCategoryColor, refreshCategories } = useCategories(type);
+  const { wallets: userWallets, defaultWallet, refreshWallets } = useWallets();
+
+  useEffect(() => {
+    if (isOpen) {
+      if (userCategories.length === 0) {
+        void refreshCategories();
+      }
+      if (userWallets.length === 0) {
+        void refreshWallets();
+      }
+    }
+  }, [isOpen, userCategories.length, userWallets.length, refreshCategories, refreshWallets]);
 
   const [amount, setAmount] = useState<string>(
     initialData?.amount ? initialData.amount.toString() : ''

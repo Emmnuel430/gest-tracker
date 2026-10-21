@@ -156,7 +156,11 @@ my-app/
   2. `/mot-de-passe-oublie/verification` : Saisie du code à 6 chiffres avec compte à rebours de 60 secondes pour le renvoi et expiration du code à 10 minutes (`otp_expiry = 600`).
   3. `/mot-de-passe-oublie/nouveau` : Définition du nouveau mot de passe accessible uniquement en présence du cookie court `httpOnly` (5 min) délivré lors de l'étape 2.
   - **Environnement local :** Les e-mails de récupération sont consultables instantanément dans l'interface Mailpit locale à l'adresse [`http://127.0.0.1:54324`](http://127.0.0.1:54324).
-- **Cloisonnement total des données :** Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
+- **Cloisonnement total des données & Synchronisation temps réel :**
+  - Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
+  - Le contexte client `ReferenceDataProvider` synchronise automatiquement les catégories et portefeuilles dès la connexion (`SIGNED_IN`), à chaque changement de route, ou via l'événement `gt-refresh-reference-data`.
+  - Les pages `/entrant` et `/sortant` préchargent directement les données côté serveur pour un affichage instantané sans latence dès la fin du parcours d'onboarding.
+  - Tous les formulaires et modals (`TransactionForm`, `EditTransactionModal`, `RecurringModal`, `BudgetModal`) intègrent un mécanisme d'auto-réparation déclenchant un rafraîchissement si la liste locale est initialement vide.
 
 ### 4.2 Tableau de Bord Principal (`/`)
 

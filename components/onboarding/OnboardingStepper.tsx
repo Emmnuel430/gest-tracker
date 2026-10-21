@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useTransition, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useTransition, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   ArrowRight,
@@ -20,20 +20,23 @@ import {
   RefreshCw,
   ShieldCheck,
   Zap,
-} from 'lucide-react';
-import { CurrencyInput } from '@/components/ui/CurrencyInput';
-import { Button } from '@/components/ui/Button';
-import { formatCurrency, parseAmountInput } from '@/constants/config';
-import { DEFAULT_CATEGORIES } from '@/constants/categories';
-import { completeOnboardingAction, skipOnboardingAction } from '@/actions/onboarding';
-import { InfoTooltip } from '@/components/ui/InfoTooltip';
+} from "lucide-react";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
+import { Button } from "@/components/ui/Button";
+import { formatCurrency, parseAmountInput } from "@/constants/config";
+import { DEFAULT_CATEGORIES } from "@/constants/categories";
+import {
+  completeOnboardingAction,
+  skipOnboardingAction,
+} from "@/actions/onboarding";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 
-const STORAGE_KEY = 'gest_tracker_onboarding_draft_v1';
+const STORAGE_KEY = "gest_tracker_onboarding_draft_v1";
 
 interface CustomWalletDraft {
   id: string;
   name: string;
-  type: 'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS';
+  type: "CASH" | "MOBILE_MONEY" | "BANK" | "SAVINGS";
   balance: string;
   color: string;
   selected: boolean;
@@ -42,50 +45,50 @@ interface CustomWalletDraft {
 
 interface CustomCategoryDraft {
   name: string;
-  kind: 'INCOME' | 'EXPENSE' | 'BOTH';
+  kind: "INCOME" | "EXPENSE" | "BOTH";
   color: string;
   selected: boolean;
 }
 
 const INITIAL_WALLETS: CustomWalletDraft[] = [
   {
-    id: 'w_cash',
-    name: 'Espèces',
-    type: 'CASH',
-    balance: '0',
-    color: '#52B788',
+    id: "w_cash",
+    name: "Espèces",
+    type: "CASH",
+    balance: "0",
+    color: "#52B788",
     selected: true,
     isDefault: true,
   },
   {
-    id: 'w_wave',
-    name: 'Wave',
-    type: 'MOBILE_MONEY',
-    balance: '0',
-    color: '#1DC4F2',
+    id: "w_wave",
+    name: "Wave",
+    type: "MOBILE_MONEY",
+    balance: "0",
+    color: "#1DC4F2",
     selected: true,
     isDefault: false,
   },
   {
-    id: 'w_om',
-    name: 'Orange Money',
-    type: 'MOBILE_MONEY',
-    balance: '0',
-    color: '#FF7900',
+    id: "w_om",
+    name: "Orange Money",
+    type: "MOBILE_MONEY",
+    balance: "0",
+    color: "#FF7900",
     selected: true,
     isDefault: false,
   },
 ];
 
 const PRESET_WALLET_COLORS = [
-  '#52B788',
-  '#1DC4F2',
-  '#FF7900',
-  '#2563EB',
-  '#B8C0FF',
-  '#FFE600',
-  '#FF5964',
-  '#9B5DE5',
+  "#52B788",
+  "#1DC4F2",
+  "#FF7900",
+  "#2563EB",
+  "#B8C0FF",
+  "#FFE600",
+  "#FF5964",
+  "#9B5DE5",
 ];
 
 export function OnboardingStepper() {
@@ -96,9 +99,11 @@ export function OnboardingStepper() {
 
   // Étape 2 : Portefeuilles
   const [wallets, setWallets] = useState<CustomWalletDraft[]>(INITIAL_WALLETS);
-  const [newWalletName, setNewWalletName] = useState('');
-  const [newWalletType, setNewWalletType] = useState<'CASH' | 'MOBILE_MONEY' | 'BANK' | 'SAVINGS'>('BANK');
-  const [newWalletColor, setNewWalletColor] = useState('#2563EB');
+  const [newWalletName, setNewWalletName] = useState("");
+  const [newWalletType, setNewWalletType] = useState<
+    "CASH" | "MOBILE_MONEY" | "BANK" | "SAVINGS"
+  >("BANK");
+  const [newWalletColor, setNewWalletColor] = useState("#2563EB");
   const [showAddWallet, setShowAddWallet] = useState(false);
 
   // Étape 3 : Catégories
@@ -108,11 +113,11 @@ export function OnboardingStepper() {
       kind: c.kind,
       color: c.color,
       selected: true,
-    }))
+    })),
   );
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatKind, setNewCatKind] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
-  const [newCatColor, setNewCatColor] = useState('#FF5964');
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatKind, setNewCatKind] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [newCatColor, setNewCatColor] = useState("#FF5964");
   const [showAddCat, setShowAddCat] = useState(false);
 
   // Restauration du brouillon depuis sessionStorage au montage
@@ -135,7 +140,7 @@ export function OnboardingStepper() {
     try {
       sessionStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ step, wallets, categories })
+        JSON.stringify({ step, wallets, categories }),
       );
     } catch {
       // Ignore sessionStorage issues
@@ -156,7 +161,7 @@ export function OnboardingStepper() {
         ...w,
         isDefault: w.id === id,
         selected: w.id === id ? true : w.selected, // Le compte par défaut doit être sélectionné
-      }))
+      })),
     );
   };
 
@@ -164,36 +169,40 @@ export function OnboardingStepper() {
     setWallets((prev) => {
       const target = prev.find((w) => w.id === id);
       if (target?.isDefault) {
-        setErrorMessage('Vous ne pouvez pas désélectionner votre compte principal.');
+        setErrorMessage(
+          "Vous ne pouvez pas désélectionner votre compte principal.",
+        );
         return prev;
       }
-      return prev.map((w) => (w.id === id ? { ...w, selected: !w.selected } : w));
+      return prev.map((w) =>
+        w.id === id ? { ...w, selected: !w.selected } : w,
+      );
     });
   };
 
   const updateWalletBalance = (id: string, value: string) => {
     setWallets((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, balance: value } : w))
+      prev.map((w) => (w.id === id ? { ...w, balance: value } : w)),
     );
   };
 
   const handleAddCustomWallet = () => {
     if (!newWalletName.trim()) {
-      setErrorMessage('Veuillez donner un nom à votre compte.');
+      setErrorMessage("Veuillez donner un nom à votre compte.");
       return;
     }
     const exists = wallets.some(
-      (w) => w.name.trim().toLowerCase() === newWalletName.trim().toLowerCase()
+      (w) => w.name.trim().toLowerCase() === newWalletName.trim().toLowerCase(),
     );
     if (exists) {
       setErrorMessage(`Un compte nommé "${newWalletName.trim()}" existe déjà.`);
       return;
     }
     const colorExists = wallets.some(
-      (w) => w.color.toLowerCase() === newWalletColor.toLowerCase()
+      (w) => w.color.toLowerCase() === newWalletColor.toLowerCase(),
     );
     if (colorExists) {
-      setErrorMessage('Cette couleur est déjà attribuée à un autre compte.');
+      setErrorMessage("Cette couleur est déjà attribuée à un autre compte.");
       return;
     }
 
@@ -201,14 +210,14 @@ export function OnboardingStepper() {
       id: `w_custom_${Date.now()}`,
       name: newWalletName.trim(),
       type: newWalletType,
-      balance: '0',
+      balance: "0",
       color: newWalletColor,
       selected: true,
       isDefault: false,
     };
 
     setWallets((prev) => [...prev, newDraft]);
-    setNewWalletName('');
+    setNewWalletName("");
     setShowAddWallet(false);
     setErrorMessage(null);
   };
@@ -217,7 +226,9 @@ export function OnboardingStepper() {
     setWallets((prev) => {
       const target = prev.find((w) => w.id === id);
       if (target?.isDefault) {
-        setErrorMessage('Désignez d’abord un autre compte principal avant de retirer celui-ci.');
+        setErrorMessage(
+          "Désignez d’abord un autre compte principal avant de retirer celui-ci.",
+        );
         return prev;
       }
       return prev.filter((w) => w.id !== id);
@@ -226,17 +237,17 @@ export function OnboardingStepper() {
 
   const toggleCategorySelection = (name: string) => {
     setCategories((prev) =>
-      prev.map((c) => (c.name === name ? { ...c, selected: !c.selected } : c))
+      prev.map((c) => (c.name === name ? { ...c, selected: !c.selected } : c)),
     );
   };
 
   const handleAddCustomCategory = () => {
     if (!newCatName.trim()) {
-      setErrorMessage('Veuillez saisir un nom pour la catégorie.');
+      setErrorMessage("Veuillez saisir un nom pour la catégorie.");
       return;
     }
     const exists = categories.some(
-      (c) => c.name.trim().toLowerCase() === newCatName.trim().toLowerCase()
+      (c) => c.name.trim().toLowerCase() === newCatName.trim().toLowerCase(),
     );
     if (exists) {
       setErrorMessage(`La catégorie "${newCatName.trim()}" existe déjà.`);
@@ -252,7 +263,7 @@ export function OnboardingStepper() {
         selected: true,
       },
     ]);
-    setNewCatName('');
+    setNewCatName("");
     setShowAddCat(false);
     setErrorMessage(null);
   };
@@ -262,7 +273,7 @@ export function OnboardingStepper() {
     setErrorMessage(null);
     const selectedWallets = wallets.filter((w) => w.selected);
     if (selectedWallets.length === 0) {
-      setErrorMessage('Veuillez sélectionner au moins un compte à utiliser.');
+      setErrorMessage("Veuillez sélectionner au moins un compte à utiliser.");
       return false;
     }
     const hasDefault = selectedWallets.some((w) => w.isDefault);
@@ -277,12 +288,16 @@ export function OnboardingStepper() {
   const validateStep3 = () => {
     setErrorMessage(null);
     const selectedCats = categories.filter((c) => c.selected);
-    const hasExpense = selectedCats.some((c) => c.kind === 'EXPENSE' || c.kind === 'BOTH');
-    const hasIncome = selectedCats.some((c) => c.kind === 'INCOME' || c.kind === 'BOTH');
+    const hasExpense = selectedCats.some(
+      (c) => c.kind === "EXPENSE" || c.kind === "BOTH",
+    );
+    const hasIncome = selectedCats.some(
+      (c) => c.kind === "INCOME" || c.kind === "BOTH",
+    );
 
     if (!hasExpense || !hasIncome) {
       setErrorMessage(
-        'Veuillez activer au moins une catégorie de dépense et une de revenu.'
+        "Veuillez activer au moins une catégorie de dépense et une de revenu.",
       );
       return false;
     }
@@ -319,10 +334,15 @@ export function OnboardingStepper() {
 
       if (res.success) {
         sessionStorage.removeItem(STORAGE_KEY);
-        router.push('/');
-        router.refresh();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("gt-refresh-reference-data"));
+          window.location.href = "/";
+        } else {
+          router.push("/");
+          router.refresh();
+        }
       } else {
-        setErrorMessage(res.error || 'Erreur lors de la validation.');
+        setErrorMessage(res.error || "Erreur lors de la validation.");
       }
     });
   };
@@ -333,10 +353,15 @@ export function OnboardingStepper() {
       const res = await skipOnboardingAction();
       if (res.success) {
         sessionStorage.removeItem(STORAGE_KEY);
-        router.push('/');
-        router.refresh();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("gt-refresh-reference-data"));
+          window.location.href = "/";
+        } else {
+          router.push("/");
+          router.refresh();
+        }
       } else {
-        setErrorMessage(res.error || 'Erreur lors de la configuration rapide.');
+        setErrorMessage(res.error || "Erreur lors de la configuration rapide.");
       }
     });
   };
@@ -344,11 +369,11 @@ export function OnboardingStepper() {
   // Rendu de l'icône de portefeuille
   const renderWalletIcon = (type: string) => {
     switch (type) {
-      case 'MOBILE_MONEY':
+      case "MOBILE_MONEY":
         return <Smartphone className="w-5 h-5 stroke-2.5 text-[#111827]" />;
-      case 'BANK':
+      case "BANK":
         return <CreditCard className="w-5 h-5 stroke-2.5 text-[#111827]" />;
-      case 'SAVINGS':
+      case "SAVINGS":
         return <PiggyBank className="w-5 h-5 stroke-2.5 text-[#111827]" />;
       default:
         return <Banknote className="w-5 h-5 stroke-2.5 text-[#111827]" />;
@@ -361,7 +386,9 @@ export function OnboardingStepper() {
       <div className="p-3 bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000]">
         <div className="flex items-center justify-between text-xs font-black uppercase text-neutral-500 dark:text-neutral-400 mb-2 px-1">
           <span>Configuration initiale</span>
-          <span className="text-[#2563EB] dark:text-[#60A5FA]">Étape {step} sur 4</span>
+          <span className="text-[#2563EB] dark:text-[#60A5FA]">
+            Étape {step} sur 4
+          </span>
         </div>
         <div className="grid grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((s) => (
@@ -369,10 +396,10 @@ export function OnboardingStepper() {
               key={s}
               className={`h-2.5 rounded-full border-2 border-[#111827] dark:border-[#334155] transition-all ${
                 s === step
-                  ? 'bg-[#FFE600]'
+                  ? "bg-[#FFE600]"
                   : s < step
-                  ? 'bg-[#00DF81]'
-                  : 'bg-neutral-100 dark:bg-[#0F172A]'
+                    ? "bg-[#00DF81]"
+                    : "bg-neutral-100 dark:bg-[#0F172A]"
               }`}
             />
           ))}
@@ -408,7 +435,8 @@ export function OnboardingStepper() {
                 Bienvenue sur Gest Tracker
               </h1>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-                Votre outil néobrutaliste pour maîtriser chaque dépense et suivre votre trésorerie réelle.
+                Votre outil du quotidien pour maîtriser chaque dépense et suivre
+                votre trésorerie réelle.
               </p>
             </div>
 
@@ -451,7 +479,8 @@ export function OnboardingStepper() {
                     Zéro perte de données
                   </h4>
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                    Vos soldes physiques démarrent avec votre montant réel actuel.
+                    Vos soldes physiques démarrent avec votre montant réel
+                    actuel.
                   </p>
                 </div>
               </div>
@@ -476,7 +505,9 @@ export function OnboardingStepper() {
                 disabled={isPending}
                 className="w-full py-2 text-[11px] font-bold text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer text-center block"
               >
-                {isPending ? 'Configuration...' : 'Configurer plus tard (démarrage rapide avec 3 comptes à 0)'}
+                {isPending
+                  ? "Configuration..."
+                  : "Configurer plus tard (démarrage rapide avec 3 comptes à 0)"}
               </button>
             </div>
           </div>
@@ -511,8 +542,8 @@ export function OnboardingStepper() {
                   key={w.id}
                   className={`p-3.5 rounded-2xl border-3 transition-all space-y-3 ${
                     w.selected
-                      ? 'bg-white dark:bg-[#131C31] border-[#111827] dark:border-[#334155] shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000]'
-                      : 'bg-neutral-50 dark:bg-[#0F172A] border-dashed border-neutral-300 dark:border-neutral-700 opacity-60'
+                      ? "bg-white dark:bg-[#131C31] border-[#111827] dark:border-[#334155] shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000]"
+                      : "bg-neutral-50 dark:bg-[#0F172A] border-dashed border-neutral-300 dark:border-neutral-700 opacity-60"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -530,18 +561,21 @@ export function OnboardingStepper() {
                       >
                         {renderWalletIcon(w.type)}
                       </div>
-                      <label htmlFor={`check_${w.id}`} className="cursor-pointer">
+                      <label
+                        htmlFor={`check_${w.id}`}
+                        className="cursor-pointer"
+                      >
                         <span className="font-black text-sm text-[#111827] dark:text-[#F8FAFC] block">
                           {w.name}
                         </span>
                         <span className="text-[10px] font-bold text-neutral-500 uppercase">
-                          {w.type === 'MOBILE_MONEY'
-                            ? 'Mobile Money'
-                            : w.type === 'BANK'
-                            ? 'Banque'
-                            : w.type === 'SAVINGS'
-                            ? 'Épargne'
-                            : 'Espèces'}
+                          {w.type === "MOBILE_MONEY"
+                            ? "Mobile Money"
+                            : w.type === "BANK"
+                              ? "Banque"
+                              : w.type === "SAVINGS"
+                                ? "Épargne"
+                                : "Espèces"}
                         </span>
                       </label>
                     </div>
@@ -554,16 +588,20 @@ export function OnboardingStepper() {
                           onClick={() => setDefaultWallet(w.id)}
                           className={`px-2 py-1 text-[10px] font-black uppercase rounded-lg border-2 transition-all flex items-center gap-1 cursor-pointer ${
                             w.isDefault
-                              ? 'bg-[#FFE600] text-[#111827] border-[#111827] shadow-[2px_2px_0px_0px_#111827]'
-                              : 'bg-neutral-100 dark:bg-[#1E293B] text-neutral-500 border-neutral-300 dark:border-neutral-700 hover:border-black'
+                              ? "bg-[#FFE600] text-[#111827] border-[#111827] shadow-[2px_2px_0px_0px_#111827]"
+                              : "bg-neutral-100 dark:bg-[#1E293B] text-neutral-500 border-neutral-300 dark:border-neutral-700 hover:border-black"
                           }`}
                         >
-                          <Star className={`w-3 h-3 ${w.isDefault ? 'fill-[#111827]' : ''}`} />
-                          <span>{w.isDefault ? 'Principal' : 'Définir principal'}</span>
+                          <Star
+                            className={`w-3 h-3 ${w.isDefault ? "fill-[#111827]" : ""}`}
+                          />
+                          <span>
+                            {w.isDefault ? "Principal" : "Définir principal"}
+                          </span>
                         </button>
                       )}
 
-                      {w.id.startsWith('w_custom_') && (
+                      {w.id.startsWith("w_custom_") && (
                         <button
                           type="button"
                           onClick={() => removeCustomWallet(w.id)}
@@ -636,7 +674,9 @@ export function OnboardingStepper() {
                           type="button"
                           onClick={() => setNewWalletColor(c)}
                           className={`w-5 h-5 rounded-full border shrink-0 ${
-                            newWalletColor === c ? 'scale-125 border-black dark:border-white ring-2 ring-black' : 'border-neutral-300'
+                            newWalletColor === c
+                              ? "scale-125 border-black dark:border-white ring-2 ring-black"
+                              : "border-neutral-300"
                           }`}
                           style={{ backgroundColor: c }}
                         />
@@ -722,7 +762,8 @@ export function OnboardingStepper() {
                 Mes Catégories
               </h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Cochez les catégories que vous utilisez. Vous pourrez toujours en ajouter plus tard.
+                Cochez les catégories que vous utilisez. Vous pourrez toujours
+                en ajouter plus tard.
               </p>
             </div>
 
@@ -733,7 +774,7 @@ export function OnboardingStepper() {
               </span>
               <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-1">
                 {categories
-                  .filter((c) => c.kind === 'EXPENSE' || c.kind === 'BOTH')
+                  .filter((c) => c.kind === "EXPENSE" || c.kind === "BOTH")
                   .map((cat) => (
                     <button
                       key={cat.name}
@@ -741,12 +782,12 @@ export function OnboardingStepper() {
                       onClick={() => toggleCategorySelection(cat.name)}
                       className={`px-2.5 py-1 text-xs font-black rounded-lg border-2 transition-all flex items-center gap-1.5 cursor-pointer ${
                         cat.selected
-                          ? 'border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827]'
-                          : 'opacity-40 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A]'
+                          ? "border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827]"
+                          : "opacity-40 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A]"
                       }`}
                       style={{
                         backgroundColor: cat.selected ? cat.color : undefined,
-                        color: cat.selected ? '#111827' : undefined,
+                        color: cat.selected ? "#111827" : undefined,
                       }}
                     >
                       {cat.selected && <Check className="w-3 h-3 stroke-3" />}
@@ -763,7 +804,7 @@ export function OnboardingStepper() {
               </span>
               <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1">
                 {categories
-                  .filter((c) => c.kind === 'INCOME')
+                  .filter((c) => c.kind === "INCOME")
                   .map((cat) => (
                     <button
                       key={cat.name}
@@ -771,12 +812,12 @@ export function OnboardingStepper() {
                       onClick={() => toggleCategorySelection(cat.name)}
                       className={`px-2.5 py-1 text-xs font-black rounded-lg border-2 transition-all flex items-center gap-1.5 cursor-pointer ${
                         cat.selected
-                          ? 'border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827]'
-                          : 'opacity-40 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A]'
+                          ? "border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827]"
+                          : "opacity-40 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-[#0F172A]"
                       }`}
                       style={{
                         backgroundColor: cat.selected ? cat.color : undefined,
-                        color: cat.selected ? '#111827' : undefined,
+                        color: cat.selected ? "#111827" : undefined,
                       }}
                     >
                       {cat.selected && <Check className="w-3 h-3 stroke-3" />}
@@ -880,7 +921,8 @@ export function OnboardingStepper() {
                 Prêt à démarrer !
               </h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Vérifiez votre configuration avant de commencer à suivre vos dépenses.
+                Vérifiez votre configuration avant de commencer à suivre vos
+                dépenses.
               </p>
             </div>
 
@@ -912,7 +954,9 @@ export function OnboardingStepper() {
                           className="w-3 h-3 rounded-full border border-black"
                           style={{ backgroundColor: w.color }}
                         />
-                        <span className="text-[#111827] dark:text-[#F8FAFC]">{w.name}</span>
+                        <span className="text-[#111827] dark:text-[#F8FAFC]">
+                          {w.name}
+                        </span>
                         {w.isDefault && (
                           <span className="px-1 text-[9px] font-black uppercase bg-[#FFE600] text-black border border-black rounded">
                             Principal
@@ -920,7 +964,9 @@ export function OnboardingStepper() {
                         )}
                       </div>
                       <span className="font-black text-[#111827] dark:text-white">
-                        {formatCurrency(Math.max(0, parseAmountInput(w.balance)))}
+                        {formatCurrency(
+                          Math.max(0, parseAmountInput(w.balance)),
+                        )}
                       </span>
                     </div>
                   ))}
@@ -938,7 +984,8 @@ export function OnboardingStepper() {
             <div className="p-3.5 bg-neutral-50 dark:bg-[#131C31] rounded-xl border-2 border-[#111827] dark:border-[#334155] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase text-neutral-600 dark:text-neutral-400">
-                  Catégories retenues ({categories.filter((c) => c.selected).length})
+                  Catégories retenues (
+                  {categories.filter((c) => c.selected).length})
                 </span>
                 <button
                   type="button"
@@ -955,7 +1002,10 @@ export function OnboardingStepper() {
                     <span
                       key={c.name}
                       className="px-2 py-0.5 text-[10px] font-bold rounded border border-neutral-300 dark:border-neutral-700"
-                      style={{ backgroundColor: `${c.color}20`, color: c.color }}
+                      style={{
+                        backgroundColor: `${c.color}20`,
+                        color: c.color,
+                      }}
                     >
                       {c.name}
                     </span>
