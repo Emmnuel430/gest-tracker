@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.11.0)
+# GEST TRACKER — Documentation Complète (v2.12.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -201,14 +201,17 @@ my-app/
   - **Hausse atypique de dépenses :** Détecte toutes les catégories affichant une hausse de plus de **20 %** et d'au moins **5 000 FCFA** par rapport au mois précédent, triées par montant de surcoût décroissant.
   - **Conseils personnalisés :** Recommandation systématique de renforcement d'épargne si le taux est inférieur au seuil de 15 %.
 
-### 4.4 Hub de Gestion & Modules (`/gestion`)
+### 4.4 Hub de Gestion & Modules (`/gestion`) (v2.12.0)
 
-Accessible directement depuis l'onglet central de la barre de navigation (avec redirection permanente 308 depuis l'ancienne route `/options`). Il regroupe les modules financiers avancés sous forme de cartes d'action interactives :
+Accessible directement depuis la barre de navigation inférieure (`BottomNav`). Le hub centralise les 4 modules avancés sous forme de centre de contrôle vivant doté de **Smart Badges** temps réel calculés côté serveur :
 
-1. **Budgets & Plafonds**
-2. **Règles Récurrentes** (avec notifications e-mail à J-7, J-3 et J0)
-3. **Portefeuilles & Virements**
-4. **Dettes & Créances**
+1. **Budgets & Plafonds** : Affichage direct du nombre de budgets actifs, pourcentage consommé et alerte rouge en cas de dépassement.
+2. **Règles Récurrentes** : Décompte des charges fixes programmées et nombre d'échéances dues sur le mois en cours.
+3. **Portefeuilles & Virements** : Synthèse instantanée du nombre de comptes et du patrimoine global net.
+4. **Dettes & Créances** : Suivi des dossiers en cours et de la position financière nette (+/-).
+
+- **Navigation & Continuité de flux :** Les 4 sous-pages de gestion (`/budgets`, `/recurrences`, `/portefeuilles`, `/dettes`) disposent de boutons retour contextuels vers `/gestion` garantissant une navigation cohérente.
+- **Barre de Navigation 4 Onglets (`BottomNav`) :** Disposition mobile ergonomique équilibrée en 4 piliers majeurs : **Accueil**, **Historique**, **Gestion** et **Profil**.
 
 ### 4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`)
 

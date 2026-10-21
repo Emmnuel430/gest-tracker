@@ -67,11 +67,11 @@ export function PortefeuillesView() {
         {/* Navigation & Actions d'en-tête */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <Link
-            href="/"
+            href="/gestion"
             className="flex items-center gap-1 text-xs font-black uppercase text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors p-2 rounded-lg border-2 border-transparent hover:border-[#111827] dark:hover:border-white"
           >
             <ArrowLeft className="w-4 h-4 stroke-3" />
-            Accueil
+            Gestion
           </Link>
 
           <div className="flex items-center gap-2">
@@ -160,7 +160,7 @@ export function PortefeuillesView() {
                 Aucun compte configuré
               </h3>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-sm mx-auto mt-1">
-                Créez vos portefeuilles (Espèces, Wave, Orange Money, Banque) pour savoir exactement où se trouve votre argent.
+                Ajoutez vos comptes (Espèces, Mobile Money, Banque) pour suivre vos soldes.
               </p>
             </div>
             <Button onClick={handleOpenCreate} variant="primary" className="text-xs uppercase">

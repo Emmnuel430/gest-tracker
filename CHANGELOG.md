@@ -3,6 +3,31 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0] - 2026-10-21
+
+### Features
+- **navigation** : Refonte de la barre de navigation inférieure (`BottomNav`) passant à 4 onglets stratégiques :
+  - **Accueil** (`/`) : Tableau de bord, solde net et saisie rapide.
+  - **Historique** (`/historique`) : Accès direct en 1 tap au cœur opérationnel (liste, filtres par période, répartition et graphiques).
+  - **Gestion** (`/gestion`) : Hub centralisé des 4 modules avancés (`/budgets`, `/recurrences`, `/portefeuilles`, `/dettes`).
+  - **Profil** (`/parametres`) : Paramètres, thème et sécurité (renommé « Profil » pour éliminer toute ambiguïté avec les comptes de trésorerie).
+- **gestion** : Hub `/gestion` transformé en centre de contrôle dynamique avec **Smart Badges** et métriques en temps réel calculées côté serveur via `getGestionMetricsAction` :
+  - **Budgets** : Affichage direct du nombre de budgets actifs, du taux de consommation globale et badge d'alerte en cas de dépassement.
+  - **Récurrences** : Comptage des règles actives et des échéances du mois en cours en attente de traitement.
+  - **Portefeuilles** : Synthèse instantanée du nombre de comptes et du patrimoine total disponible.
+  - **Dettes** : Indicateur de position nette (+/-) et nombre de dossiers en cours.
+- **ux** : Rétablissement de la continuité de navigation inter-pages :
+  - Les 4 sous-pages de gestion (`/budgets`, `/recurrences`, `/portefeuilles`, `/dettes`) disposent désormais d'un bouton de retour pointant directement vers `/gestion` avec libellé explicite, évitant l'éjection intempestive de l'utilisateur sur la page d'accueil.
+- **style** : Épuration du verbillage et renforcement de la concision visuelle :
+  - Descriptions percutantes de 4 à 6 mots sur les cartes de `/gestion`.
+  - Remplacement du grand bloc d'astuce de 100px par une pastille astuce compacte avec `InfoTooltip`.
+  - Épuration des descriptions textuelles des états vides (*Empty States*) dans `/recurrences`, `/portefeuilles` et `/dettes`.
+
+### Tests
+- **tests** : Suite automatisée (`tests/v2120-navigation-gestion.test.ts`) validant la configuration à 4 onglets, les liens de retour vers `/gestion`, le contrat de `getGestionMetricsAction` et l'absence totale d'emojis.
+
+---
+
 ## [2.11.0] - 2026-10-21
 
 ### Features
