@@ -56,11 +56,11 @@ export function DettesView() {
         {/* Navigation & Action */}
         <div className="flex items-center justify-between gap-4">
           <Link
-            href="/"
+            href="/gestion"
             className="flex items-center gap-1 text-xs font-black uppercase text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors p-2 rounded-lg border-2 border-transparent hover:border-[#111827] dark:hover:border-white"
           >
             <ArrowLeft className="w-4 h-4 stroke-3" />
-            Accueil
+            Gestion
           </Link>
 
           <Button
@@ -162,7 +162,7 @@ export function DettesView() {
                 Aucun dossier dans cette vue
               </h3>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-sm mx-auto mt-1">
-                Tous vos comptes sont à jour ou aucun prêt en cours n&apos;est enregistré.
+                Aucun prêt ou emprunt en cours enregistré.
               </p>
             </div>
             <Button

@@ -58,11 +58,11 @@ export function RecurrencesView() {
         {/* Navigation & Titre */}
         <div className="flex items-center justify-between gap-4">
           <Link
-            href="/"
+            href="/gestion"
             className="flex items-center gap-1 text-xs font-black uppercase text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors p-2 rounded-lg border-2 border-transparent hover:border-[#111827] dark:hover:border-white"
           >
             <ArrowLeft className="w-4 h-4 stroke-3" />
-            Accueil
+            Gestion
           </Link>
 
           <Button
@@ -142,7 +142,7 @@ export function RecurrencesView() {
                 Aucune charge récurrente définie
               </h3>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-sm mx-auto mt-1">
-                Configurez vos charges fixes (loyer, wifi, abonnements, etc.) pour recevoir une alerte chaque mois sans avoir à tout retaper manuellement.
+                Configurez vos charges régulières pour recevoir vos rappels chaque mois.
               </p>
             </div>
             <Button onClick={handleOpenCreate} variant="primary" className="text-xs uppercase">
