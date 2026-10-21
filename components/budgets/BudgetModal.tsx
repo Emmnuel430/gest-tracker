@@ -27,7 +27,7 @@ export function BudgetModal({
   currentMonth,
   initialData,
 }: BudgetModalProps) {
-  const { categories: expenseCategories } = useCategories('EXPENSE');
+  const { categories: expenseCategories, refreshCategories } = useCategories('EXPENSE');
   const [isPending, startTransition] = useTransition();
 
   const [category, setCategory] = useState<string>(
@@ -37,6 +37,12 @@ export function BudgetModal({
     initialData?.amount ? initialData.amount.toString() : ''
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && expenseCategories.length === 0) {
+      void refreshCategories();
+    }
+  }, [isOpen, expenseCategories.length, refreshCategories]);
 
   useEffect(() => {
     if (initialData?.category) {

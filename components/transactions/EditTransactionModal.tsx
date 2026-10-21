@@ -47,8 +47,17 @@ function EditForm({
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>(
     transaction.type === 'INCOME' ? 'INCOME' : 'EXPENSE'
   );
-  const { categories: categoryList } = useCategories(type);
-  const { wallets: userWallets } = useWallets();
+  const { categories: categoryList, refreshCategories } = useCategories(type);
+  const { wallets: userWallets, refreshWallets } = useWallets();
+
+  React.useEffect(() => {
+    if (categoryList.length === 0) {
+      void refreshCategories();
+    }
+    if (userWallets.length === 0) {
+      void refreshWallets();
+    }
+  }, [categoryList.length, userWallets.length, refreshCategories, refreshWallets]);
 
   const [amount, setAmount] = useState(() => formatAmountInput(transaction.amount));
   const [category, setCategory] = useState(transaction.category);

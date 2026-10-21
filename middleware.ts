@@ -58,6 +58,7 @@ export const config = {
     '/gestion',
     '/options',
     '/parametres',
+    '/bienvenue',
     '/login',
     '/register',
     '/mot-de-passe-oublie',

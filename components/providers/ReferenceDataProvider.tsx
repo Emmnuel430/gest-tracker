@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import { CategoryItem, filterCategoriesByType } from '@/lib/categories';
 import { getCategoriesAction } from '@/actions/categories';
 import { WalletItem, getWalletsAction } from '@/actions/wallets';
+import { createClient } from '@/lib/supabase/client';
 
 interface ReferenceDataContextType {
   categories: CategoryItem[];
@@ -11,6 +13,7 @@ interface ReferenceDataContextType {
   isLoading: boolean;
   refreshCategories: () => Promise<void>;
   refreshWallets: () => Promise<void>;
+  refreshAll: () => Promise<void>;
   getCategoryColor: (categoryName: string, fallbackColor?: string) => string;
   getWalletColor: (walletNameOrId: string, fallbackColor?: string) => string;
 }
@@ -26,6 +29,7 @@ export function ReferenceDataProvider({
   initialCategories?: CategoryItem[];
   initialWallets?: WalletItem[];
 }) {
+  const pathname = usePathname();
   const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
   const [wallets, setWallets] = useState<WalletItem[]>(initialWallets);
   const [isLoading, setIsLoading] = useState<boolean>(
@@ -54,6 +58,13 @@ export function ReferenceDataProvider({
     }
   }, []);
 
+  const refreshAll = useCallback(async () => {
+    setIsLoading(true);
+    await Promise.all([fetchCategories(), fetchWallets()]);
+    setIsLoading(false);
+  }, [fetchCategories, fetchWallets]);
+
+  // 1. Chargement initial au montage
   useEffect(() => {
     let isMounted = true;
     const loadAll = async () => {
@@ -67,6 +78,56 @@ export function ReferenceDataProvider({
       isMounted = false;
     };
   }, [fetchCategories, fetchWallets]);
+
+  // 2. Écoute des changements de route : si l'utilisateur arrive sur une page protégée avec des listes vides
+  const isAuthOrOnboarding =
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/bienvenue' ||
+    pathname.startsWith('/mot-de-passe-oublie');
+
+  useEffect(() => {
+    if (!isAuthOrOnboarding && (categories.length === 0 || wallets.length === 0)) {
+      refreshAll();
+    }
+  }, [pathname, isAuthOrOnboarding, categories.length, wallets.length, refreshAll]);
+
+  // 3. Écoute de l'état d'authentification Supabase (connexion, déconnexion, refresh de token)
+  useEffect(() => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+          refreshAll();
+        } else if (event === 'SIGNED_OUT') {
+          setCategories([]);
+          setWallets([]);
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch {
+      // Ignorer si indisponible en environnement de test
+    }
+  }, [refreshAll]);
+
+  // 4. Écouteur d'événement global pour rechargement forcé depuis les Server Actions / Stepper
+  useEffect(() => {
+    const handleGlobalRefresh = () => {
+      refreshAll();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('gt-refresh-reference-data', handleGlobalRefresh);
+      return () => {
+        window.removeEventListener('gt-refresh-reference-data', handleGlobalRefresh);
+      };
+    }
+  }, [refreshAll]);
 
   // Map de couleurs des catégories
   const categoryColorMap = useMemo(() => {
@@ -111,6 +172,7 @@ export function ReferenceDataProvider({
         isLoading,
         refreshCategories: fetchCategories,
         refreshWallets: fetchWallets,
+        refreshAll,
         getCategoryColor,
         getWalletColor,
       }}

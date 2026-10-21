@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.10.2)
+# GEST TRACKER — Documentation Complète (v2.11.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -10,7 +10,7 @@ Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRA
 2. [Stack Technique](#2-stack-technique)
 3. [Arborescence du Projet](#3-arborescence-du-projet)
 4. [Fonctionnalités Détaillées par Module](#4-fonctionnalités-détaillées-par-module)
-   - [4.1 Authentification & Cloisonnement Multi-User](#41-authentification--cloisonnement-multi-user)
+   - [4.1 Authentification, Onboarding & Premier Login (`/bienvenue`)](#41-authentification-onboarding--premier-login-bienvenue)
    - [4.2 Tableau de Bord Principal (`/`)](#42-tableau-de-bord-principal-)
    - [4.3 Bilan & Conseils Financiers (Moteur d'Insights)](#43-bilan--conseils-financiers-moteur-dinsights)
    - [4.4 Hub de Gestion & Modules (`/gestion`)](#44-hub-de-gestion--modules-gestion)
@@ -126,9 +126,19 @@ my-app/
 
 ## 4. Fonctionnalités Détaillées par Module
 
-### 4.1 Authentification & Cloisonnement Multi-User
+### 4.1 Authentification, Onboarding & Premier Login (`/bienvenue`)
 
-- **Routes :** `/login`, `/register`, et `/mot-de-passe-oublie` (3 étapes).
+- **Routes d'authentification :** `/login`, `/register`, et `/mot-de-passe-oublie` (3 étapes).
+- **Parcours d'Onboarding Premier Login (`/bienvenue`) (v2.11.0) :**
+  - **Guards de navigation :** `requireOnboarding()` bloque l'accès à toutes les pages de l'application (`/`, `/entrant`, `/sortant`, `/historique`, `/portefeuilles`, `/budgets`, `/recurrences`, `/dettes`, `/gestion`, `/parametres`) et redirige immédiatement vers `/bienvenue` si `onboarding_completed_at` est nul. Inversement, `redirectIfOnboardingCompleted()` empêche les utilisateurs déjà configurés de revenir sur `/bienvenue`.
+  - **Table `user_profiles` :** Table PostgreSQL dédiée (`user_id`, `onboarding_completed_at`, `created_at`, `updated_at`) avec RLS Supabase et rétrocompatibilité garantie par backfill pour tous les comptes historiques.
+  - **Stepper néobrutaliste en 4 étapes :**
+    1. *Étape 1 — Bienvenue & Philosophie* : Présentation des principes clés de GEST TRACKER (contrôle, séparation des comptes, rapidité).
+    2. *Étape 2 — Mes Portefeuilles* : Configuration initiale des comptes avec solde de départ, choix du compte principal et contrôle d'unicité des noms et couleurs.
+    3. *Étape 3 — Mes Catégories* : Sélection assistée parmi des suggestions préconfigurées et ajout de catégories personnalisées (revenus, dépenses, ou les deux).
+    4. *Étape 4 — Récapitulatif & Lancement* : Synthèse visuelle complète avant validation finale.
+  - **Persistance du brouillon :** Sauvegarde automatique dans le `sessionStorage` pour ne pas perdre la configuration en cas de rafraîchissement intempestif.
+  - **Option de démarrage rapide :** Bouton "Configurer plus tard" permettant de passer immédiatement à l'application avec les configurations standard par défaut.
 - **Politique de mot de passe stricte (`PasswordSchema`) :**
   - Minimum 8 caractères.
   - Au moins 1 lettre majuscule (`[A-Z]`).
@@ -146,7 +156,11 @@ my-app/
   2. `/mot-de-passe-oublie/verification` : Saisie du code à 6 chiffres avec compte à rebours de 60 secondes pour le renvoi et expiration du code à 10 minutes (`otp_expiry = 600`).
   3. `/mot-de-passe-oublie/nouveau` : Définition du nouveau mot de passe accessible uniquement en présence du cookie court `httpOnly` (5 min) délivré lors de l'étape 2.
   - **Environnement local :** Les e-mails de récupération sont consultables instantanément dans l'interface Mailpit locale à l'adresse [`http://127.0.0.1:54324`](http://127.0.0.1:54324).
-- **Cloisonnement total des données :** Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
+- **Cloisonnement total des données & Synchronisation temps réel :**
+  - Toutes les requêtes en base de données filtrent impérativement sur `userId: user.id`. Aucun utilisateur ne peut accéder aux données d'un autre.
+  - Le contexte client `ReferenceDataProvider` synchronise automatiquement les catégories et portefeuilles dès la connexion (`SIGNED_IN`), à chaque changement de route, ou via l'événement `gt-refresh-reference-data`.
+  - Les pages `/entrant` et `/sortant` préchargent directement les données côté serveur pour un affichage instantané sans latence dès la fin du parcours d'onboarding.
+  - Tous les formulaires et modals (`TransactionForm`, `EditTransactionModal`, `RecurringModal`, `BudgetModal`) intègrent un mécanisme d'auto-réparation déclenchant un rafraîchissement si la liste locale est initialement vide.
 
 ### 4.2 Tableau de Bord Principal (`/`)
 

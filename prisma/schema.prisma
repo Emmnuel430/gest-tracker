@@ -220,5 +220,14 @@ model Debt {
   @@map("debts")
 }
 
+model UserProfile {
+  userId                String    @id @map("user_id")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_profiles")
+}
+
 
 

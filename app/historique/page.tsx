@@ -1,6 +1,7 @@
 import { getTransactionsPageAction, getHistoryStatsAction } from '@/actions/transactions';
 import { HistoryView } from '@/components/history/HistoryView';
 import { HistoryFiltersSchema } from '@/lib/validations';
+import { requireOnboarding } from '@/lib/onboarding';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,8 @@ interface HistoriquePageProps {
 }
 
 export default async function HistoriquePage({ searchParams }: HistoriquePageProps) {
+  await requireOnboarding();
+
   const resolvedParams = await searchParams;
   const rawPeriod = typeof resolvedParams.period === 'string' ? resolvedParams.period : 'month';
   const rawType = typeof resolvedParams.type === 'string' ? resolvedParams.type : 'all';
