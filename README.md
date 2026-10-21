@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.13.0)
+# GEST TRACKER — Documentation Complète (v2.14.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -10,8 +10,9 @@ Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRA
 2. [Stack Technique](#2-stack-technique)
 3. [Arborescence du Projet](#3-arborescence-du-projet)
 4. [Fonctionnalités Détaillées par Module](#4-fonctionnalités-détaillées-par-module)
+   - [4.0 Vitrine Publique & Démo Interactive (`/` & `/demo`)](#40-vitrine-publique--démo-interactive--et-demo)
    - [4.1 Authentification, Onboarding & Premier Login (`/bienvenue`)](#41-authentification-onboarding--premier-login-bienvenue)
-   - [4.2 Tableau de Bord Principal (`/`)](#42-tableau-de-bord-principal-)
+   - [4.2 Tableau de Bord Principal (`/app`)](#42-tableau-de-bord-principal-app)
    - [4.3 Bilan & Conseils Financiers (Moteur d'Insights)](#43-bilan--conseils-financiers-moteur-dinsights)
    - [4.4 Hub de Gestion & Modules (`/gestion`)](#44-hub-de-gestion--modules-gestion)
    - [4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`)](#45-budgets-mensuels--gestion-des-catégories-budgets)
@@ -58,7 +59,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (161 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (226 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -73,16 +74,20 @@ my-app/
 │   ├── csv-import.ts         # Importation de relevés bancaires avec dédoublonnage et mapping catégorie
 │   ├── debts.ts              # Dettes, créances et remboursements partiels
 │   ├── insights.ts           # Moteur d'analyses financières et détection d'anomalies
+│   ├── onboarding.ts         # Complétion et activation rapide d'onboarding
 │   ├── recurring.ts          # Échéances récurrentes et génération automatique
 │   ├── transactions.ts       # CRUD transactions et statistiques de solde
 │   ├── user.ts               # Profil, changement de mot de passe, suppression de compte
 │   └── wallets.ts            # Portefeuilles et virements internes neutres
 ├── app/                      # Pages et Routes Next.js App Router
-│   ├── api/                  # Routes API (Export JSON, CSV, PDF)
+│   ├── api/                  # Routes API (Export JSON, CSV, PDF, Cron)
+│   ├── app/                  # Tableau de bord principal authentifié (Dashboard)
+│   ├── bienvenue/            # Stepper d'onboarding premier login
 │   ├── budgets/              # Page Budgets mensuels & Gestion des catégories
+│   ├── demo/                 # Démonstration interactive publique en lecture seule
 │   ├── dettes/               # Page Dettes & Créances
 │   ├── entrant/              # Formulaire de recette / revenu
-│   ├── gestion/              # Hub central des modules financiers V2 (redirection 308 depuis /options)
+│   ├── gestion/              # Hub central des modules financiers
 │   ├── historique/           # Filtres, graphiques et liste complète
 │   ├── login/                # Page de connexion Supabase
 │   ├── parametres/           # Profil, thème, sécurité et exports
@@ -90,24 +95,29 @@ my-app/
 │   ├── recurrences/          # Règles d'échéances fixes
 │   ├── register/             # Inscription avec confirmation de mot de passe
 │   ├── sortant/              # Formulaire de dépense
-│   ├── layout.tsx            # Layout racine avec ReferenceDataProvider, Thème et BottomNav
-│   └── page.tsx              # Tableau de bord principal
+│   ├── layout.tsx            # Layout racine avec ThemeProvider et AppShell
+│   └── page.tsx              # Vitrine publique (visiteurs) / Redirection vers /app (connectés)
 ├── components/               # Composants React organisés par domaine
 │   ├── budgets/              # BudgetCard, BudgetModal, CategoryManagerModal
 │   ├── debts/                # DebtCard, DebtModal, RepaymentModal
+│   ├── demo/                 # DemoView, DemoActionModal (bac à sable public)
 │   ├── home/                 # BalanceSummary, HomeActions, RecentTransactionsList
 │   ├── insights/             # FinancialInsightsCard, InsightsCarousel
-│   ├── layout/               # BottomNav (3 onglets), HeaderAuth
-│   ├── providers/            # ReferenceDataProvider (cache réactif catégories et couleurs)
+│   ├── layout/               # AppShell (découplage public/privé), BottomNav (4 onglets), HeaderAuth
+│   ├── onboarding/           # OnboardingStepper, OnboardingQuickStart
+│   ├── providers/            # ReferenceDataProvider (cache réactif catégories et portefeuilles)
+│   ├── public/               # PublicHeader, PublicFooter, PublicLandingView
 │   ├── recurring/            # RecurringCard, RecurringModal, RecurringAlertBanner
-│   ├── ui/                   # Button, Card, ConfirmDialog (modal de sécurité)
+│   ├── ui/                   # Button, Card, ConfirmDialog (modal de sécurité), InfoTooltip
 │   └── wallets/              # WalletCard, WalletModal, TransferModal
 ├── constants/                # Catégories par défaut, moyens de paiement et configuration
 ├── lib/                      # Utilitaires réutilisables
 │   ├── auth.ts               # Récupération de l'utilisateur authentifié côté serveur
 │   ├── categories.ts         # Filtrage de catégories par kind (INCOME/EXPENSE/BOTH)
 │   ├── dates.ts              # Formatage de dates en français
+│   ├── demo/                 # Fixtures réalistes FCFA pour la démo interactive (demo-data.ts)
 │   ├── insights.ts           # Moteur d'analyses financières et détection d'anomalies
+│   ├── onboarding.ts         # Logique de redirection et complétion onboarding
 │   ├── prisma.ts             # Client Prisma singleton avec Proxy auto-guérisseur
 │   ├── recurring.ts          # Résolution calendaire (clamp fin de mois) et libellés
 │   ├── supabase/             # Clients Supabase (client.ts et server.ts)
@@ -117,27 +127,48 @@ my-app/
 │   ├── migration_v2.sql      # Script SQL idempotent de migration pour la Production
 │   ├── schema.prisma         # Schéma déclaratif Prisma 7
 │   └── seed.ts               # Seeder de démonstration avec catégories relationnelles
+├── public/                   # Actifs statiques et PWA
+│   ├── icon.svg              # Favicon et icône applicative vectorielle
+│   └── manifest.json         # Manifeste PWA orienté mobile vers /app
 ├── scripts/                  # Scripts de maintenance
 │   └── backfill-user-transactions.ts # Rattachement des transactions orphelines
-└── tests/                    # 103 tests unitaires automatisés (node:test + tsx)
+└── tests/                    # 226 tests unitaires automatisés (node:test + tsx)
 ```
 
 ---
 
 ## 4. Fonctionnalités Détaillées par Module
 
+### 4.0 Vitrine Publique & Démo Interactive (`/` & `/demo`)
+
+- **Vitrine d'accueil (`PublicLandingView`) sur `/` :**
+  - Conçue pour convertir les visiteurs en utilisateurs sans barrière à l'entrée.
+  - Mise en avant claire des 4 piliers fondamentaux : Sans publicité, Mobile-first néobrutaliste, Sécurité stricte & isolation RLS, et Trésorerie multi-comptes en temps réel adaptée à l'Afrique de l'Ouest (Espèces, Wave, Orange Money, Banques en FCFA).
+  - Deux boutons d'action stratégiques : « Tester la démo interactive » (`/demo`) et « Créer un compte gratuit » (`/register`).
+  - Redirection automatique et instantanée des utilisateurs déjà authentifiés vers le tableau de bord privé (`/app`).
+- **Démonstration interactive (`DemoView`) sur `/demo` :**
+  - Accessible immédiatement à tout visiteur sans inscription ni collecte de courriel ou mot de passe.
+  - Fonctionne sur un jeu de données fictif complet et équilibré en Francs CFA (650 000 FCFA de trésorerie sur 4 comptes, 12 transactions exemplaires et 286 000 FCFA de dépenses mensuelles).
+  - Comprend 4 onglets interactifs complets : *Tableau de bord*, *Historique* (avec filtres en direct par période, type et portefeuille), *Répartition & Statistiques graphiques*, et *Portefeuilles*.
+  - Mode bac à sable sécurisé en lecture seule : toute tentative d'ajout, de modification ou de suppression ouvre une modal néobrutaliste pédagogique (`DemoActionModal`) expliquant le mode démo et invitant à créer son propre espace en 1 clic.
+- **Découplage architectural via `AppShell` :**
+  - Les pages publiques (`/`, `/demo`, `/login`, `/register`, etc.) n'exécutent aucun appel serveur superflu de données de référence et n'affichent pas la barre de navigation `BottomNav`.
+  - Le `ReferenceDataProvider` et la navigation inférieure ne sont montés que sur les routes d'application privées authentifiées.
+
 ### 4.1 Authentification, Onboarding & Premier Login (`/bienvenue`)
 
 - **Routes d'authentification :** `/login`, `/register`, et `/mot-de-passe-oublie` (3 étapes).
-- **Parcours d'Onboarding Premier Login (`/bienvenue`) (v2.11.0) :**
-  - **Guards de navigation :** `requireOnboarding()` bloque l'accès à toutes les pages de l'application (`/`, `/entrant`, `/sortant`, `/historique`, `/portefeuilles`, `/budgets`, `/recurrences`, `/dettes`, `/gestion`, `/parametres`) et redirige immédiatement vers `/bienvenue` si `onboarding_completed_at` est nul. Inversement, `redirectIfOnboardingCompleted()` empêche les utilisateurs déjà configurés de revenir sur `/bienvenue`.
-  - **Table `user_profiles` :** Table PostgreSQL dédiée (`user_id`, `onboarding_completed_at`, `created_at`, `updated_at`) avec RLS Supabase et rétrocompatibilité garantie par backfill pour tous les comptes historiques.
-  - **Stepper néobrutaliste en 4 étapes :**
-    1. *Étape 1 — Bienvenue & Philosophie* : Présentation des principes clés de GEST TRACKER (contrôle, séparation des comptes, rapidité).
-    2. *Étape 2 — Mes Portefeuilles* : Configuration initiale des comptes avec solde de départ, choix du compte principal et contrôle d'unicité des noms et couleurs.
-    3. *Étape 3 — Mes Catégories* : Sélection assistée parmi des suggestions préconfigurées et ajout de catégories personnalisées (revenus, dépenses, ou les deux).
+- **Inscription fluide (`/register`) :**
+  - Bouton d'inscription actif dès la saisie pour éviter toute sensation de blocage silencieux (désactivation uniquement pendant le traitement serveur).
+- **Parcours d'Onboarding Premier Login (`/bienvenue`) :**
+  - **Démarrage express en 1 clic :** Option « Démarrer immédiatement en 1 clic (Standard) » permettant de configurer instantanément un compte Espèces (0 FCFA), un compte Wave (0 FCFA) et les 10 catégories usuelles sans devoir traverser les 4 étapes manuelles.
+  - **Guards de navigation :** `requireOnboarding()` bloque l'accès à toutes les pages privées de l'application et redirige vers `/bienvenue` si l'onboarding n'est pas finalisé.
+  - **Stepper néobrutaliste en 4 étapes (configuration personnalisée) :**
+    1. *Étape 1 — Bienvenue & Philosophie* : Présentation des principes clés de GEST TRACKER.
+    2. *Étape 2 — Mes Portefeuilles* : Configuration initiale des comptes avec solde de départ, choix du compte principal.
+    3. *Étape 3 — Mes Catégories* : Sélection assistée parmi des suggestions préconfigurées et ajout de catégories personnalisées.
     4. *Étape 4 — Récapitulatif & Lancement* : Synthèse visuelle complète avant validation finale.
-  - **Persistance du brouillon :** Sauvegarde automatique dans le `sessionStorage` pour ne pas perdre la configuration en cas de rafraîchissement intempestif.
+  - **Persistance du brouillon :** Sauvegarde automatique dans le `sessionStorage` pour préserver la saisie.
   - **Option de démarrage rapide :** Bouton "Configurer plus tard" permettant de passer immédiatement à l'application avec les configurations standard par défaut.
 - **Politique de mot de passe stricte (`PasswordSchema`) :**
   - Minimum 8 caractères.
@@ -596,8 +627,12 @@ pnpm supabase db push
 
 ## 7. Tests Automatisés & Qualité de Code
 
-L'application intègre une suite de **142 tests unitaires** couvrant l'ensemble des règles métier critiques :
+L'application intègre une suite de **226 tests unitaires** couvrant l'ensemble des règles métier critiques :
 
+- **`tests/v2140-public-demo-access.test.ts` :** Autorisation des routes publiques middleware, conformité du jeu de données de démo FCFA, isolation du layout `AppShell`, activation express 1 clic, manifeste PWA et zéro emoji.
+- **`tests/v2130-home-transfer.test.ts` :** Trilogie financière sur l'accueil (`Entrant`, `Sortant`, `Virement interne`), réconciliation réactive en modal et concision visuelle.
+- **`tests/v2120-navigation-gestion.test.ts` :** Barre de navigation inférieure à 4 onglets, métriques temps réel du hub `/gestion` et continuité de navigation.
+- **`tests/v2110-onboarding-welcome.test.ts` :** Stepper d'onboarding premier login, validation des portefeuilles et catégories.
 - **`tests/recurring-reminders.test.ts` :** Moteur de calcul des rappels d'échéances à J-7, J-3 et J0, déduplication stricte des e-mails, clamp calendaire et gestion des exclusions.
 - **`tests/auth-recovery.test.ts` :** Validation du schéma de mot de passe complexe, scoring de robustesse, et flux de récupération à 3 étapes.
 - **`tests/history.test.ts` :** Matrice de visibilité contextuelle, pagination par curseur déterministe, et synchronisation des filtres.
@@ -618,7 +653,7 @@ pnpm test
 pnpm lint
 ```
 
-_Résultat garanti : 161 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+_Résultat garanti : 226 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
 
 ---
 
@@ -632,7 +667,7 @@ Le développement et la maintenance de **Gest Tracker** s'appuient sur un collè
 - **Database Administrator (`database.md`) :** Schéma Prisma, migrations versionnées et isolation des données.
 - **Lead Application Security (`security.md`) :** Authentification Supabase Auth, middleware SSR et politiques RLS.
 - **UX & Logic Auditor (`ux-logic-auditor.md`) :** Audit holistique des parcours réels, cohérence cross-pages, étanchéité de la logique financière, accessibilité et validation ciblée après correctifs.
-- **QA Lead (`qa.md`) :** Suites de tests automatisés (161 tests unitaires), typage strict et validation de la Definition of Done.
+- **QA Lead (`qa.md`) :** Suites de tests automatisés (226 tests unitaires), typage strict et validation de la Definition of Done.
 
 ### 8.1 Rôle et Compétences de UX_LOGIC_AUDITOR
 

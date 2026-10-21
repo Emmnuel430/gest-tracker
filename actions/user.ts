@@ -149,6 +149,7 @@ export async function deleteAccountAction(): Promise<AccountDeleteResponse> {
     await supabase.auth.signOut();
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
     revalidatePath('/budgets');
     revalidatePath('/recurrences');

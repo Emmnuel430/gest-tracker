@@ -86,6 +86,7 @@ export async function upsertBudgetAction(rawData: unknown): Promise<ActionRespon
     revalidatePath('/budgets');
     revalidatePath('/historique');
     revalidatePath('/');
+    revalidatePath('/app');
 
     return {
       success: true,

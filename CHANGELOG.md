@@ -3,6 +3,32 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0] - 2026-10-21
+
+### Features
+- **public-access** : Vitrine publique d'accueil (`PublicLandingView`) accessible à tout visiteur non authentifié sur `/` :
+  - Proposition de valeur axée sur le multi-comptes adapté à l'Afrique de l'Ouest (Espèces, Wave, Orange Money, Comptes bancaires en FCFA).
+  - Présentation des 4 piliers d'expérience : Zéro publicité, Mobile-first néobrutaliste, Sécurité stricte & chiffrement, Multi-comptes temps réel.
+  - Double appel à l'action immédiat : Essayer la démo sans compte (`/demo`) et Créer un compte gratuit (`/register`).
+  - Redirection automatique et transparente des utilisateurs connectés vers le tableau de bord privé (`/app`).
+- **demo** : Environnement de démonstration interactif (`/demo`) sans inscription ni collecte d'informations :
+  - Jeu de données réaliste et équilibré en FCFA (solde total 650 000 FCFA, 4 portefeuilles configurés, 12 transactions exemplaires et 286 000 FCFA de dépenses du mois).
+  - Navigation par 4 onglets interactifs : Tableau de bord, Historique avec filtres dynamiques (période, compte, type), Répartition & Statistiques graphiques, et Portefeuilles.
+  - Sécurisation en lecture seule avec modal néobrutaliste explicative (`DemoActionModal`) lors de toute tentative de saisie/modification, guidant vers l'inscription en 1 clic.
+- **layout** : Découplage de l'architecture de layout (`AppShell`) :
+  - Isolation du chargement des données privées : le `ReferenceDataProvider` et la barre de navigation `BottomNav` ne sont montés que sur les routes privées authentifiées, éliminant tout appel superflu ou fuite de contexte sur les pages publiques.
+- **onboarding** : Accélération de l'activation utilisateur :
+  - Intégration d'un bouton d'activation express « Démarrer immédiatement en 1 clic (Standard) » dans le stepper d'onboarding (`OnboardingStepper`), initialisant automatiquement 2 portefeuilles et 10 catégories usuelles sans forcer les 4 étapes de saisie.
+  - Suppression de la désactivation prématurée du bouton de validation sur le formulaire d'inscription (`/register`), empêchant le blocage ergonomique des utilisateurs.
+- **pwa** : Correction et fiabilisation du manifeste applicatif (`public/manifest.json`) :
+  - Suppression des références orphelines aux icônes PNG inexistantes et utilisation de l'icône SVG vectorielle `/icon.svg`.
+  - Configuration de `start_url` vers `/app` avec orientation portrait adaptée au smartphone.
+
+### Tests
+- **tests** : Suite automatisée (`tests/v2140-public-demo-access.test.ts`) validant les autorisations de routage du middleware, la conformité du jeu de données de démo, l'isolation du layout public, l'activation express en 1 clic, l'intégrité du manifeste PWA et l'absence totale d'emojis.
+
+---
+
 ## [2.13.0] - 2026-10-21
 
 ### Features

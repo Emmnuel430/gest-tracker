@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
         // Si la session est immédiatement active (auto-confirm activé en dev/local)
         if (data?.session) {
-          router.push('/');
+          router.push('/app');
           router.refresh();
           return;
         }
@@ -186,12 +186,7 @@ export default function RegisterPage() {
               variant="primary"
               size="lg"
               fullWidth
-              disabled={
-                isPending ||
-                !evaluatePasswordStrength(password).isValid ||
-                !confirmPassword ||
-                password !== confirmPassword
-              }
+              disabled={isPending}
               className="mt-2 bg-[#10B981] hover:bg-[#059669] text-white"
             >
               {isPending ? (

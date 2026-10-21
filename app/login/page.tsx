@@ -46,7 +46,7 @@ function LoginForm() {
           return;
         }
 
-        router.push('/');
+        router.push('/app');
         router.refresh();
       } catch (err: unknown) {
         setErrorMessage(getErrorMessage(err));

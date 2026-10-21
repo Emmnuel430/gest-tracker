@@ -156,7 +156,7 @@ export function ParametresView() {
       {/* En-tête avec bouton retour */}
       <div className="flex items-center justify-between">
         <Link
-          href="/"
+          href="/app"
           className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] hover:text-[#2563EB] dark:hover:text-[#60A5FA] transition-colors"
         >
           <ArrowLeft className="w-4 h-4 stroke-3" />

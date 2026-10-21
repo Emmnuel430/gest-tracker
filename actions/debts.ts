@@ -128,6 +128,7 @@ export async function createDebtAction(rawData: unknown): Promise<ActionResponse
 
     revalidatePath('/dettes');
     revalidatePath('/');
+    revalidatePath('/app');
 
     const label = type === 'LENT' ? 'Prêt à' : 'Dette envers';
     return {
@@ -186,6 +187,7 @@ export async function recordDebtRepaymentAction(
 
     revalidatePath('/dettes');
     revalidatePath('/');
+    revalidatePath('/app');
 
     return {
       success: true,

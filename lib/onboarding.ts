@@ -40,7 +40,7 @@ export async function redirectIfOnboardingCompleted(): Promise<string> {
   const user = await getAuthenticatedUser();
   const completed = await isOnboardingCompleted(user.id);
   if (completed) {
-    redirect('/');
+    redirect('/app');
   }
   return user.id;
 }

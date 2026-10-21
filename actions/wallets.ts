@@ -327,6 +327,7 @@ export async function upsertWalletAction(rawData: unknown): Promise<WalletAction
 
     revalidatePath('/portefeuilles');
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
 
     return {
@@ -392,6 +393,7 @@ export async function restoreWalletAction(
 
     revalidatePath('/portefeuilles');
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
 
     return {
@@ -440,6 +442,7 @@ export async function archiveWalletAction(
 
     revalidatePath('/portefeuilles');
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
 
     return {
@@ -501,6 +504,7 @@ export async function deleteWalletAction(id: string): Promise<ActionResponse> {
 
     revalidatePath('/portefeuilles');
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
 
     return {
@@ -626,6 +630,7 @@ export async function transferBetweenWalletsAction(rawData: unknown): Promise<Ac
     revalidatePath('/portefeuilles');
     revalidatePath('/historique');
     revalidatePath('/');
+    revalidatePath('/app');
 
     const feeNotice =
       computedFee > 0 ? ` (dont ${computedFee.toLocaleString('fr-FR')} FCFA de frais débités)` : '';

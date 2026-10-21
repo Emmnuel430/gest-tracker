@@ -336,11 +336,9 @@ export function OnboardingStepper() {
         sessionStorage.removeItem(STORAGE_KEY);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("gt-refresh-reference-data"));
-          window.location.href = "/";
-        } else {
-          router.push("/");
-          router.refresh();
         }
+        router.push("/app");
+        router.refresh();
       } else {
         setErrorMessage(res.error || "Erreur lors de la validation.");
       }
@@ -355,11 +353,9 @@ export function OnboardingStepper() {
         sessionStorage.removeItem(STORAGE_KEY);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("gt-refresh-reference-data"));
-          window.location.href = "/";
-        } else {
-          router.push("/");
-          router.refresh();
         }
+        router.push("/app");
+        router.refresh();
       } else {
         setErrorMessage(res.error || "Erreur lors de la configuration rapide.");
       }
@@ -486,28 +482,32 @@ export function OnboardingStepper() {
               </div>
             </div>
 
-            {/* Boutons d'action */}
-            <div className="pt-4 space-y-2">
+            {/* Boutons d'action optimisés pour activation rapide */}
+            <div className="pt-4 space-y-3">
               <Button
                 type="button"
                 variant="primary"
                 size="lg"
-                onClick={() => setStep(2)}
-                className="w-full text-xs uppercase flex items-center justify-center gap-2"
+                onClick={handleSkip}
+                disabled={isPending}
+                className="w-full text-xs uppercase flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white"
               >
-                <span>Démarrer ma configuration (2 min)</span>
-                <ArrowRight className="w-4 h-4 stroke-3" />
+                <Zap className="w-4 h-4 stroke-3 text-white" />
+                <span>
+                  {isPending
+                    ? "Initialisation en cours..."
+                    : "Démarrer immédiatement en 1 clic (Standard)"}
+                </span>
               </Button>
 
               <button
                 type="button"
-                onClick={handleSkip}
+                onClick={() => setStep(2)}
                 disabled={isPending}
-                className="w-full py-2 text-[11px] font-bold text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer text-center block"
+                className="w-full py-2.5 px-3 border-2 border-dashed border-[#111827] dark:border-[#334155] rounded-xl text-xs font-black uppercase text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-[#131C31] flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                {isPending
-                  ? "Configuration..."
-                  : "Configurer plus tard (démarrage rapide avec 3 comptes à 0)"}
+                <span>Personnaliser mes comptes et soldes (2 min)</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-3" />
               </button>
             </div>
           </div>

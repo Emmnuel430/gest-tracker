@@ -179,6 +179,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
     }
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/recurrences');
     revalidatePath('/budgets');
     revalidatePath('/portefeuilles');
@@ -218,6 +219,7 @@ export async function toggleRecurringRuleStatusAction(id: string): Promise<Actio
     });
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/recurrences');
 
     return {
@@ -250,6 +252,7 @@ export async function deleteRecurringRuleAction(id: string): Promise<ActionRespo
     }
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/recurrences');
 
     return {
@@ -370,6 +373,7 @@ export async function processRecurringRuleAction(
     });
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
     revalidatePath('/budgets');
     revalidatePath('/recurrences');

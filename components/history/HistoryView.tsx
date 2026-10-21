@@ -323,7 +323,7 @@ export function HistoryView({
       {/* En-tête avec navigation retour et export */}
       <div className="flex items-center justify-between">
         <Link
-          href="/"
+          href="/app"
           className="inline-flex items-center gap-1.5 font-black text-xs uppercase px-3 py-1.5 bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-[#334155] text-[#111827] dark:text-[#F8FAFC] rounded-lg shadow-[2px_2px_0px_0px_#111827] dark:shadow-[2px_2px_0px_0px_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
         >
           <ArrowLeft className="w-4 h-4 stroke-3" />

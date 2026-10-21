@@ -17,28 +17,34 @@ export async function middleware(request: NextRequest) {
 
   const { supabaseResponse, user } = await updateSession(request);
 
+  const isPublicPage =
+    pathname === '/' ||
+    pathname === '/demo' ||
+    pathname.startsWith('/demo');
+
   const isAuthPage =
     pathname === '/login' ||
     pathname === '/register' ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/mot-de-passe-oublie');
 
-  // Si l'utilisateur n'est pas connecté et n'est pas sur une page d'auth, redirection vers /login
-  if (!user && !isAuthPage) {
+  // Si l'utilisateur n'est pas connecté et n'est pas sur une page publique ou d'auth, redirection vers /login
+  if (!user && !isPublicPage && !isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Si l'utilisateur est déjà connecté et tente d'aller sur les pages d'auth, redirection vers le dashboard
+  // Si l'utilisateur est déjà connecté et tente d'aller sur la vitrine publique ou les pages d'auth, redirection vers le dashboard (/app)
   if (
     user &&
-    (pathname === '/login' ||
+    (pathname === '/' ||
+      pathname === '/login' ||
       pathname === '/register' ||
       pathname.startsWith('/mot-de-passe-oublie'))
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/app';
     return NextResponse.redirect(url);
   }
 
@@ -48,6 +54,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
+    '/demo',
+    '/demo/:path*',
+    '/app',
     '/entrant',
     '/sortant',
     '/historique',
