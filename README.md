@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.12.0)
+# GEST TRACKER — Documentation Complète (v2.13.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -172,10 +172,14 @@ my-app/
 - **Bannière d'Alerte Récurrente :**
   - Détecte automatiquement les charges du mois qui n'ont pas encore été validées (loyer, abonnements).
   - Permet de valider (créant la transaction réelle) ou d'ignorer en un clic.
-- **Actions Massives Rapides :**
-  - Bouton **ENTRANT** vert néobrutaliste (`/entrant`) pour enregistrer un revenu.
-  - Bouton **SORTANT** rouge néobrutaliste (`/sortant`) pour enregistrer une dépense.
-  - Bouton **HISTORIQUE** bleu néobrutaliste (`/historique`) pour explorer les archives.
+- **Trilogie Financière & Action Bar 2+1 Mobile-First (v2.13.0) :**
+  - **Ligne 1 (50% / 50%) :**
+    - Bouton **ENTRANT** vert néobrutaliste (`#16A34A`, `ArrowDownLeft`) vers `/entrant` pour enregistrer un revenu.
+    - Bouton **SORTANT** rouge néobrutaliste (`#DC2626`, `ArrowUpRight`) vers `/sortant` pour enregistrer une dépense.
+  - **Ligne 2 (100% pleine largeur) :**
+    - Bouton **VIREMENT INTERNE** jaune néobrutaliste (`#FFE600`, `ArrowRightLeft`) avec badge « Entre comptes », déclenchant directement la `TransferModal` en surimpression sans rechargement de page.
+  - **Concision visuelle :** Suppression de tous les sous-titres verbeux, divisant l'encombrement vertical par deux (~120px vs ~240px) pour préserver la ligne de flottaison sur mobile.
+  - **Historique déporté :** Le bouton géant `HISTORIQUE` de l'accueil est supprimé car accessible en 1 tap permanent dans la `BottomNav`.
 - **Dernières Opérations Cliquables (v2.9.0) :**
   - Composant unique compact `TransactionListItem` : bouton interactif pleine largeur avec icône de type (`ArrowDownLeft`, `ArrowUpRight`, `ArrowRightLeft`), pastille de catégorie, date/heure et montant.
   - Les virements internes (`TRANSFER`) sont affichés avec une stricte neutralité comptable (sans signe négatif indu et en teinte neutre, C4).
