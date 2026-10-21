@@ -76,7 +76,7 @@ export default async function HomePage() {
       {/* 1. Résumé du Solde Global et totaux par période (Sections 10 & 11) */}
       <BalanceSummary globalBalance={globalBalance} summaries={summaries} />
 
-      {/* 2. Les 3 boutons d'actions massifs (Entrant, Sortant, Historique) */}
+      {/* 2. Trilogie financière : Action Bar 2+1 (Entrant, Sortant, Virement) */}
       <HomeActions />
 
       {/* 3. Bilan & Conseils Financiers (placé immédiatement après l'historique) */}

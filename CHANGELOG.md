@@ -3,6 +3,25 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2026-10-21
+
+### Features
+- **home** : Refonte complète de la barre d'actions rapides de la page d'accueil (`HomeActions.tsx`) :
+  - **Trilogie financière** : Déploiement des 3 opérations financières fondamentales (`Entrant`, `Sortant`, `Virement interne`) directement sur l'écran d'accueil.
+  - **Action Bar 2 + 1 (Mobile-First)** :
+    - Ligne 1 (50% / 50%) : Boutons compacts `ENTRANT` (vert `#16A34A`, `ArrowDownLeft`) et `SORTANT` (rouge `#DC2626`, `ArrowUpRight`).
+    - Ligne 2 (100% pleine largeur) : Bouton `VIREMENT INTERNE` (jaune néobrutaliste `#FFE600`, `ArrowRightLeft`) avec badge « Entre comptes ».
+  - **Ouverture directe en modal** : Le tap sur `VIREMENT INTERNE` ouvre instantanément la `TransferModal` en surimpression sans rechargement de page, avec réconciliation réactive en direct (`refreshWallets()` et `router.refresh()`).
+  - **Concision visuelle** : Élimination intégrale des phrases et sous-titres verbeux, réduisant l'encombrement vertical de plus de 50 % (~120px vs ~240px) pour maintenir les conseils financiers et transactions récentes immédiatement au-dessus de la ligne de flottaison sur mobile.
+  - **Suppression du bouton Historique obsolète** : Le bouton `HISTORIQUE` géant sur l'accueil est supprimé, l'accès à l'historique étant désormais garanti en 1 tap permanent via l'onglet dédié de la `BottomNav`.
+- **wallets** : Sécurisation ergonomique de `TransferModal` :
+  - Gestion guidée lorsque l'utilisateur dispose de moins de 2 comptes actifs, affichant une explication claire et un lien direct vers `/portefeuilles` pour ajouter un compte.
+
+### Tests
+- **tests** : Suite automatisée (`tests/v2130-home-transfer.test.ts`) validant la présence des 3 boutons de la trilogie financière, la suppression du lien vers `/historique` sur l'accueil, la disposition 2+1, la gestion des portefeuilles insuffisants dans `TransferModal`, et l'absence stricte d'emojis.
+
+---
+
 ## [2.12.0] - 2026-10-21
 
 ### Features
