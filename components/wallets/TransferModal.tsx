@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
+import Link from 'next/link';
 import { X, ArrowRight, Zap, Info, ChevronDown, ChevronUp, Percent, Banknote } from 'lucide-react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -85,6 +86,56 @@ export function TransferModal({
   }, [hasFee, feeMode, numericFeeValue, numericAmount]);
 
   if (!isOpen) return null;
+
+  if (wallets.length < 2) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="w-full max-w-md bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-neutral-200 dark:border-[#334155]">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-[#FFE600] text-[#111827] border-2 border-[#111827] rounded-lg">
+                <Zap className="w-4 h-4 stroke-2.5" />
+              </div>
+              <h3 className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
+                Virement Interne
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 hover:bg-neutral-100 dark:hover:bg-[#131C31] border-2 border-transparent hover:border-[#111827] dark:hover:border-white rounded-lg transition-all cursor-pointer"
+            >
+              <X className="w-5 h-5 text-neutral-700 dark:text-neutral-300 stroke-2.5" />
+            </button>
+          </div>
+          <div className="space-y-4">
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-400 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                Un virement interne nécessite au moins 2 comptes actifs. Vous disposez actuellement de {wallets.length} compte{wallets.length === 0 ? '' : ' actif'}.
+              </span>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2.5 text-xs font-black uppercase rounded-xl border-2 border-[#111827] dark:border-[#334155] hover:bg-neutral-100 dark:hover:bg-[#131C31] text-[#111827] dark:text-[#F8FAFC] transition-all cursor-pointer"
+              >
+                Fermer
+              </button>
+              <Link
+                href="/portefeuilles"
+                onClick={onClose}
+                className="flex-1 py-2.5 text-xs font-black uppercase rounded-xl border-2 border-[#111827] dark:border-white bg-[#FFE600] hover:bg-[#FACC15] text-[#111827] shadow-[2px_2px_0px_0px_#111827] text-center flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                Ajouter un compte
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
