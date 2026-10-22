@@ -123,6 +123,7 @@ export async function createTransactionAction(
     });
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
     revalidatePath('/portefeuilles');
     revalidatePath('/entrant');
@@ -553,6 +554,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
     ]);
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
     revalidatePath('/portefeuilles');
 
@@ -695,6 +697,7 @@ export async function updateTransactionAction(rawData: unknown): Promise<ActionR
     });
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/historique');
     revalidatePath('/portefeuilles');
 

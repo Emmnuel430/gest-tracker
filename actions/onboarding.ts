@@ -120,6 +120,7 @@ export async function completeOnboardingAction(
     });
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/bienvenue');
     revalidatePath('/portefeuilles');
     revalidatePath('/budgets');
@@ -228,6 +229,7 @@ export async function skipOnboardingAction(): Promise<ActionResponse<{ message: 
     });
 
     revalidatePath('/');
+    revalidatePath('/app');
     revalidatePath('/bienvenue');
     revalidatePath('/portefeuilles');
     revalidatePath('/budgets');

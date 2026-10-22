@@ -1,23 +1,29 @@
-'use client';
+"use client";
 
-import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { UserPlus, ShieldCheck, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { RegisterSchema, evaluatePasswordStrength } from '@/lib/validations';
-import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
-import { getErrorMessage } from '@/lib/utils';
+import React, { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  UserPlus,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  AlertTriangle,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { RegisterSchema, evaluatePasswordStrength } from "@/lib/validations";
+import { PasswordStrengthMeter } from "@/components/ui/PasswordStrengthMeter";
+import { getErrorMessage } from "@/lib/utils";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -55,10 +61,12 @@ export default function RegisterPage() {
         });
 
         if (error) {
-          if (error.message.includes('already registered')) {
-            setErrorMessage('Un compte existe déjà avec cette adresse email.');
-          } else if (error.message.includes('Password should be')) {
-            setErrorMessage('Le mot de passe doit comporter au moins 8 caractères.');
+          if (error.message.includes("already registered")) {
+            setErrorMessage("Un compte existe déjà avec cette adresse email.");
+          } else if (error.message.includes("Password should be")) {
+            setErrorMessage(
+              "Le mot de passe doit comporter au moins 8 caractères.",
+            );
           } else {
             setErrorMessage(error.message || "Erreur lors de l'inscription.");
           }
@@ -67,7 +75,7 @@ export default function RegisterPage() {
 
         // Si la session est immédiatement active (auto-confirm activé en dev/local)
         if (data?.session) {
-          router.push('/');
+          router.push("/app");
           router.refresh();
           return;
         }
@@ -75,7 +83,7 @@ export default function RegisterPage() {
         // Si confirmation d'email requise par le serveur Supabase
         if (data?.user && !data?.session) {
           setSuccessInfo(
-            'Votre compte a été créé avec succès ! Si la confirmation par email est activée, veuillez consulter votre boîte de réception pour valider votre compte.'
+            "Votre compte a été créé avec succès ! Si la confirmation par email est activée, veuillez consulter votre boîte de réception pour valider votre compte.",
           );
         }
       } catch (err: unknown) {
@@ -113,7 +121,12 @@ export default function RegisterPage() {
             </p>
             <div className="pt-2">
               <Link href="/login">
-                <Button variant="primary" size="md" fullWidth className="inline-flex items-center justify-center gap-1.5">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  className="inline-flex items-center justify-center gap-1.5"
+                >
                   <span>Se Connecter</span>
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -186,16 +199,11 @@ export default function RegisterPage() {
               variant="primary"
               size="lg"
               fullWidth
-              disabled={
-                isPending ||
-                !evaluatePasswordStrength(password).isValid ||
-                !confirmPassword ||
-                password !== confirmPassword
-              }
+              disabled={isPending}
               className="mt-2 bg-[#10B981] hover:bg-[#059669] text-white"
             >
               {isPending ? (
-                'Création en cours...'
+                "Création en cours..."
               ) : (
                 <span className="inline-flex items-center justify-center gap-1.5">
                   Créer mon compte
@@ -209,7 +217,7 @@ export default function RegisterPage() {
         {!successInfo && (
           <div className="mt-5 pt-4 border-t-2 border-neutral-200 dark:border-[#334155] text-center">
             <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400">
-              Vous avez déjà un compte ?{' '}
+              Vous avez déjà un compte ?{" "}
               <Link
                 href="/login"
                 className="text-[#2563EB] dark:text-[#60A5FA] hover:underline font-black inline-flex items-center gap-1 mt-1 sm:mt-0"
@@ -220,11 +228,6 @@ export default function RegisterPage() {
             </p>
           </div>
         )}
-
-        <div className="mt-4 pt-3 border-t-2 border-dashed border-neutral-200 dark:border-[#334155] flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
-          <ShieldCheck className="w-4 h-4 text-[#16A34A]" />
-          <span>Données isolées et privées par utilisateur</span>
-        </div>
       </div>
     </div>
   );

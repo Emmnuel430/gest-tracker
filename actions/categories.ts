@@ -359,4 +359,5 @@ function revalidateCategoryPaths() {
   revalidatePath('/recurrences');
   revalidatePath('/gestion');
   revalidatePath('/');
+  revalidatePath('/app');
 }

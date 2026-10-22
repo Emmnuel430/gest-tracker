@@ -156,6 +156,7 @@ export async function importTransactionsFromCsvAction(
       });
 
       revalidatePath('/');
+      revalidatePath('/app');
       revalidatePath('/historique');
       revalidatePath('/budgets');
       revalidatePath('/portefeuilles');

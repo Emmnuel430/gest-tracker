@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { THEME_STORAGE_KEY } from '@/lib/theme';
-import { BottomNav } from '@/components/layout/BottomNav';
-import { ReferenceDataProvider } from '@/components/providers/ReferenceDataProvider';
+import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'GEST TRACKER — Suivi des dépenses & revenus',
@@ -52,13 +51,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#111827] dark:text-[#F8FAFC] transition-colors pb-24 sm:pb-28">
-        <ReferenceDataProvider>
-          <main className="flex-1 w-full max-w-xl mx-auto px-4 py-5 sm:py-6">
-            {children}
-          </main>
-        </ReferenceDataProvider>
-        <BottomNav />
+      <body className="min-h-full flex flex-col bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#111827] dark:text-[#F8FAFC] transition-colors">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

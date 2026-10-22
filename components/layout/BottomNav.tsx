@@ -9,8 +9,11 @@ import { cn } from '@/lib/utils';
 export function BottomNav() {
   const pathname = usePathname();
 
-  // Ne pas afficher sur les pages d'authentification ou d'onboarding
+  // Ne pas afficher sur les pages publiques, de démo, d'authentification ou d'onboarding
   if (
+    pathname === '/' ||
+    pathname === '/demo' ||
+    pathname.startsWith('/demo') ||
     pathname === '/login' ||
     pathname === '/register' ||
     pathname.startsWith('/mot-de-passe-oublie') ||
@@ -20,7 +23,7 @@ export function BottomNav() {
     return null;
   }
 
-  const isHomeActive = pathname === '/';
+  const isHomeActive = pathname === '/' || pathname === '/app';
   const isHistoryActive = pathname === '/historique' || pathname.startsWith('/historique');
   const isGestionActive =
     pathname === '/gestion' ||

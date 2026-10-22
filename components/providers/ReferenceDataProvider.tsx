@@ -24,19 +24,22 @@ export function ReferenceDataProvider({
   children,
   initialCategories = [],
   initialWallets = [],
+  readOnly = false,
 }: {
   children: React.ReactNode;
   initialCategories?: CategoryItem[];
   initialWallets?: WalletItem[];
+  readOnly?: boolean;
 }) {
   const pathname = usePathname();
   const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
   const [wallets, setWallets] = useState<WalletItem[]>(initialWallets);
   const [isLoading, setIsLoading] = useState<boolean>(
-    initialCategories.length === 0 || initialWallets.length === 0
+    !readOnly && (initialCategories.length === 0 || initialWallets.length === 0)
   );
 
   const fetchCategories = useCallback(async () => {
+    if (readOnly) return;
     try {
       const res = await getCategoriesAction(undefined, { includeArchived: true });
       if (res.success && res.data) {
@@ -45,9 +48,10 @@ export function ReferenceDataProvider({
     } catch (err) {
       console.error('Erreur lors du chargement des catégories :', err);
     }
-  }, []);
+  }, [readOnly]);
 
   const fetchWallets = useCallback(async () => {
+    if (readOnly) return;
     try {
       const res = await getWalletsAction({ includeArchived: true, includeDeleted: true });
       if (res.success && res.data) {
@@ -56,16 +60,30 @@ export function ReferenceDataProvider({
     } catch (err) {
       console.error('Erreur lors du chargement des portefeuilles :', err);
     }
-  }, []);
+  }, [readOnly]);
 
   const refreshAll = useCallback(async () => {
+    if (readOnly) return;
     setIsLoading(true);
     await Promise.all([fetchCategories(), fetchWallets()]);
     setIsLoading(false);
-  }, [fetchCategories, fetchWallets]);
+  }, [fetchCategories, fetchWallets, readOnly]);
 
-  // 1. Chargement initial au montage
+  // 1. Chargement initial au montage (uniquement si NON readOnly et NON public/auth)
   useEffect(() => {
+    if (readOnly) return;
+
+    const isPublicOrAuth =
+      pathname === '/' ||
+      pathname === '/demo' ||
+      pathname.startsWith('/demo') ||
+      pathname === '/login' ||
+      pathname === '/register' ||
+      pathname === '/bienvenue' ||
+      pathname.startsWith('/mot-de-passe-oublie');
+
+    if (isPublicOrAuth) return;
+
     let isMounted = true;
     const loadAll = async () => {
       setIsLoading(true);
@@ -77,20 +95,24 @@ export function ReferenceDataProvider({
     return () => {
       isMounted = false;
     };
-  }, [fetchCategories, fetchWallets]);
+  }, [fetchCategories, fetchWallets, readOnly, pathname]);
 
   // 2. Écoute des changements de route : si l'utilisateur arrive sur une page protégée avec des listes vides
   const isAuthOrOnboarding =
+    pathname === '/' ||
+    pathname === '/demo' ||
+    pathname.startsWith('/demo') ||
     pathname === '/login' ||
     pathname === '/register' ||
     pathname === '/bienvenue' ||
     pathname.startsWith('/mot-de-passe-oublie');
 
   useEffect(() => {
+    if (readOnly) return;
     if (!isAuthOrOnboarding && (categories.length === 0 || wallets.length === 0)) {
       refreshAll();
     }
-  }, [pathname, isAuthOrOnboarding, categories.length, wallets.length, refreshAll]);
+  }, [pathname, isAuthOrOnboarding, categories.length, wallets.length, refreshAll, readOnly]);
 
   // 3. Écoute de l'état d'authentification Supabase (connexion, déconnexion, refresh de token)
   useEffect(() => {
