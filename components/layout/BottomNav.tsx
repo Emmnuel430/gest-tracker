@@ -37,7 +37,7 @@ export function BottomNav() {
 
   const navItems = [
     {
-      href: '/',
+      href: '/app',
       label: 'Accueil',
       isActive: isHomeActive,
       icon: Home,
@@ -81,7 +81,7 @@ export function BottomNav() {
               className={cn(
                 'flex flex-col items-center justify-center py-1 sm:py-1.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl transition-all cursor-pointer group select-none border-2',
                 item.isActive
-                  ? 'bg-[#3B82F6] text-white border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-1'
+                  ? 'bg-[#2563EB] text-white border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#FFFFFF] -translate-y-1'
                   : 'bg-white dark:bg-[#1E293B] border-transparent hover:border-[#111827] dark:hover:border-white hover:shadow-[2px_2px_0px_0px_#111827] dark:hover:shadow-[2px_2px_0px_0px_#FFFFFF]'
               )}
               title={item.title}

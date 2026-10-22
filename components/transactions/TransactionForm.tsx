@@ -134,7 +134,7 @@ export function TransactionForm({
           response.message || "Opération enregistrée avec succès !",
         );
         setTimeout(() => {
-          router.push("/");
+          router.push("/app");
           router.refresh();
         }, 800);
       } else {

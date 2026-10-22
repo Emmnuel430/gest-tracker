@@ -1,8 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { ShieldCheck, Mail, ArrowUpRight, Play, Lock, UserPlus } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import {
+  ShieldCheck,
+  Mail,
+  ArrowUpRight,
+  Play,
+  Lock,
+  UserPlus,
+} from "lucide-react";
 
 export function PublicFooter() {
   return (
@@ -20,11 +27,13 @@ export function PublicFooter() {
               </span>
             </div>
             <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 leading-relaxed max-w-sm">
-              L'outil néobrutaliste sans compromis pour suivre vos dépenses, vos revenus et votre trésorerie multi-comptes (Espèces, Wave, Orange Money et Banques) en zone FCFA.
+              L'outil simple et rapide pour suivre vos dépenses, vos revenus et
+              votre trésorerie multi-comptes (Espèces, Wave, Orange Money et
+              Banques) en zone FCFA.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
               <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
-              <span>Chiffrement SSL & Isolation RLS par utilisateur</span>
+              <span>Chiffrement SSL & Données strictement privées</span>
             </div>
           </div>
 
@@ -35,19 +44,28 @@ export function PublicFooter() {
             </h4>
             <ul className="space-y-2 text-xs font-bold text-neutral-600 dark:text-neutral-400">
               <li>
-                <Link href="/demo" className="hover:text-[#2563EB] dark:hover:text-[#60A5FA] inline-flex items-center gap-1 transition-colors">
+                <Link
+                  href="/demo"
+                  className="hover:text-[#2563EB] dark:hover:text-[#60A5FA] inline-flex items-center gap-1 transition-colors"
+                >
                   <Play className="w-3 h-3 fill-current" />
                   <span>Démo interactive sans compte</span>
                 </Link>
               </li>
               <li>
-                <Link href="/register" className="hover:text-[#2563EB] dark:hover:text-[#60A5FA] inline-flex items-center gap-1 transition-colors">
+                <Link
+                  href="/register"
+                  className="hover:text-[#2563EB] dark:hover:text-[#60A5FA] inline-flex items-center gap-1 transition-colors"
+                >
                   <UserPlus className="w-3 h-3" />
                   <span>Créer un compte gratuit</span>
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-[#2563EB] dark:hover:text-[#60A5FA] inline-flex items-center gap-1 transition-colors">
+                <Link
+                  href="/login"
+                  className="hover:text-[#2563EB] dark:hover:text-[#60A5FA] inline-flex items-center gap-1 transition-colors"
+                >
                   <Lock className="w-3 h-3" />
                   <span>Connexion à mon espace</span>
                 </Link>
@@ -61,11 +79,13 @@ export function PublicFooter() {
               Confidentialité
             </h4>
             <p className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              Vos données financières restent strictement privées. Aucun compte bancaire n'est synchronisé automatiquement ni partagé avec des tiers.
+              Vos données financières restent strictement privées. Aucun compte
+              bancaire n'est synchronisé automatiquement ni partagé avec des
+              tiers.
             </p>
             <div className="pt-1">
               <a
-                href="mailto:contact@gesttracker.app"
+                href="mailto:emmanueldaho859@gmail.com"
                 className="text-[11px] font-black uppercase text-[#2563EB] dark:text-[#60A5FA] hover:underline inline-flex items-center gap-1"
               >
                 <Mail className="w-3.5 h-3.5" />
@@ -80,8 +100,6 @@ export function PublicFooter() {
           <p>© 2026 GEST TRACKER. Tous droits réservés.</p>
           <div className="flex items-center gap-4 text-[11px]">
             <span>Version 2.14.0</span>
-            <span>•</span>
-            <span>Simplicité & Zéro over-engineering</span>
           </div>
         </div>
       </div>

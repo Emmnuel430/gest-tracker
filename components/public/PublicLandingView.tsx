@@ -258,8 +258,8 @@ export function PublicLandingView() {
               </h3>
               <p className="text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
                 Vos finances vous appartiennent exclusivement. Chaque donnée est
-                isolée côté base de données PostgreSQL via Row-Level Security.
-                Zéro tracking commercial.
+                chiffrée, sécurisée et accessible uniquement depuis votre compte personnel.
+                Zéro partage avec des tiers.
               </p>
               <div className="pt-1 text-xs font-bold text-neutral-500">
                 Session chiffrée SSL & authentification sécurisée.

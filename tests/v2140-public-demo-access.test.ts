@@ -107,7 +107,8 @@ describe('Version 2.14.0 — Accès public, Démo interactive et Activation simp
     const registerContent = fs.readFileSync(registerPath, 'utf8');
 
     assert.ok(
-      registerContent.includes("router.push('/app')"),
+      registerContent.includes("router.push('/app')") ||
+        registerContent.includes('router.push("/app")'),
       'RegisterPage doit rediriger vers /app après inscription'
     );
     assert.ok(

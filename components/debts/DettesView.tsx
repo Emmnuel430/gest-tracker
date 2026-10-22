@@ -51,17 +51,16 @@ export function DettesView() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B0F19] text-[#111827] dark:text-[#F8FAFC] pb-24 transition-colors">
-      <main className="max-w-2xl mx-auto px-4 pt-6 space-y-6">
-        {/* Navigation & Action */}
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/gestion"
-            className="flex items-center gap-1 text-xs font-black uppercase text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors p-2 rounded-lg border-2 border-transparent hover:border-[#111827] dark:hover:border-white"
-          >
-            <ArrowLeft className="w-4 h-4 stroke-3" />
-            Gestion
-          </Link>
+    <div className="space-y-6 max-w-xl mx-auto pb-10">
+      {/* Navigation & Action */}
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          href="/gestion"
+          className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] hover:text-[#2563EB] dark:hover:text-[#60A5FA] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 stroke-3" />
+          <span>Gestion</span>
+        </Link>
 
           <Button
             onClick={() => setCreateModalOpen(true)}
@@ -186,7 +185,6 @@ export function DettesView() {
             ))}
           </div>
         )}
-      </main>
 
       {/* Modale d'ajout */}
       <DebtModal

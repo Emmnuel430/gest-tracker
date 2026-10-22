@@ -11,6 +11,7 @@ import {
   PieChart,
   GitCompare,
   Loader2,
+  RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Transaction } from '@/types/transaction';
@@ -581,12 +582,34 @@ export function HistoryView({
               Chargement des opérations...
             </div>
           ) : transactions.length === 0 ? (
-            <EmptyState
-              title="Aucune opération sur cette plage"
-              description="Ajustez les dates ou appliquez une plage plus large pour afficher vos opérations."
-              actionLabel="＋ Enregistrer une opération"
-              actionHref="/sortant"
-            />
+            <div className="space-y-3">
+              <EmptyState
+                title={hasActiveFilters ? "Aucune opération pour ces filtres" : "Aucune opération sur cette plage"}
+                description={
+                  hasActiveFilters
+                    ? "Aucune transaction ne correspond aux critères sélectionnés (type, catégorie ou compte). Vous pouvez réinitialiser les filtres pour retrouver toutes vos opérations."
+                    : "Ajustez les dates ou appliquez une plage plus large pour afficher vos opérations."
+                }
+                actionLabel={hasActiveFilters ? undefined : "＋ Enregistrer une opération"}
+                actionHref={hasActiveFilters ? undefined : "/sortant"}
+              />
+              {hasActiveFilters && (
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTypeFilter('all');
+                      setCategoryFilter('all');
+                      setPaymentFilter('all');
+                    }}
+                    className="inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-black text-xs uppercase rounded-xl border-2 border-[#111827] dark:border-white shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 stroke-2.5" />
+                    <span>Réinitialiser les filtres</span>
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-2.5">
               {transactions.map((tx) => (

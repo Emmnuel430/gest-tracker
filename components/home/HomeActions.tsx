@@ -74,16 +74,16 @@ export function HomeActions() {
         aria-label="Effectuer un virement interne entre portefeuilles"
         className="group block w-full outline-hidden"
       >
-        <div className="w-full bg-[#FFE600] border-2 border-[#111827] dark:border-[#334155] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] flex items-center justify-between gap-2 transition-all duration-150 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[4px_4px_0px_0px_#111827] dark:group-hover:shadow-[4px_4px_0px_0px_#000000] group-active:translate-x-0.5 group-active:translate-y-0.5 group-active:shadow-none cursor-pointer">
+        <div className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] border-2 border-[#111827] dark:border-[#334155] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] flex items-center justify-between gap-2 transition-all duration-150 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[4px_4px_0px_0px_#111827] dark:group-hover:shadow-[4px_4px_0px_0px_#000000] group-active:translate-x-0.5 group-active:translate-y-0.5 group-active:shadow-none cursor-pointer">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#111827] dark:bg-white text-white dark:text-[#111827] border-2 border-[#111827] dark:border-white rounded-lg shadow-[1.5px_1.5px_0px_0px_#111827] dark:shadow-[1.5px_1.5px_0px_0px_#000000] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white dark:bg-[#1E293B] text-[#2563EB] border-2 border-[#111827] dark:border-white rounded-lg shadow-[1.5px_1.5px_0px_0px_#111827] dark:shadow-[1.5px_1.5px_0px_0px_#000000] flex items-center justify-center shrink-0">
               <ArrowRightLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-2.5" />
             </div>
-            <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#111827] truncate">
+            <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white truncate">
               VIREMENT INTERNE
             </span>
           </div>
-          <span className="shrink-0 text-[10px] sm:text-xs font-black uppercase text-[#111827] px-2 py-0.5 bg-white border-2 border-[#111827] rounded-md shadow-[1.5px_1.5px_0px_0px_#111827] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
+          <span className="shrink-0 text-[10px] sm:text-xs font-black uppercase text-[#2563EB] dark:text-white px-2 py-0.5 bg-white dark:bg-[#1E293B] border-2 border-[#111827] dark:border-white rounded-md shadow-[1.5px_1.5px_0px_0px_#111827] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
             Entre comptes
           </span>
         </div>
