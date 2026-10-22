@@ -64,7 +64,7 @@ export function DemoActionModal({
         <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl space-y-1.5 text-xs font-bold text-neutral-600 dark:text-neutral-300">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-            <span>Données isolées et strictement privées (RLS)</span>
+            <span>Données isolées et strictement privées</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#10B981]" />

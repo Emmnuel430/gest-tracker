@@ -1,6 +1,6 @@
-# GEST TRACKER — Documentation Complète (v2.14.0)
+# GEST TRACKER — Documentation Complète (v2.14.1)
 
-Bienvenue sur la documentation technique et fonctionnelle de **Personal GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue selon les principes du **Néobrutalisme Moderne** avec une architecture full-stack Next.js, Supabase et Prisma.
+Bienvenue sur la documentation technique et fonctionnelle de **GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue avec une architecture full-stack Next.js, Supabase et Prisma.
 
 ---
 
@@ -143,14 +143,14 @@ my-app/
 
 - **Vitrine d'accueil (`PublicLandingView`) sur `/` :**
   - Conçue pour convertir les visiteurs en utilisateurs sans barrière à l'entrée.
-  - Mise en avant claire des 4 piliers fondamentaux : Sans publicité, Mobile-first néobrutaliste, Sécurité stricte & isolation RLS, et Trésorerie multi-comptes en temps réel adaptée à l'Afrique de l'Ouest (Espèces, Wave, Orange Money, Banques en FCFA).
+  - Mise en avant claire des 4 piliers fondamentaux : Sans publicité, Interface ultra-rapide, Sécurité stricte & confidentialité totale, et Trésorerie multi-comptes en temps réel adaptée à l'Afrique de l'Ouest (Espèces, Wave, Orange Money, Banques en FCFA).
   - Deux boutons d'action stratégiques : « Tester la démo interactive » (`/demo`) et « Créer un compte gratuit » (`/register`).
   - Redirection automatique et instantanée des utilisateurs déjà authentifiés vers le tableau de bord privé (`/app`).
 - **Démonstration interactive (`DemoView`) sur `/demo` :**
   - Accessible immédiatement à tout visiteur sans inscription ni collecte de courriel ou mot de passe.
   - Fonctionne sur un jeu de données fictif complet et équilibré en Francs CFA (650 000 FCFA de trésorerie sur 4 comptes, 12 transactions exemplaires et 286 000 FCFA de dépenses mensuelles).
   - Comprend 4 onglets interactifs complets : *Tableau de bord*, *Historique* (avec filtres en direct par période, type et portefeuille), *Répartition & Statistiques graphiques*, et *Portefeuilles*.
-  - Mode bac à sable sécurisé en lecture seule : toute tentative d'ajout, de modification ou de suppression ouvre une modal néobrutaliste pédagogique (`DemoActionModal`) expliquant le mode démo et invitant à créer son propre espace en 1 clic.
+  - Mode bac à sable sécurisé en lecture seule : toute tentative d'ajout, de modification ou de suppression ouvre une modal pédagogique (`DemoActionModal`) expliquant le mode démo et invitant à créer son propre espace en 1 clic.
 - **Découplage architectural via `AppShell` :**
   - Les pages publiques (`/`, `/demo`, `/login`, `/register`, etc.) n'exécutent aucun appel serveur superflu de données de référence et n'affichent pas la barre de navigation `BottomNav`.
   - Le `ReferenceDataProvider` et la navigation inférieure ne sont montés que sur les routes d'application privées authentifiées.
@@ -158,6 +158,7 @@ my-app/
 ### 4.1 Authentification, Onboarding & Premier Login (`/bienvenue`)
 
 - **Routes d'authentification :** `/login`, `/register`, et `/mot-de-passe-oublie` (3 étapes).
+- **Navigation libre et zéro impasse :** Bouton explicite « Retour à l'accueil » (`ArrowLeft`) au-dessus de chaque formulaire d'authentification permettant de revenir à tout moment vers la vitrine publique ou la démo.
 - **Inscription fluide (`/register`) :**
   - Bouton d'inscription actif dès la saisie pour éviter toute sensation de blocage silencieux (désactivation uniquement pendant le traitement serveur).
 - **Parcours d'Onboarding Premier Login (`/bienvenue`) :**
@@ -193,7 +194,7 @@ my-app/
   - Les pages `/entrant` et `/sortant` préchargent directement les données côté serveur pour un affichage instantané sans latence dès la fin du parcours d'onboarding.
   - Tous les formulaires et modals (`TransactionForm`, `EditTransactionModal`, `RecurringModal`, `BudgetModal`) intègrent un mécanisme d'auto-réparation déclenchant un rafraîchissement si la liste locale est initialement vide.
 
-### 4.2 Tableau de Bord Principal (`/`)
+### 4.2 Tableau de Bord Principal (`/app`)
 
 - **Résumé du Solde & Périodes (v2.8.0 / v2.9.0) :**
   - **Solde Total Disponible (Patrimoine net) :** Issu du service centralisé `getWalletBalancesForUser`, le solde global affiché en haut de l'accueil correspond rigoureusement à la somme des portefeuilles (soldes déclarés $T_0$ et mouvements postérieurs compris).
@@ -203,12 +204,12 @@ my-app/
 - **Bannière d'Alerte Récurrente :**
   - Détecte automatiquement les charges du mois qui n'ont pas encore été validées (loyer, abonnements).
   - Permet de valider (créant la transaction réelle) ou d'ignorer en un clic.
-- **Trilogie Financière & Action Bar 2+1 Mobile-First (v2.13.0) :**
+- **Trilogie Financière & Action Bar 2+1 Mobile-First (v2.13.0 / v2.14.1) :**
   - **Ligne 1 (50% / 50%) :**
-    - Bouton **ENTRANT** vert néobrutaliste (`#16A34A`, `ArrowDownLeft`) vers `/entrant` pour enregistrer un revenu.
-    - Bouton **SORTANT** rouge néobrutaliste (`#DC2626`, `ArrowUpRight`) vers `/sortant` pour enregistrer une dépense.
+    - Bouton **ENTRANT** vert émeraude (`#16A34A`, `ArrowDownLeft`) vers `/entrant` pour enregistrer un revenu.
+    - Bouton **SORTANT** rouge corail (`#DC2626`, `ArrowUpRight`) vers `/sortant` pour enregistrer une dépense.
   - **Ligne 2 (100% pleine largeur) :**
-    - Bouton **VIREMENT INTERNE** jaune néobrutaliste (`#FFE600`, `ArrowRightLeft`) avec badge « Entre comptes », déclenchant directement la `TransferModal` en surimpression sans rechargement de page.
+    - Bouton **VIREMENT INTERNE** bleu signature (`#2563EB`, hover `#1D4ED8`, `ArrowRightLeft`) avec badge « Entre comptes », déclenchant directement la `TransferModal` en surimpression sans rechargement de page.
   - **Concision visuelle :** Suppression de tous les sous-titres verbeux, divisant l'encombrement vertical par deux (~120px vs ~240px) pour préserver la ligne de flottaison sur mobile.
   - **Historique déporté :** Le bouton géant `HISTORIQUE` de l'accueil est supprimé car accessible en 1 tap permanent dans la `BottomNav`.
 - **Dernières Opérations Cliquables (v2.9.0) :**

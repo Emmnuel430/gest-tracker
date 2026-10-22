@@ -74,7 +74,7 @@ export function RecurringAlertBanner({
           disabled={isPending}
           className="flex-1 py-2 px-3 bg-[#111827] hover:bg-black text-white font-black text-xs uppercase rounded-lg border-2 border-[#111827] flex items-center justify-center gap-1.5 cursor-pointer transition-all active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50"
         >
-          <Check className="w-4 h-4 text-[#00DF81] stroke-3" />
+          <Check className="w-4 h-4 text-[#16A34A] stroke-3" />
           Confirmer l’opération
         </button>
         <button

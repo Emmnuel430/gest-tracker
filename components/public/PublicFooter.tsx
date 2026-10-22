@@ -20,11 +20,11 @@ export function PublicFooter() {
               </span>
             </div>
             <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 leading-relaxed max-w-sm">
-              L'outil néobrutaliste sans compromis pour suivre vos dépenses, vos revenus et votre trésorerie multi-comptes (Espèces, Wave, Orange Money et Banques) en zone FCFA.
+              L'outil simple et rapide pour suivre vos dépenses, vos revenus et votre trésorerie multi-comptes (Espèces, Wave, Orange Money et Banques) en zone FCFA.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
               <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
-              <span>Chiffrement SSL & Isolation RLS par utilisateur</span>
+              <span>Chiffrement SSL & Données strictement privées</span>
             </div>
           </div>
 

@@ -43,6 +43,17 @@ export default function MotDePasseOubliePage() {
 
   return (
     <div className="w-full max-w-sm mx-auto py-8">
+      {/* Bouton retour vers l'accueil public */}
+      <div className="mb-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-neutral-600 dark:text-neutral-400 hover:text-[#111827] dark:hover:text-white transition-colors p-1.5 rounded-lg border-2 border-transparent hover:border-[#111827] dark:hover:border-white cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4 stroke-3" />
+          <span>Retour à l&apos;accueil</span>
+        </Link>
+      </div>
+
       <div className="text-center mb-8">
         <div className="w-14 h-14 bg-[#FFE600] border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center mx-auto mb-3">
           <KeyRound className="w-7 h-7 text-[#111827] stroke-3" />

@@ -3,6 +3,18 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.1] - 2026-10-22
+
+### Bug Fixes
+- **auth** : Ajout d'un bouton de retour vers l'accueil public (`/`) sur les pages d'authentification (`/login`, `/register`, `/mot-de-passe-oublie`, `/verification`, `/nouveau`), supprimant l'impasse de navigation pour les visiteurs non authentifiés.
+- **home** : Harmonisation chromatique des boutons du tableau de bord (`/app`) : remplacement du fond jaune fluo `#FFE600` du bouton `VIREMENT INTERNE` par le bleu primaire signature `#2563EB` (hover `#1D4ED8`, texte blanc, icône `ArrowRightLeft`), équilibrant la trilogie opérationnelle (Vert Entrant, Rouge Sortant, Bleu Virement).
+- **layout** : Correction de l'imbrication sémantique HTML5 (suppression de la balise `<main>` redondante) et élimination du double padding inférieur `pb-24` sur les vues secondaires (`/portefeuilles`, `/dettes`, `/recurrences`).
+- **navigation** : Élimination de la redirection serveur 307 : l'onglet « Accueil » de la `BottomNav` cible désormais directement `/app` (au lieu de `/`), et le formulaire de transaction (`TransactionForm`) redirige vers `/app` après soumission.
+- **history** : Ajout d'un bouton d'action direct « Réinitialiser les filtres » dans l'état vide d'`HistoryView` lorsque des filtres actifs ne retournent aucune transaction.
+- **branding** : Épuration du jargon technique développeur (*néobrutalisme*, *PostgreSQL via Row-Level Security*, *RLS*, anglicismes résiduels) dans la vitrine publique, le pied de page, les métadonnées et la modal de démo, au profit d'engagements clairs de confidentialité et de simplicité financière.
+
+---
+
 ## [2.14.0] - 2026-10-21
 
 ### Features

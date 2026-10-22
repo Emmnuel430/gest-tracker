@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'GEST TRACKER — Suivi des dépenses & revenus',
-  description: 'Application personnelle de suivi financier en Néobrutalisme',
+  description: 'Application personnelle de gestion financière et multi-comptes (Espèces, Wave, Orange Money, Banques) en zone FCFA.',
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',

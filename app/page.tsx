@@ -5,7 +5,7 @@ import { PublicLandingView } from '@/components/public/PublicLandingView';
 
 export const metadata: Metadata = {
   title: 'GEST TRACKER — Suivi des dépenses & revenus',
-  description: 'Application personnelle néobrutaliste de gestion financière et multi-comptes (Espèces, Wave, Orange Money, Banques) en zone FCFA.',
+  description: 'Application personnelle de gestion financière et multi-comptes (Espèces, Wave, Orange Money, Banques) en zone FCFA.',
 };
 
 export const dynamic = 'force-dynamic';

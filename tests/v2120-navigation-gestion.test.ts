@@ -10,8 +10,8 @@ describe('Version 2.12.0 — Navigation 4 onglets, Hub Gestion & Concision', () 
     const bottomNavPath = path.join(rootDir, 'components', 'layout', 'BottomNav.tsx');
     const content = fs.readFileSync(bottomNavPath, 'utf8');
 
-    // Vérifie les 4 routes clés
-    assert.match(content, /href:\s*['"]\/['"]/);
+    // Vérifie les 4 routes clés (/app ou / pour Accueil, /historique, /gestion, /parametres)
+    assert.match(content, /href:\s*['"](\/|\/app)['"]/);
     assert.match(content, /href:\s*['"]\/historique['"]/);
     assert.match(content, /href:\s*['"]\/gestion['"]/);
     assert.match(content, /href:\s*['"]\/parametres['"]/);
