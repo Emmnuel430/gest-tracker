@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 import {
   Play,
   ArrowRight,
@@ -16,10 +16,10 @@ import {
   Smartphone,
   Banknote,
   CreditCard,
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { PublicHeader } from '@/components/public/PublicHeader';
-import { PublicFooter } from '@/components/public/PublicFooter';
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { PublicHeader } from "@/components/public/PublicHeader";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 export function PublicLandingView() {
   return (
@@ -33,18 +33,30 @@ export function PublicLandingView() {
         <section className="text-center space-y-6 max-w-3xl mx-auto pt-4">
           {/* Badge Néobrutaliste */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFE600] text-[#111827] border-2 border-[#111827] shadow-[3px_3px_0px_0px_#111827] text-xs font-black uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 stroke-[3]" />
-            <span>Gestion financière personnelle en Afrique de l&apos;Ouest</span>
+            <Sparkles className="w-4 h-4 stroke-3" />
+            <span>La gestion financière personnelle simplement !</span>
           </div>
 
           {/* Titre Principal */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC] leading-[1.1]">
-            Reprenez le contrôle total de vos finances.
+            Reprenez le{" "}
+            <span className="text-[#FFC107] dark:text-[#10B981]">contrôle</span>{" "}
+            total de{" "}
+            <span className="text-[#FFC107] dark:text-[#10B981]">
+              vos finances
+            </span>
+            .
           </h1>
 
           {/* Sous-titre */}
           <p className="text-sm sm:text-lg font-semibold text-neutral-600 dark:text-neutral-300 leading-relaxed max-w-2xl mx-auto">
-            Suivez vos <span className="text-[#10B981] font-bold">espèces</span>, vos comptes <span className="text-[#1DC4F2] font-bold">Wave</span>, <span className="text-[#FF7900] font-bold">Orange Money</span> et vos comptes <span className="text-[#2563EB] font-bold">bancaires</span> en un clin d&apos;œil. Sans tableurs complexes, avec une simplicité radicale.
+            Suivez vos <span className="text-[#10B981] font-bold">espèces</span>
+            , vos comptes <span className="text-[#1DC4F2] font-bold">Wave</span>
+            , <span className="text-[#FF7900] font-bold">Orange Money</span> et
+            vos comptes{" "}
+            <span className="text-[#2563EB] font-bold">bancaires</span> en un
+            clin d&apos;œil. Sans tableurs complexes, avec une simplicité
+            radicale.
           </p>
 
           {/* Double CTA Principal */}
@@ -56,7 +68,7 @@ export function PublicLandingView() {
                 fullWidth
                 className="text-sm uppercase flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] px-6 py-3.5"
               >
-                <Play className="w-4 h-4 stroke-[3] fill-current" />
+                <Play className="w-4 h-4 stroke-3 fill-current" />
                 <span>Essayer la démo interactive</span>
               </Button>
             </Link>
@@ -69,7 +81,7 @@ export function PublicLandingView() {
                 className="text-sm uppercase flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000] px-6 py-3.5 bg-[#10B981] hover:bg-[#059669] text-white"
               >
                 <span>Créer un compte gratuit</span>
-                <ArrowRight className="w-4 h-4 stroke-[3]" />
+                <ArrowRight className="w-4 h-4 stroke-3" />
               </Button>
             </Link>
           </div>
@@ -86,7 +98,7 @@ export function PublicLandingView() {
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-              Multi-portefeuilles en FCFA
+              Multi-portefeuilles
             </span>
           </div>
         </section>
@@ -105,7 +117,10 @@ export function PublicLandingView() {
                 Explorez l&apos;application en direct sans créer de compte.
               </h2>
               <p className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                Naviguez dans un tableau de bord fictif, filtrez l&apos;historique par période, consultez la répartition par catégorie et observez le suivi en temps réel de 4 comptes réalistes (Espèces, Wave, Orange Money, Banque).
+                Naviguez dans un tableau de bord fictif, filtrez
+                l&apos;historique par période, consultez la répartition par
+                catégorie et observez le suivi en temps réel de 4 comptes
+                réalistes (Espèces, Wave, Orange Money, Banque).
               </p>
             </div>
 
@@ -118,7 +133,7 @@ export function PublicLandingView() {
                 >
                   <Play className="w-4 h-4 fill-current" />
                   <span>Lancer la démo en 1 clic</span>
-                  <ArrowRight className="w-4 h-4 stroke-[3]" />
+                  <ArrowRight className="w-4 h-4 stroke-3" />
                 </Button>
               </Link>
             </div>
@@ -127,20 +142,36 @@ export function PublicLandingView() {
           {/* Mini-aperçu visuel de données démo */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t-2 border-neutral-100 dark:border-neutral-800">
             <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl">
-              <span className="text-[10px] font-black uppercase text-neutral-500 block">Solde consolidé</span>
-              <span className="text-base sm:text-lg font-black text-[#2563EB] dark:text-[#60A5FA]">650 000 FCFA</span>
+              <span className="text-[10px] font-black uppercase text-neutral-500 block">
+                Solde consolidé
+              </span>
+              <span className="text-base sm:text-lg font-black text-[#2563EB] dark:text-[#60A5FA]">
+                650 000 FCFA
+              </span>
             </div>
             <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl">
-              <span className="text-[10px] font-black uppercase text-neutral-500 block">Wave disponible</span>
-              <span className="text-base sm:text-lg font-black text-[#1DC4F2]">210 000 FCFA</span>
+              <span className="text-[10px] font-black uppercase text-neutral-500 block">
+                Wave disponible
+              </span>
+              <span className="text-base sm:text-lg font-black text-[#1DC4F2]">
+                210 000 FCFA
+              </span>
             </div>
             <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl">
-              <span className="text-[10px] font-black uppercase text-neutral-500 block">Orange Money</span>
-              <span className="text-base sm:text-lg font-black text-[#FF7900]">155 000 FCFA</span>
+              <span className="text-[10px] font-black uppercase text-neutral-500 block">
+                Orange Money
+              </span>
+              <span className="text-base sm:text-lg font-black text-[#FF7900]">
+                155 000 FCFA
+              </span>
             </div>
             <div className="p-3 bg-[#F8FAFC] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-xl">
-              <span className="text-[10px] font-black uppercase text-neutral-500 block">Espèces physiques</span>
-              <span className="text-base sm:text-lg font-black text-[#52B788]">85 000 FCFA</span>
+              <span className="text-[10px] font-black uppercase text-neutral-500 block">
+                Espèces physiques
+              </span>
+              <span className="text-base sm:text-lg font-black text-[#52B788]">
+                85 000 FCFA
+              </span>
             </div>
           </div>
         </section>
@@ -154,7 +185,8 @@ export function PublicLandingView() {
               Conçu pour votre réalité financière
             </h2>
             <p className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-              Des fonctionnalités taillées pour le quotidien, sans jargon ni complexité inutile.
+              Des fonctionnalités taillées pour le quotidien, sans jargon ni
+              complexité inutile.
             </p>
           </div>
 
@@ -168,7 +200,9 @@ export function PublicLandingView() {
                 Trésorerie Multi-Comptes Réelle
               </h3>
               <p className="text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                Suivez simultanément vos espèces en poche, vos soldes Wave et Orange Money, ainsi que vos comptes bancaires. Consultez votre patrimoine net en un coup d&apos;œil.
+                Suivez simultanément vos espèces en poche, vos soldes Wave et
+                Orange Money, ainsi que vos comptes bancaires. Consultez votre
+                patrimoine net en un coup d&apos;œil.
               </p>
               <div className="pt-1 flex items-center gap-2 text-xs font-bold text-neutral-500">
                 <Banknote className="w-4 h-4 text-[#52B788]" />
@@ -187,7 +221,9 @@ export function PublicLandingView() {
                 Trilogie Financière 2+1
               </h3>
               <p className="text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                Saisissez un revenu (Entrant), une dépense (Sortant) ou un virement entre vos comptes en moins de 5 secondes. Les frais de virement sont calculés et enregistrés automatiquement.
+                Saisissez un revenu (Entrant), une dépense (Sortant) ou un
+                virement entre vos comptes en moins de 5 secondes. Les frais de
+                virement sont calculés et enregistrés automatiquement.
               </p>
               <div className="pt-1 text-xs font-bold text-neutral-500">
                 Neutralité mathématique garantie sur les transferts internes.
@@ -203,7 +239,9 @@ export function PublicLandingView() {
                 Catégories & Enveloppes Claires
               </h3>
               <p className="text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                Organisez vos rentrées et vos sorties dans des catégories sur-mesure dotées de codes couleur distinctifs. Définissez vos plafonds budgétaires mensuels.
+                Organisez vos rentrées et vos sorties dans des catégories
+                sur-mesure dotées de codes couleur distinctifs. Définissez vos
+                plafonds budgétaires mensuels.
               </p>
               <div className="pt-1 text-xs font-bold text-neutral-500">
                 Contrôle préventif de surconsommation budgétaire.
@@ -219,7 +257,9 @@ export function PublicLandingView() {
                 Cloisonnement & Confidentialité Totale
               </h3>
               <p className="text-xs sm:text-sm font-medium text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                Vos finances vous appartiennent exclusivement. Chaque donnée est isolée côté base de données PostgreSQL via Row-Level Security. Zéro tracking commercial.
+                Vos finances vous appartiennent exclusivement. Chaque donnée est
+                isolée côté base de données PostgreSQL via Row-Level Security.
+                Zéro tracking commercial.
               </p>
               <div className="pt-1 text-xs font-bold text-neutral-500">
                 Session chiffrée SSL & authentification sécurisée.
@@ -237,7 +277,8 @@ export function PublicLandingView() {
               Prêt à reprendre la main sur votre argent ?
             </h2>
             <p className="text-xs sm:text-sm font-semibold text-neutral-300 leading-relaxed">
-              Commencez par tester la démo interactive sans engagement, ou créez votre compte gratuit en 30 secondes.
+              Commencez par tester la démo interactive sans engagement, ou créez
+              votre compte gratuit en 30 secondes.
             </p>
           </div>
 
@@ -262,7 +303,7 @@ export function PublicLandingView() {
                 className="text-xs sm:text-sm uppercase flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#000000] bg-[#10B981] hover:bg-[#059669] text-white"
               >
                 <span>Créer mon compte gratuit</span>
-                <ArrowRight className="w-4 h-4 stroke-[3]" />
+                <ArrowRight className="w-4 h-4 stroke-3" />
               </Button>
             </Link>
           </div>
