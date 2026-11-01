@@ -3,6 +3,19 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.0] - 2026-11-01
+
+### Features
+- **session-policy** : Mise en place d'une politique stricte de durée des sessions et de l'option « Se souvenir de moi » :
+  - **Délai d'inactivité de 15 minutes** : Déconnexion automatique après 15 minutes sans interaction pour sécuriser les données financières sur les postes partagés.
+  - **Option « Se souvenir de moi » (30 jours)** : Option facultative sur la page de connexion prolongeant la validité à 30 jours sans interruption par inactivité.
+  - **Jeton de session signé HMAC-SHA256** : Encodage et vérification cryptographique via Web Crypto API dans le cookie HTTP-only `gt_session` (compatible Middleware Next.js et Server Actions).
+  - **Surveillance d'inactivité client (`SessionTimeoutWatcher`)** : Écoute passive des interactions utilisateurs, synchronisation inter-onglets via `BroadcastChannel`, ping périodique vers `/api/session/activity` et alerte de compte à rebours de 60s à 14 minutes.
+  - **Bannières explicatives sur `/login`** : Notifications néobrutalistes distinctes pour l'inactivité (`reason=idle`) et l'expiration (`reason=expired`).
+  - **Migration transparente** : Prise en charge automatique des sessions préexistantes sans déconnexion intempestive.
+
+---
+
 ## [2.14.1] - 2026-10-22
 
 ### Bug Fixes
