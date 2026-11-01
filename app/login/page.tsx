@@ -14,17 +14,22 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { getErrorMessage } from "@/lib/utils";
+import { signInAction } from "@/actions/auth-session";
+import { Clock } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetSuccess = searchParams.get("reset") === "success";
+  const reason = searchParams.get("reason");
 
   const [isPending, startTransition] = useTransition();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,18 +43,14 @@ function LoginForm() {
 
     startTransition(async () => {
       try {
-        const supabase = createClient();
-        const { error } = await supabase.auth.signInWithPassword({
+        const result = await signInAction({
           email: email.trim().toLowerCase(),
           password,
+          rememberMe,
         });
 
-        if (error) {
-          setErrorMessage(
-            error.message === "Invalid login credentials"
-              ? "Email ou mot de passe incorrect."
-              : error.message,
-          );
+        if (!result.success) {
+          setErrorMessage(result.error);
           return;
         }
 
@@ -97,6 +98,22 @@ function LoginForm() {
           </div>
         )}
 
+        {reason === "idle" && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-[#FEF3C7] dark:bg-[#78350F] border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] text-xs font-bold text-[#92400E] dark:text-[#FDE68A]">
+            <Clock className="w-4 h-4 shrink-0 text-[#D97706]" />
+            <span>
+              Vous avez été déconnecté après 15 minutes d&apos;inactivité par mesure de sécurité.
+            </span>
+          </div>
+        )}
+
+        {reason === "expired" && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-[#FEF2F2] dark:bg-[#7F1D1D] border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000] text-xs font-bold text-[#B91C1C] dark:text-[#FCA5A5]">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[#DC2626]" />
+            <span>Votre session a expiré. Veuillez vous reconnecter.</span>
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
             label="Email"
@@ -118,7 +135,20 @@ function LoginForm() {
               required
               autoComplete="current-password"
             />
-            <div className="flex justify-end mt-1">
+            <div className="flex items-center justify-between mt-2.5">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 border-2 border-[#111827] dark:border-[#334155] rounded accent-[#2563EB] cursor-pointer"
+                />
+                <span className="text-xs font-bold text-[#111827] dark:text-[#F8FAFC]">
+                  Se souvenir de moi
+                </span>
+                <InfoTooltip content="Reste connecté 30 jours sur cet appareil. Sans cette option, vous serez déconnecté après 15 minutes d'inactivité." />
+              </label>
+
               <Link
                 href="/mot-de-passe-oublie"
                 className="text-[11px] font-bold text-[#2563EB] dark:text-[#60A5FA] hover:underline"

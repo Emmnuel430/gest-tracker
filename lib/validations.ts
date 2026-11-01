@@ -144,6 +144,7 @@ export const LoginSchema = z.object({
     .toLowerCase()
     .email({ message: 'Veuillez saisir une adresse email valide' }),
   password: z.string().min(1, { message: 'Veuillez renseigner votre mot de passe' }),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 export type RegisterFormValues = z.infer<typeof RegisterSchema>;

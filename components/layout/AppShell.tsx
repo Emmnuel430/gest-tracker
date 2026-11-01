@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { ReferenceDataProvider } from '@/components/providers/ReferenceDataProvider';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { SessionTimeoutWatcher } from '@/components/auth/SessionTimeoutWatcher';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -36,6 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </ReferenceDataProvider>
       <BottomNav />
+      <SessionTimeoutWatcher />
     </div>
   );
 }

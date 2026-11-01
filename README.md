@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.14.1)
+# GEST TRACKER — Documentation Complète (v2.15.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -59,7 +59,7 @@ La devise native de l'application est le **Franc CFA (FCFA)**.
 - **Validation des données :** [Zod](https://zod.dev/) pour toutes les entrées utilisateur et Server Actions.
 - **Visualisation & Graphiques :** [Recharts](https://recharts.org/) (flux mensuels, répartition circulaire).
 - **Icônes :** [Lucide React](https://lucide.dev/).
-- **Tests :** Node.js Test Runner avec `tsx` (226 tests unitaires automatisés).
+- **Tests :** Node.js Test Runner avec `tsx` (236 tests unitaires automatisés).
 - **Qualité & Lint :** ESLint 9 (Flat Config native) sans avertissement (`pnpm lint`).
 
 ---
@@ -556,6 +556,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_votre_cle"
 # PostgreSQL Database (Session Pooler port 5432)
 DATABASE_URL="postgresql://postgres.votre-projet:votre_mot_de_passe@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?schema=public"
 DIRECT_URL="postgresql://postgres.votre-projet:votre_mot_de_passe@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?schema=public"
+
+# Sécurité des Sessions (Secret HMAC-SHA256, jamais préfixé par NEXT_PUBLIC_)
+SESSION_COOKIE_SECRET="votre_secret_aleatoire_de_32_caracteres_minimum!"
 ```
 
 ### Commandes Utiles
@@ -647,6 +650,7 @@ L'application intègre une suite de **226 tests unitaires** couvrant l'ensemble 
 - **`tests/debts.test.ts` :** Gestion des soldes de dettes et remboursements échelonnés.
 - **`tests/csv-import.test.ts` :** Parsing de fichiers bancaires et détection de doublons.
 - **`tests/v2140-multi-agents-system.test.ts` :** Intégrité du système multi-agents, référentiels partagés et conformité stricte zéro emoji.
+- **`tests/v2150-session-policy.test.ts` :** Évaluation des politiques de session (15 min inactivité, 30 jours persistance) et intégrité cryptographique HMAC-SHA256.
 
 Pour exécuter les tests et le linter :
 
@@ -655,7 +659,7 @@ pnpm test
 pnpm lint
 ```
 
-_Résultat garanti : 232 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+_Résultat garanti : 236 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
 
 ---
 
