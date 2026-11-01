@@ -646,6 +646,7 @@ L'application intègre une suite de **226 tests unitaires** couvrant l'ensemble 
 - **`tests/insights.test.ts` :** Détection de hausses anormales multiples, seuil d'épargne 15 %, alertes de budget cumulatives et tri déterministe par sévérité.
 - **`tests/debts.test.ts` :** Gestion des soldes de dettes et remboursements échelonnés.
 - **`tests/csv-import.test.ts` :** Parsing de fichiers bancaires et détection de doublons.
+- **`tests/v2140-multi-agents-system.test.ts` :** Intégrité du système multi-agents, référentiels partagés et conformité stricte zéro emoji.
 
 Pour exécuter les tests et le linter :
 
@@ -654,7 +655,7 @@ pnpm test
 pnpm lint
 ```
 
-_Résultat garanti : 226 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
+_Résultat garanti : 232 tests passés à 100 %, 0 échec, 0 avertissement ESLint._
 
 ---
 
@@ -668,7 +669,7 @@ Le développement et la maintenance de **Gest Tracker** s'appuient sur un collè
 - **Database Administrator (`database.md`) :** Schéma Prisma, migrations versionnées et isolation des données.
 - **Lead Application Security (`security.md`) :** Authentification Supabase Auth, middleware SSR et politiques RLS.
 - **UX & Logic Auditor (`ux-logic-auditor.md`) :** Audit holistique des parcours réels, cohérence cross-pages, étanchéité de la logique financière, accessibilité et validation ciblée après correctifs.
-- **QA Lead (`qa.md`) :** Suites de tests automatisés (226 tests unitaires), typage strict et validation de la Definition of Done.
+- **QA Lead (`qa.md`) :** Suites de tests automatisés (232 tests unitaires), typage strict et validation de la Definition of Done.
 
 ### 8.1 Rôle et Compétences de UX_LOGIC_AUDITOR
 
@@ -688,3 +689,13 @@ Il opère selon 6 compétences clés :
 - **Mode AUDIT :** Analyse non-destructive produisant un rapport d'audit détaillé avec anomalies classées de P0 (critique) à P3 (mineur).
 - **Mode VALIDATION :** Rejeu ciblé des scénarios après correctifs appliqués par l'équipe de développement.
 - **Discipline Git :** Développement exclusif sur branche dédiée (`feat/...`, `fix/...`), interdiction absolue de merge vers `main`, push sur la branche de travail et délégation de la Pull Request à l'utilisateur humain.
+
+### 8.3 Outillage Agentique & Automatisation Fermée
+
+Pour garantir un niveau d'excellence et d'autonomie sans faille, le projet intègre :
+- **Lifecycle Hook (`.agent/hooks.json`) :** Hook `Stop` interceptant la fin d'intervention pour forcer le passage systématique de `pnpm test` et `next build`. Si une erreur survient, l'agent est automatiquement relancé en auto-guérison.
+- **Model Context Protocol (`.agent/mcp_config.json`) :** Serveurs MCP PostgreSQL et Supabase locaux pour donner aux rôles Database et Backend des outils natifs d'interrogation SQL et d'audit RLS.
+- **Règles Contextuelles par Domaine :**
+  - `components/AGENTS.md` : Règles de néobrutalisme, zéro emoji, accessibilité tactile 375px+ et interdiction d'`alert()`.
+  - `actions/AGENTS.md` : Règles pour Server Actions, isolation multi-tenant (`userId`), validation Zod et calculs financiers sans flottants.
+- **Référentiels Documentaires Partagés :** `.agent/docs/USER-FLOWS.md`, `.agent/docs/DESIGN-SYSTEM.md` et `.agent/docs/DEFINITION-OF-DONE.md`.

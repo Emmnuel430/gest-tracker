@@ -7,8 +7,10 @@ test('Systeme Multi-Agents & Documentation Partagee (Audit & Evolution)', async 
   const rootDir = path.resolve(__dirname, '..', '..');
 
   await t.test('Presence des 3 referentiels documentaires partages dans docs/', () => {
-    const docsDir = path.join(rootDir, 'docs');
-    assert.ok(fs.existsSync(docsDir), 'Le repertoire docs/ doit exister a la racine');
+    const docsDir = fs.existsSync(path.join(rootDir, '.agent', 'docs'))
+      ? path.join(rootDir, '.agent', 'docs')
+      : path.join(rootDir, 'docs');
+    assert.ok(fs.existsSync(docsDir), 'Le repertoire docs/ doit exister dans .agent/docs ou a la racine');
 
     const expectedDocs = ['USER-FLOWS.md', 'DESIGN-SYSTEM.md', 'DEFINITION-OF-DONE.md'];
     for (const doc of expectedDocs) {
@@ -20,8 +22,10 @@ test('Systeme Multi-Agents & Documentation Partagee (Audit & Evolution)', async 
   });
 
   await t.test('Presence et conformite de la skill locale product-activation-audit', () => {
-    const skillPath = path.join(rootDir, '.agents', 'skills', 'product-activation-audit', 'SKILL.md');
-    assert.ok(fs.existsSync(skillPath), 'La skill product-activation-audit doit exister dans .agents/skills/');
+    const skillPath = fs.existsSync(path.join(rootDir, '.agent', 'skills', 'product-activation-audit', 'SKILL.md'))
+      ? path.join(rootDir, '.agent', 'skills', 'product-activation-audit', 'SKILL.md')
+      : path.join(rootDir, '.agents', 'skills', 'product-activation-audit', 'SKILL.md');
+    assert.ok(fs.existsSync(skillPath), 'La skill product-activation-audit doit exister dans .agent/skills/ ou .agents/skills/');
 
     const content = fs.readFileSync(skillPath, 'utf8');
     assert.match(content, /^---\r?\nname:\s*product-activation-audit/m, 'Le frontmatter name doit etre defini');
