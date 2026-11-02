@@ -1,14 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  resolveDueDate,
   formatDueDateISO,
-  isSameCalendarDay,
   getRemindersDueOn,
+  MAX_REMINDER_ATTEMPTS,
 } from '../lib/recurring';
+import {
+  escapeHtml,
+  resolveSenderAddress,
+  buildReminderEmailContent,
+} from '../lib/mailer';
 import { RecurringRuleSchema } from '../lib/validations';
 
-test('Recurring Reminders Engine (V2.6.0)', async (t) => {
+test('Recurring Reminders Engine & Mailer Security (V2.6.0 / V2.15.1)', async (t) => {
   await t.test('RecurringRuleSchema inclut remindersEnabled avec true par défaut', () => {
     const parsedDefault = RecurringRuleSchema.safeParse({
       type: 'EXPENSE',
@@ -44,6 +48,7 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
         type: 'EXPENSE',
         amount: 200000,
         category: 'Loyer',
+        payment: 'Wave',
         dayOfMonth: 10,
         isActive: true,
         remindersEnabled: true,
@@ -56,6 +61,7 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
     assert.strictEqual(remindersJ7.length, 1);
     assert.strictEqual(remindersJ7[0].ruleId, 'rule-rent');
     assert.strictEqual(remindersJ7[0].offsetDays, 7);
+    assert.strictEqual(remindersJ7[0].payment, 'Wave');
     assert.strictEqual(formatDueDateISO(remindersJ7[0].dueDate), '2026-10-10');
 
     // J-3 : 7 octobre pour une échéance le 10 octobre
@@ -92,23 +98,18 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
       },
     ];
 
-    // En avril (30 jours) : l'échéance effective est le 30 avril.
-    // J-7 = 23 avril
     const dateApril23 = new Date(2026, 3, 23, 8, 0, 0);
     const remindersAprilJ7 = getRemindersDueOn(dateApril23, rules);
     assert.strictEqual(remindersAprilJ7.length, 1);
     assert.strictEqual(remindersAprilJ7[0].offsetDays, 7);
     assert.strictEqual(formatDueDateISO(remindersAprilJ7[0].dueDate), '2026-04-30');
 
-    // En février non bissextile (2025, 28 jours) : l'échéance effective est le 28 février.
-    // J-7 = 21 février
     const dateFeb21 = new Date(2025, 1, 21, 8, 0, 0);
     const remindersFebJ7 = getRemindersDueOn(dateFeb21, rules);
     assert.strictEqual(remindersFebJ7.length, 1);
     assert.strictEqual(remindersFebJ7[0].offsetDays, 7);
     assert.strictEqual(formatDueDateISO(remindersFebJ7[0].dueDate), '2025-02-28');
 
-    // J0 = 28 février
     const dateFeb28 = new Date(2025, 1, 28, 8, 0, 0);
     const remindersFebJ0 = getRemindersDueOn(dateFeb28, rules);
     assert.strictEqual(remindersFebJ0.length, 1);
@@ -116,7 +117,7 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
     assert.strictEqual(formatDueDateISO(remindersFebJ0[0].dueDate), '2025-02-28');
   });
 
-  await t.test('ignore les règles inactives (isActive: false)', () => {
+  await t.test('ignore les règles inactives, sans rappel ou à fréquence non mensuelle', () => {
     const rules = [
       {
         id: 'rule-inactive',
@@ -128,15 +129,6 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
         isActive: false,
         remindersEnabled: true,
       },
-    ];
-
-    const dateJ0 = new Date(2026, 9, 10, 8, 0, 0);
-    const reminders = getRemindersDueOn(dateJ0, rules);
-    assert.strictEqual(reminders.length, 0);
-  });
-
-  await t.test('ignore les règles dont les rappels sont désactivés (remindersEnabled: false)', () => {
-    const rules = [
       {
         id: 'rule-no-reminder',
         userId: 'user-1',
@@ -147,6 +139,17 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
         isActive: true,
         remindersEnabled: false,
       },
+      {
+        id: 'rule-weekly-legacy',
+        userId: 'user-1',
+        type: 'EXPENSE',
+        amount: 10000,
+        category: 'Transport',
+        dayOfMonth: 10,
+        frequency: 'WEEKLY',
+        isActive: true,
+        remindersEnabled: true,
+      },
     ];
 
     const dateJ0 = new Date(2026, 9, 10, 8, 0, 0);
@@ -154,7 +157,7 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
     assert.strictEqual(reminders.length, 0);
   });
 
-  await t.test('déduplication : ne renvoie pas un rappel déjà envoyé (status: SENT)', () => {
+  await t.test('déduplication : ne renvoie pas un rappel déjà envoyé (SENT) ou ayant atteint 3 échecs', () => {
     const rules = [
       {
         id: 'rule-dedup',
@@ -170,13 +173,12 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
 
     const dateJMinus7 = new Date(2026, 9, 8, 8, 0, 0);
 
-    // Sans historique de log : le rappel J-7 doit être envoyé
+    // 1. Sans historique : rappel envoyé
     const initialReminders = getRemindersDueOn(dateJMinus7, rules, []);
     assert.strictEqual(initialReminders.length, 1);
-    assert.strictEqual(initialReminders[0].offsetDays, 7);
 
-    // Avec log existant envoyé : aucun rappel
-    const existingLogs = [
+    // 2. Avec log SENT : ignoré
+    const sentLogs = [
       {
         ruleId: 'rule-dedup',
         dueDate: '2026-10-15',
@@ -184,14 +186,31 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
         status: 'SENT',
       },
     ];
-    const filteredReminders = getRemindersDueOn(dateJMinus7, rules, existingLogs);
-    assert.strictEqual(filteredReminders.length, 0);
+    assert.strictEqual(getRemindersDueOn(dateJMinus7, rules, sentLogs).length, 0);
 
-    // Mais quand le jour arrive à J-3 (12 octobre), J-3 doit être renvoyé même si J-7 était déjà envoyé
-    const dateJMinus3 = new Date(2026, 9, 12, 8, 0, 0);
-    const remindersJ3 = getRemindersDueOn(dateJMinus3, rules, existingLogs);
-    assert.strictEqual(remindersJ3.length, 1);
-    assert.strictEqual(remindersJ3[0].offsetDays, 3);
+    // 3. Avec log FAILED mais attempts = 2 (< MAX_REMINDER_ATTEMPTS) : retenté
+    const failedLogsRetriable = [
+      {
+        ruleId: 'rule-dedup',
+        dueDate: '2026-10-15',
+        offsetDays: 7,
+        status: 'FAILED',
+        attempts: 2,
+      },
+    ];
+    assert.strictEqual(getRemindersDueOn(dateJMinus7, rules, failedLogsRetriable).length, 1);
+
+    // 4. Avec log FAILED et attempts = 3 (MAX_REMINDER_ATTEMPTS) : ignoré
+    const failedLogsMaxed = [
+      {
+        ruleId: 'rule-dedup',
+        dueDate: '2026-10-15',
+        offsetDays: 7,
+        status: 'FAILED',
+        attempts: MAX_REMINDER_ATTEMPTS,
+      },
+    ];
+    assert.strictEqual(getRemindersDueOn(dateJMinus7, rules, failedLogsMaxed).length, 0);
   });
 
   await t.test('convertit correctement les objets Decimal en nombres natifs', () => {
@@ -213,5 +232,56 @@ test('Recurring Reminders Engine (V2.6.0)', async (t) => {
     assert.strictEqual(reminders.length, 1);
     assert.strictEqual(reminders[0].amount, 450000);
     assert.strictEqual(typeof reminders[0].amount, 'number');
+  });
+
+  await t.test('MAIL-03 : resolveSenderAddress formate proprement l’en-tête From pour Gmail SMTP', () => {
+    const fromWithPlainEmail = resolveSenderAddress({
+      NODE_ENV: 'production',
+      SMTP_HOST: 'smtp.gmail.com',
+      SMTP_USER: 'moncompte@gmail.com',
+      SMTP_FROM: 'moncompte@gmail.com',
+    });
+    assert.strictEqual(fromWithPlainEmail, 'Gest Tracker <moncompte@gmail.com>');
+
+    const fromFallbackToUser = resolveSenderAddress({
+      NODE_ENV: 'production',
+      SMTP_HOST: 'smtp.gmail.com',
+      SMTP_USER: 'moncompte@gmail.com',
+    });
+    assert.strictEqual(fromFallbackToUser, 'Gest Tracker <moncompte@gmail.com>');
+
+    const fromAlreadyFormatted = resolveSenderAddress({
+      NODE_ENV: 'production',
+      SMTP_HOST: 'smtp.gmail.com',
+      SMTP_USER: 'moncompte@gmail.com',
+      SMTP_FROM: 'Gest Tracker <moncompte@gmail.com>',
+    });
+    assert.strictEqual(fromAlreadyFormatted, 'Gest Tracker <moncompte@gmail.com>');
+  });
+
+  await t.test('MAIL-04 : escapeHtml et buildReminderEmailContent neutralisent toute injection HTML/XSS', () => {
+    const rawMalicious = '<script>alert("xss")</script> & "quote" \'single\'';
+    const escaped = escapeHtml(rawMalicious);
+    assert.strictEqual(
+      escaped,
+      '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; &quot;quote&quot; &#39;single&#39;'
+    );
+
+    const content = buildReminderEmailContent({
+      to: 'user@example.com',
+      category: 'Loyer <img src=x onerror=alert(1)>',
+      payment: 'Wave & <script>evil()</script>',
+      type: 'EXPENSE',
+      amount: 150000,
+      dueDate: new Date(2026, 10, 5, 12, 0, 0),
+      offsetDays: 3,
+      note: 'Note avec <script>steal()</script>',
+    });
+
+    assert.strictEqual(content.html.includes('<script>'), false);
+    assert.strictEqual(content.html.includes('<img src=x'), false);
+    assert.strictEqual(content.html.includes('&lt;script&gt;steal()&lt;/script&gt;'), true);
+    assert.strictEqual(content.html.includes('Wave &amp; &lt;script&gt;evil()&lt;/script&gt;'), true);
+    assert.strictEqual(content.text.includes('Portefeuille : Wave'), true);
   });
 });

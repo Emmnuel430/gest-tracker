@@ -1,9 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { RecurringRuleSchema } from '../lib/validations';
-import { resolveDueDate, formatDayOfMonthLabel } from '../lib/recurring';
+import {
+  resolveDueDate,
+  formatDayOfMonthLabel,
+  getTodayInTimeZone,
+  formatCurrentMonthISO,
+} from '../lib/recurring';
 
-test('RecurringRuleSchema (Zod Validation V2)', async (t) => {
+test('RecurringRuleSchema (Zod Validation V2.15.1)', async (t) => {
   await t.test('valide une règle de dépense récurrente conforme', () => {
     const validExpense = {
       type: 'EXPENSE',
@@ -25,7 +32,7 @@ test('RecurringRuleSchema (Zod Validation V2)', async (t) => {
     }
   });
 
-  await t.test('valide une règle de revenu récurrent conforme', () => {
+  await t.test('valide une règle de revenu récurrent conforme avec valeurs par défaut', () => {
     const validIncome = {
       type: 'INCOME',
       amount: 600000,
@@ -38,9 +45,34 @@ test('RecurringRuleSchema (Zod Validation V2)', async (t) => {
     assert.strictEqual(res.success, true);
     if (res.success) {
       assert.strictEqual(res.data.type, 'INCOME');
-      assert.strictEqual(res.data.frequency, 'MONTHLY'); // Valeur par défaut
-      assert.strictEqual(res.data.isActive, true); // Valeur par défaut
+      assert.strictEqual(res.data.frequency, 'MONTHLY');
+      assert.strictEqual(res.data.isActive, true);
+      assert.strictEqual(res.data.remindersEnabled, true);
     }
+  });
+
+  await t.test('REC-01 : rejette les fréquences WEEKLY et YEARLY non supportées par le moteur', () => {
+    const invalidWeekly = {
+      type: 'EXPENSE',
+      amount: 25000,
+      category: 'Transport',
+      payment: 'Wave',
+      dayOfMonth: 5,
+      frequency: 'WEEKLY',
+    };
+    const resWeekly = RecurringRuleSchema.safeParse(invalidWeekly);
+    assert.strictEqual(resWeekly.success, false);
+
+    const invalidYearly = {
+      type: 'EXPENSE',
+      amount: 120000,
+      category: 'Assurance',
+      payment: 'Compte bancaire',
+      dayOfMonth: 15,
+      frequency: 'YEARLY',
+    };
+    const resYearly = RecurringRuleSchema.safeParse(invalidYearly);
+    assert.strictEqual(resYearly.success, false);
   });
 
   await t.test('rejette un montant négatif ou nul', () => {
@@ -117,7 +149,7 @@ test('RecurringRuleSchema (Zod Validation V2)', async (t) => {
   });
 });
 
-test('Recurring Rules Due Status & Forecasting Calculations (V2 Specifications)', async (t) => {
+test('Recurring Rules Due Status, Idempotency & Forecasting Calculations (V2.15.1)', async (t) => {
   interface RuleMock {
     id: string;
     type: 'INCOME' | 'EXPENSE';
@@ -157,7 +189,7 @@ test('Recurring Rules Due Status & Forecasting Calculations (V2 Specifications)'
     assert.strictEqual(isDueThisMonth(rule, currentMonth), true);
   });
 
-  await t.test('identifie une règle déjà traitée ce mois-ci comme non due', () => {
+  await t.test('REC-02 : identifie une règle déjà traitée ce mois-ci comme non due (idempotence)', () => {
     const rule: RuleMock = {
       id: '3',
       type: 'EXPENSE',
@@ -184,7 +216,7 @@ test('Recurring Rules Due Status & Forecasting Calculations (V2 Specifications)'
   await t.test('calcule fidèlement les totaux prévisionnels actifs mensuels', () => {
     const rules: RuleMock[] = [
       { id: '1', type: 'INCOME', amount: 500000, isActive: true, lastProcessedMonth: null },
-      { id: '2', type: 'INCOME', amount: 100000, isActive: false, lastProcessedMonth: null }, // inactive
+      { id: '2', type: 'INCOME', amount: 100000, isActive: false, lastProcessedMonth: null },
       { id: '3', type: 'EXPENSE', amount: 150000, isActive: true, lastProcessedMonth: null },
       { id: '4', type: 'EXPENSE', amount: 25000, isActive: true, lastProcessedMonth: null },
     ];
@@ -204,9 +236,8 @@ test('Recurring Rules Due Status & Forecasting Calculations (V2 Specifications)'
   });
 });
 
-test('Recurring Rules Due Date Resolution (End-of-Month Clamp & Formatter)', async (t) => {
+test('Recurring Rules Due Date Resolution & TimeZone Normalization (V2.15.1)', async (t) => {
   await t.test('ramène le 31 au 28 février pour une année non bissextile (2027)', () => {
-    // Février = mois index 1
     const dueDate = resolveDueDate(2027, 1, 31);
     assert.strictEqual(dueDate.getFullYear(), 2027);
     assert.strictEqual(dueDate.getMonth(), 1);
@@ -223,7 +254,6 @@ test('Recurring Rules Due Date Resolution (End-of-Month Clamp & Formatter)', asy
   });
 
   await t.test('ramène le 31 au 30 avril pour un mois de 30 jours', () => {
-    // Avril = mois index 3
     const dueDate = resolveDueDate(2026, 3, 31);
     assert.strictEqual(dueDate.getFullYear(), 2026);
     assert.strictEqual(dueDate.getMonth(), 3);
@@ -231,7 +261,7 @@ test('Recurring Rules Due Date Resolution (End-of-Month Clamp & Formatter)', asy
   });
 
   await t.test('conserve le jour exact quand le mois comporte au moins ce nombre de jours', () => {
-    const dueDate = resolveDueDate(2026, 9, 15); // 15 octobre 2026
+    const dueDate = resolveDueDate(2026, 9, 15);
     assert.strictEqual(dueDate.getDate(), 15);
   });
 
@@ -241,5 +271,40 @@ test('Recurring Rules Due Date Resolution (End-of-Month Clamp & Formatter)', asy
     assert.strictEqual(formatDayOfMonthLabel(29), 'Le 29 (ou dernier jour du mois)');
     assert.strictEqual(formatDayOfMonthLabel(15), 'Le 15 du mois');
     assert.strictEqual(formatDayOfMonthLabel(5), 'Le 5 du mois');
+  });
+
+  await t.test('MAIL-01 : normalise la date calendaire sur Africa/Abidjan (UTC+0)', () => {
+    const sampleUtc = new Date('2026-11-02T23:45:00.000Z');
+    const abidjanToday = getTodayInTimeZone(sampleUtc, 'Africa/Abidjan');
+    assert.strictEqual(abidjanToday.getFullYear(), 2026);
+    assert.strictEqual(abidjanToday.getMonth(), 10); // Novembre = index 10
+    assert.strictEqual(abidjanToday.getDate(), 2);
+    assert.strictEqual(abidjanToday.getHours(), 12);
+
+    assert.strictEqual(formatCurrentMonthISO(sampleUtc, 'Africa/Abidjan'), '2026-11');
+  });
+
+  await t.test('Respect strict de la règle Zéro Emoji sur les fichiers récurrences et mailer', () => {
+    const filesToCheck = [
+      'actions/recurring.ts',
+      'lib/recurring.ts',
+      'lib/mailer.ts',
+      'app/api/cron/reminders/route.ts',
+      'components/recurring/RecurringModal.tsx',
+      'components/recurring/RecurringCard.tsx',
+      'components/recurring/RecurrencesView.tsx',
+      'components/recurring/RecurringAlertBanner.tsx',
+    ];
+    const emojiRegex = /\p{Extended_Pictographic}/u;
+
+    for (const relPath of filesToCheck) {
+      const fullPath = path.resolve(process.cwd(), relPath);
+      const content = fs.readFileSync(fullPath, 'utf8');
+      assert.strictEqual(
+        emojiRegex.test(content),
+        false,
+        `Un emoji a été détecté dans le fichier ${relPath}`
+      );
+    }
   });
 });
