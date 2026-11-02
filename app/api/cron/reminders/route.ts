@@ -1,10 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
-import { getRemindersDueOn, ReminderTarget } from '@/lib/recurring';
+import {
+  getRemindersDueOn,
+  getTodayInTimeZone,
+  MAX_REMINDER_ATTEMPTS,
+} from '@/lib/recurring';
 import { sendRecurringReminderEmail } from '@/lib/mailer';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Résout les adresses e-mail des utilisateurs ciblés sans limite de pagination à 50 inscrits (MAIL-02).
+ * Priorise la requête SQL directe sur auth.users pour les identifiants concernés, puis
+ * complète au besoin par des appels ciblés auth.admin.getUserById(userId).
+ */
+async function resolveUserEmails(userIds: string[]): Promise<Map<string, string>> {
+  const emailMap = new Map<string, string>();
+  if (userIds.length === 0) {
+    return emailMap;
+  }
+
+  try {
+    const users = await prisma.$queryRaw<{ id: string; email: string }[]>`
+      SELECT id::text, email FROM auth.users WHERE id::text IN (${Prisma.join(userIds)})
+    `;
+    for (const u of users) {
+      if (u.email) {
+        emailMap.set(u.id, u.email);
+      }
+    }
+  } catch (e: unknown) {
+    console.warn(
+      'Impossible de requêter auth.users via SQL direct, utilisation du fallback Supabase Admin.',
+      e
+    );
+  }
+
+  const missingUserIds = userIds.filter((id) => !emailMap.has(id));
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (missingUserIds.length > 0 && supabaseUrl && serviceRoleKey) {
+    const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    for (const uid of missingUserIds) {
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.getUserById(uid);
+        if (!error && data?.user?.email) {
+          emailMap.set(uid, data.user.email);
+        }
+      } catch (err: unknown) {
+        console.warn(`Impossible de résoudre l'email pour l'utilisateur ${uid}:`, err);
+      }
+    }
+  }
+
+  return emailMap;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,10 +78,15 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Récupération des règles récurrentes actives avec rappels activés
+    // Exclut les règles dont le portefeuille associé a été supprimé ou archivé.
     const rules = await prisma.recurringRule.findMany({
       where: {
         isActive: true,
         remindersEnabled: true,
+        OR: [
+          { walletId: null },
+          { wallet: { deletedAt: null, isArchived: false } },
+        ],
       },
     });
 
@@ -46,11 +107,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // 4. Calcul des rappels dus aujourd'hui (J-7, J-3, J0)
-    const today = new Date();
-    // Filtre des logs : ignorer ceux déjà SENT ou ayant atteint le max d'essais (max 3)
+    // 4. Calcul des rappels dus aujourd'hui dans le fuseau métier Africa/Abidjan (MAIL-01)
+    const today = getTodayInTimeZone();
     const validLogsForFilter = existingLogs.filter(
-      (log) => log.status === 'SENT' || log.attempts >= 3
+      (log) => log.status === 'SENT' || log.attempts >= MAX_REMINDER_ATTEMPTS
     );
 
     const dueReminders = getRemindersDueOn(today, rules, validLogsForFilter);
@@ -64,34 +124,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 5. Récupération des emails des utilisateurs concernés
+    // 5. Récupération ciblée des emails des utilisateurs concernés (MAIL-02)
     const userIds = Array.from(new Set(dueReminders.map((r) => r.userId)));
-    const emailMap = new Map<string, string>();
-
-    try {
-      if (userIds.length > 0) {
-        const users = await prisma.$queryRaw<{ id: string; email: string }[]>`
-          SELECT id::text, email FROM auth.users WHERE id::text IN (${Prisma.join(userIds)})
-        `;
-        for (const u of users) {
-          if (u.email) {
-            emailMap.set(u.id, u.email);
-          }
-        }
-      }
-    } catch (e: unknown) {
-      console.warn('Impossible de requêter auth.users via SQL direct, utilisation du fallback.', e);
-    }
+    const emailMap = await resolveUserEmails(userIds);
 
     let sentCount = 0;
     let failedCount = 0;
 
-    // 6. Envoi des e-mails et enregistrement sécurisé des statuts (Règle 7)
+    // 6. Envoi des e-mails et enregistrement sécurisé des statuts (Règle 8)
     for (const reminder of dueReminders) {
       const recipientEmail = emailMap.get(reminder.userId);
 
       if (!recipientEmail) {
-        // Enregistrement d'échec si l'utilisateur n'a pas d'adresse e-mail
         await prisma.recurringReminderLog.upsert({
           where: {
             ruleId_dueDate_offsetDays: {
@@ -120,6 +164,7 @@ export async function GET(request: NextRequest) {
       const mailResult = await sendRecurringReminderEmail({
         to: recipientEmail,
         category: reminder.category,
+        payment: reminder.payment,
         type: reminder.type,
         amount: reminder.amount,
         dueDate: reminder.dueDate,
