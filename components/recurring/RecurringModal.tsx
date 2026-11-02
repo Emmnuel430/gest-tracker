@@ -6,7 +6,11 @@ import { useCategories, useWallets } from '@/components/providers/ReferenceDataP
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
 import { parseAmountInput } from '@/constants/config';
-import { upsertRecurringRuleAction, RecurringRuleItem } from '@/actions/recurring';
+import {
+  upsertRecurringRuleAction,
+  updateRecurringRuleAction,
+  RecurringRuleItem,
+} from '@/actions/recurring';
 import { formatDayOfMonthLabel } from '@/lib/recurring';
 
 interface RecurringModalProps {
@@ -30,6 +34,18 @@ export function RecurringModal({
   const { categories: userCategories, getCategoryColor, refreshCategories } = useCategories(type);
   const { wallets: userWallets, defaultWallet, refreshWallets } = useWallets();
 
+  const activeCategories = userCategories.filter((c) => !c.isArchived);
+  const activeWallets = userWallets.filter((w) => !w.isArchived);
+
+  const [amount, setAmount] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
+  const [payment, setPayment] = useState<string>('');
+  const [walletId, setWalletId] = useState<string>('');
+  const [dayOfMonth, setDayOfMonth] = useState<number>(5);
+  const [note, setNote] = useState<string>('');
+  const [remindersEnabled, setRemindersEnabled] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen) {
       if (userCategories.length === 0) {
@@ -41,57 +57,88 @@ export function RecurringModal({
     }
   }, [isOpen, userCategories.length, userWallets.length, refreshCategories, refreshWallets]);
 
-  const [amount, setAmount] = useState<string>(
-    initialData?.amount ? initialData.amount.toString() : ''
-  );
-  const [category, setCategory] = useState<string>(
-    initialData?.category || ''
-  );
-  const [payment, setPayment] = useState<string>(
-    initialData?.payment || ''
-  );
-  const [walletId, setWalletId] = useState<string>(
-    initialData?.walletId || ''
-  );
-  const [dayOfMonth, setDayOfMonth] = useState<number>(
-    initialData?.dayOfMonth || 5
-  );
-  const [note, setNote] = useState<string>(
-    initialData?.note || ''
-  );
-  const [remindersEnabled, setRemindersEnabled] = useState<boolean>(
-    initialData?.remindersEnabled ?? true
-  );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  // Synchronisation complète de l'état à l'ouverture ou au changement de règle (REC-04)
   useEffect(() => {
-    if (initialData?.category) {
-      setCategory(initialData.category);
-    } else if (userCategories.length > 0 && !category) {
-      setCategory(userCategories[0].name);
-    }
+    if (!isOpen) return;
+
+    setErrorMessage(null);
+
     if (initialData) {
+      setType(initialData.type === 'INCOME' ? 'INCOME' : 'EXPENSE');
+      setAmount(initialData.amount ? initialData.amount.toString() : '');
+      setCategory(initialData.category || '');
+      setPayment(initialData.payment || '');
+      setWalletId(initialData.walletId || '');
+      setDayOfMonth(initialData.dayOfMonth || 5);
+      setNote(initialData.note || '');
       setRemindersEnabled(initialData.remindersEnabled ?? true);
+    } else {
+      setType('EXPENSE');
+      setAmount('');
+      setCategory('');
+      const preferredWallet =
+        defaultWallet && !defaultWallet.isArchived
+          ? defaultWallet
+          : activeWallets.find((w) => w.isDefault) || activeWallets[0];
+      setWalletId(preferredWallet?.id || '');
+      setPayment(preferredWallet?.name || '');
+      setDayOfMonth(5);
+      setNote('');
+      setRemindersEnabled(true);
     }
-  }, [initialData, userCategories, category]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialData]);
 
+  // Pré-sélection automatique de la première catégorie compatible si aucune n'est définie
   useEffect(() => {
+    if (!isOpen) return;
+    if (initialData && initialData.type === type && initialData.category) {
+      return;
+    }
+    if (!category && activeCategories.length > 0) {
+      setCategory(activeCategories[0].name);
+    }
+  }, [isOpen, initialData, type, category, activeCategories]);
+
+  // Pré-sélection automatique du portefeuille principal par défaut si les comptes chargent de manière asynchrone
+  useEffect(() => {
+    if (!isOpen) return;
     if (initialData?.walletId) {
-      setWalletId(initialData.walletId);
-    } else if (userWallets.length > 0 && !walletId) {
+      const matched = activeWallets.find((w) => w.id === initialData.walletId);
+      if (matched) {
+        setWalletId(matched.id);
+        setPayment(matched.name);
+      }
+      return;
+    }
+    if (!walletId && activeWallets.length > 0) {
       const match = payment
-        ? userWallets.find((w) => w.name.toLowerCase() === payment.toLowerCase())
-        : defaultWallet || userWallets[0];
+        ? activeWallets.find((w) => w.name.toLowerCase() === payment.toLowerCase())
+        : (defaultWallet && !defaultWallet.isArchived ? defaultWallet : null) ||
+          activeWallets.find((w) => w.isDefault) ||
+          activeWallets[0];
       if (match) {
         setWalletId(match.id);
         setPayment(match.name);
       }
     }
-  }, [initialData, userWallets, defaultWallet, payment, walletId]);
+  }, [isOpen, initialData, activeWallets, defaultWallet, payment, walletId]);
+
+  // Fermeture par touche Échap
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isPending) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isPending, onClose]);
 
   if (!isOpen) return null;
 
-  const selectedCatObj = userCategories.find(
+  const selectedCatObj = activeCategories.find(
     (c) => c.name.toLowerCase() === category.toLowerCase()
   );
 
@@ -115,9 +162,18 @@ export function RecurringModal({
       return;
     }
 
+    if (!category) {
+      setErrorMessage('Veuillez sélectionner une catégorie');
+      return;
+    }
+
+    if (!payment && !walletId) {
+      setErrorMessage('Veuillez sélectionner un portefeuille');
+      return;
+    }
+
     startTransition(async () => {
-      const res = await upsertRecurringRuleAction({
-        id: initialData?.id,
+      const payload = {
         type,
         amount: numericAmount,
         category,
@@ -125,11 +181,15 @@ export function RecurringModal({
         payment,
         walletId: walletId || null,
         dayOfMonth,
-        frequency: 'MONTHLY',
+        frequency: 'MONTHLY' as const,
         note: note.trim() || undefined,
         isActive: initialData ? initialData.isActive : true,
         remindersEnabled,
-      });
+      };
+
+      const res = initialData?.id
+        ? await updateRecurringRuleAction(initialData.id, payload)
+        : await upsertRecurringRuleAction(payload);
 
       if (res.success) {
         onSuccess();
@@ -141,15 +201,24 @@ export function RecurringModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="recurring-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150"
+    >
       <div className="w-full max-w-md bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-neutral-200 dark:border-[#334155]">
-          <h3 className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
+          <h3
+            id="recurring-modal-title"
+            className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]"
+          >
             {initialData ? 'Modifier l’opération récurrente' : 'Nouvelle charge / rentrée récurrente'}
           </h3>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer la fenêtre"
             className="p-1 hover:bg-neutral-100 dark:hover:bg-[#131C31] border-2 border-transparent hover:border-[#111827] dark:hover:border-white rounded-lg transition-all cursor-pointer"
           >
             <X className="w-5 h-5 text-neutral-700 dark:text-neutral-300 stroke-2.5" />
@@ -239,7 +308,7 @@ export function RecurringModal({
               Catégorie
             </label>
             <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto p-1 border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A]">
-              {userCategories.map((cat) => {
+              {activeCategories.map((cat) => {
                 const isSelected = category.toLowerCase() === cat.name.toLowerCase();
                 const catColor = cat.color || getCategoryColor(cat.name);
 
@@ -271,8 +340,10 @@ export function RecurringModal({
               Portefeuille / Moyen de paiement
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {userWallets.map((w) => {
-                const isSelected = walletId === w.id || payment.toLowerCase() === w.name.toLowerCase();
+              {activeWallets.map((w) => {
+                const isSelected =
+                  walletId === w.id ||
+                  (!walletId && payment.toLowerCase() === w.name.toLowerCase());
                 return (
                   <button
                     key={w.id}
@@ -354,7 +425,7 @@ export function RecurringModal({
               className="flex-1 py-2.5 text-xs uppercase"
             >
               <Sparkles className="w-3.5 h-3.5 mr-1" />
-              {initialData ? 'Mettre à jour' : 'Enregistrer'}
+              {initialData ? 'Enregistrer les modifications' : 'Enregistrer'}
             </Button>
           </div>
         </form>

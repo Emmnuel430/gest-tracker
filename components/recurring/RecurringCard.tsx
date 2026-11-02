@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Calendar, Edit2, Trash2, Power, CheckCircle, Clock, Bell, BellOff } from 'lucide-react';
+import {
+  Calendar,
+  Edit2,
+  Trash2,
+  Power,
+  CheckCircle,
+  Clock,
+  Bell,
+  BellOff,
+  AlertCircle,
+} from 'lucide-react';
 import { useCategories, useWallets } from '@/components/providers/ReferenceDataProvider';
 import { formatCurrency, getContrastTextColor } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -23,6 +33,7 @@ interface RecurringCardProps {
 export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: RecurringCardProps) {
   const [isPending, startTransition] = useTransition();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const { getCategoryColor } = useCategories();
   const { getWalletColor } = useWallets();
 
@@ -33,26 +44,40 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
   const paymentTheme = { bg: walletBg, text: walletText };
 
   const handleToggle = () => {
+    setActionError(null);
     startTransition(async () => {
       const res = await toggleRecurringRuleStatusAction(rule.id);
-      if (res.success) onRefresh();
+      if (res.success) {
+        onRefresh();
+      } else {
+        setActionError(res.error);
+      }
     });
   };
 
   const confirmDelete = () => {
+    setActionError(null);
     startTransition(async () => {
       const res = await deleteRecurringRuleAction(rule.id);
       if (res.success) {
         setShowDeleteConfirm(false);
         onRefresh();
+      } else {
+        setShowDeleteConfirm(false);
+        setActionError(res.error);
       }
     });
   };
 
   const handleProcess = (mode: 'CONFIRM' | 'SKIP') => {
+    setActionError(null);
     startTransition(async () => {
       const res = await processRecurringRuleAction(rule.id, mode);
-      if (res.success) onRefresh();
+      if (res.success) {
+        onRefresh();
+      } else {
+        setActionError(res.error);
+      }
     });
   };
 
@@ -92,6 +117,11 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
             onClick={handleToggle}
             disabled={isPending}
             title={rule.isActive ? 'Mettre en pause' : 'Réactiver'}
+            aria-label={
+              rule.isActive
+                ? `Mettre en pause la règle ${rule.category}`
+                : `Réactiver la règle ${rule.category}`
+            }
             className={`p-1 rounded-lg border border-[#111827] transition-all cursor-pointer ${
               rule.isActive
                 ? 'bg-[#00DF81] text-[#111827] hover:bg-emerald-300'
@@ -105,6 +135,7 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
             onClick={() => onEdit(rule)}
             disabled={isPending}
             title="Modifier"
+            aria-label={`Modifier la règle ${rule.category}`}
             className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-[#FFE600] text-[#111827] dark:text-[#F8FAFC] transition-all cursor-pointer"
           >
             <Edit2 className="w-3.5 h-3.5 stroke-2.5" />
@@ -114,6 +145,7 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isPending}
             title="Supprimer"
+            aria-label={`Supprimer la règle ${rule.category}`}
             className="p-1 rounded-lg border border-[#111827] bg-neutral-100 dark:bg-[#131C31] hover:bg-red-500 hover:text-white text-neutral-700 dark:text-neutral-300 transition-all cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5 stroke-2.5" />
@@ -159,6 +191,16 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
         )}
       </div>
 
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-3 p-2 bg-red-100 dark:bg-red-950/40 border-2 border-red-500 rounded-lg text-[11px] font-bold text-red-700 dark:text-red-300 flex items-start gap-1.5"
+        >
+          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
       {/* Statut Échéance du mois */}
       {rule.isActive ? (
         isDueThisMonth ? (
@@ -174,7 +216,7 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
                 type="button"
                 onClick={() => handleProcess('CONFIRM')}
                 disabled={isPending}
-                className="flex-1 py-1.5 px-2 bg-[#00DF81] text-[#111827] hover:bg-emerald-300 border-2 border-[#111827] rounded-md text-[11px] font-black uppercase flex items-center justify-center gap-1 cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827]"
+                className="flex-1 py-1.5 px-2 bg-[#00DF81] text-[#111827] hover:bg-emerald-300 border-2 border-[#111827] rounded-md text-[11px] font-black uppercase flex items-center justify-center gap-1 cursor-pointer transition-all shadow-[2px_2px_0px_0px_#111827] disabled:opacity-50"
               >
                 <CheckCircle className="w-3 h-3 stroke-2.5" />
                 Confirmer l’opération
@@ -183,7 +225,7 @@ export function RecurringCard({ rule, currentMonth, onEdit, onRefresh }: Recurri
                 type="button"
                 onClick={() => handleProcess('SKIP')}
                 disabled={isPending}
-                className="py-1.5 px-2 bg-neutral-200 dark:bg-[#334155] text-neutral-800 dark:text-neutral-200 hover:bg-neutral-300 border-2 border-[#111827] rounded-md text-[11px] font-black uppercase cursor-pointer transition-all"
+                className="py-1.5 px-2 bg-neutral-200 dark:bg-[#334155] text-neutral-800 dark:text-neutral-200 hover:bg-neutral-300 border-2 border-[#111827] rounded-md text-[11px] font-black uppercase cursor-pointer transition-all disabled:opacity-50"
               >
                 Ignorer
               </button>

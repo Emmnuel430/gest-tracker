@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Bell, Check, ArrowRight, Zap, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Check, ArrowRight, Zap, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { RecurringRuleItem, processRecurringRuleAction } from '@/actions/recurring';
 import { formatDayOfMonthLabel } from '@/lib/recurring';
@@ -14,20 +15,25 @@ interface RecurringAlertBannerProps {
 
 export function RecurringAlertBanner({
   initialDueRules,
-  currentMonth,
 }: RecurringAlertBannerProps) {
+  const router = useRouter();
   const [dueRules, setDueRules] = useState<RecurringRuleItem[]>(initialDueRules);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   if (!dueRules || dueRules.length === 0) return null;
 
-  const currentRule = dueRules[0]; // On affiche l'échéance la plus urgente
+  const currentRule = dueRules[0];
 
   const handleProcess = (ruleId: string, mode: 'CONFIRM' | 'SKIP') => {
+    setErrorMessage(null);
     startTransition(async () => {
       const res = await processRecurringRuleAction(ruleId, mode);
       if (res.success) {
         setDueRules((prev) => prev.filter((r) => r.id !== ruleId));
+        router.refresh();
+      } else {
+        setErrorMessage(res.error);
       }
     });
   };
@@ -66,6 +72,16 @@ export function RecurringAlertBanner({
           Voir tout <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
+
+      {errorMessage && (
+        <div
+          role="alert"
+          className="mt-3 p-2 bg-red-100 border-2 border-[#111827] rounded-lg text-xs font-bold text-red-700 flex items-start gap-1.5"
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 mt-3 pt-3 border-t-2 border-[#111827]/20">
         <button
