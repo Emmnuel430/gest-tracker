@@ -253,7 +253,11 @@ export const RecurringRuleSchema = z.object({
     .int({ message: 'Le jour doit être un entier' })
     .min(1, { message: 'Le jour doit être compris entre 1 et 31' })
     .max(31, { message: 'Le jour doit être compris entre 1 et 31' }),
-  frequency: z.enum(['MONTHLY', 'WEEKLY', 'YEARLY'] as const).default('MONTHLY'),
+  frequency: z
+    .literal('MONTHLY', {
+      message: 'Seule la fréquence mensuelle (MONTHLY) est prise en charge',
+    })
+    .default('MONTHLY'),
   note: z
     .string()
     .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })

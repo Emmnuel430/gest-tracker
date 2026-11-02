@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.15.0)
+# GEST TRACKER — Documentation Complète (v2.15.1)
 
 Bienvenue sur la documentation technique et fonctionnelle de **GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -267,7 +267,19 @@ Accessible directement depuis la barre de navigation inférieure (`BottomNav`). 
   - Propagation transactionnelle atomique des renommages pour préserver la rétrocompatibilité expand/contract.
 - Navigation mois par mois pour comparer sa consommation dans le temps.
 
-### 4.6 Règles Récurrentes & Charges Fixes (`/recurrences`)
+### 4.6 Règles Récurrentes & Charges Fixes (`/recurrences`) (v2.6.0 / v2.15.1)
+
+- Programmation des flux mensuels prévisibles : loyer, salaire, abonnements internet, tontine...
+- Configuration : montant (`Prisma.Decimal`), catégorie compatible (`INCOME` / `EXPENSE` / `BOTH`), portefeuille actif (pré-sélection du compte principal par défaut), jour du mois (1 à 31), fréquence mensuelle (`MONTHLY`).
+- **Création, Édition et Validation Idempotente (v2.15.1) :**
+  - Modification complète d'une règle existante via `updateRecurringRuleAction` et `RecurringModal`.
+  - Verrou d'idempotence mensuelle (`lastProcessedMonth`) et contrôle d'intégrité du portefeuille cible (blocage explicite si le compte associé a été archivé ou supprimé) exécutés dans une transaction atomique `prisma.$transaction`.
+- **Rappels par e-mail automatiques via Gmail SMTP (v2.6.0 / v2.15.1) :**
+  - Notifications proactives envoyées à **J-7**, **J-3** et le jour même de l'échéance (**J0**).
+  - Déduplication absolue via contrainte unique `(rule_id, due_date, offset_days)` dans la table `recurring_reminder_logs` et plafond de 3 tentatives (`MAX_REMINDER_ATTEMPTS = 3`).
+  - Gabarit HTML/Texte néobrutaliste sécurisé avec échappement anti-injection (`escapeHtml`) et normalisation de l'en-tête `From` (`resolveSenderAddress`).
+  - En production : **Gmail SMTP (`smtp.gmail.com`, port `465`, SSL/TLS implicite)** authentifié par mot de passe d'application Google de 16 caractères. En local : Mailpit (`127.0.0.1:54325`) ou Gmail SMTP.
+  - Déclenchement quotidien à `08:00 UTC` via Vercel Cron (`vercel.json`) sur `/api/cron/reminders` protégé par `CRON_SECRET`, évalué explicitement sur le fuseau horaire métier `Africa/Abidjan` (`getTodayInTimeZone`).
 
 - Programmation des flux prévisibles : loyer, salaire, abonnements internet, tontine...
 - Configuration : montant, catégorie, moyen de paiement, jour du mois (1 à 31), fréquence (mensuelle, hebdo, annuelle).
@@ -559,6 +571,14 @@ DIRECT_URL="postgresql://postgres.votre-projet:votre_mot_de_passe@aws-0-eu-west-
 
 # Sécurité des Sessions (Secret HMAC-SHA256, jamais préfixé par NEXT_PUBLIC_)
 SESSION_COOKIE_SECRET="votre_secret_aleatoire_de_32_caracteres_minimum!"
+
+# Rappels E-mail des Charges Récurrentes (Gmail SMTP & Vercel Cron)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="465"
+SMTP_USER="votre.adresse@gmail.com"
+SMTP_PASS="votre_mot_de_passe_application_16_caracteres"
+SMTP_FROM="Gest Tracker <votre.adresse@gmail.com>"
+CRON_SECRET="votre_secret_cron_production"
 ```
 
 ### Commandes Utiles
