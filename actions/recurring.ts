@@ -1,12 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { RecurringRuleSchema } from '@/lib/validations';
 import { ActionResponse } from '@/types/transaction';
 import { getErrorMessage } from '@/lib/utils';
-import { resolveDueDate } from '@/lib/recurring';
+import { resolveDueDate, getTodayInTimeZone, formatCurrentMonthISO } from '@/lib/recurring';
 
 export interface RecurringRuleItem {
   id: string;
@@ -23,6 +24,16 @@ export interface RecurringRuleItem {
   remindersEnabled: boolean;
   lastProcessedMonth?: string | null;
   createdAt: string;
+}
+
+function revalidateRecurringPaths() {
+  revalidatePath('/');
+  revalidatePath('/app');
+  revalidatePath('/recurrences');
+  revalidatePath('/gestion');
+  revalidatePath('/budgets');
+  revalidatePath('/portefeuilles');
+  revalidatePath('/historique');
 }
 
 /**
@@ -99,6 +110,15 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       walletId,
     } = parseResult.data;
 
+    if (id) {
+      const existingRule = await prisma.recurringRule.findFirst({
+        where: { id, userId: user.id },
+      });
+      if (!existingRule) {
+        return { success: false, error: 'Règle récurrente introuvable ou non autorisée' };
+      }
+    }
+
     let resolvedCategoryId = categoryId || null;
     if (resolvedCategoryId) {
       const cat = await prisma.category.findUnique({ where: { id: resolvedCategoryId } });
@@ -113,31 +133,47 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
         where: { userId_name: { userId: user.id, name: category } },
       });
       if (cat) {
+        if (cat.kind !== 'BOTH' && cat.kind !== type) {
+          return { success: false, error: 'Catégorie incompatible avec ce type d’opération' };
+        }
         resolvedCategoryId = cat.id;
       }
     }
 
-    // Résolution et validation du portefeuille
+    // Résolution et validation stricte du portefeuille (actif, non supprimé, non archivé)
     let resolvedWalletId: string | null = walletId || null;
     let resolvedPaymentName: string = payment;
 
     if (resolvedWalletId) {
       const w = await prisma.wallet.findFirst({
-        where: { id: resolvedWalletId, userId: user.id },
+        where: { id: resolvedWalletId, userId: user.id, deletedAt: null },
       });
       if (!w) {
         return { success: false, error: 'Portefeuille non autorisé ou introuvable' };
       }
+      if (w.isArchived) {
+        return {
+          success: false,
+          error: 'Ce portefeuille est archivé. Veuillez sélectionner un portefeuille actif.',
+        };
+      }
       resolvedPaymentName = w.name;
     } else if (payment) {
       const w = await prisma.wallet.findFirst({
-        where: { userId: user.id, name: { equals: payment, mode: 'insensitive' } },
+        where: {
+          userId: user.id,
+          deletedAt: null,
+          isArchived: false,
+          name: { equals: payment, mode: 'insensitive' },
+        },
       });
       if (w) {
         resolvedWalletId = w.id;
         resolvedPaymentName = w.name;
       }
     }
+
+    const decimalAmount = new Prisma.Decimal(amount);
 
     let savedRule;
     if (id) {
@@ -146,7 +182,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
         where: { id, userId: user.id },
         data: {
           type,
-          amount,
+          amount: decimalAmount,
           category,
           categoryId: resolvedCategoryId,
           payment: resolvedPaymentName,
@@ -164,7 +200,7 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
         data: {
           userId: user.id,
           type,
-          amount,
+          amount: decimalAmount,
           category,
           categoryId: resolvedCategoryId,
           payment: resolvedPaymentName,
@@ -178,16 +214,14 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       });
     }
 
-    revalidatePath('/');
-    revalidatePath('/app');
-    revalidatePath('/recurrences');
-    revalidatePath('/budgets');
-    revalidatePath('/portefeuilles');
+    revalidateRecurringPaths();
 
     return {
       success: true,
       data: { id: savedRule.id },
-      message: `Règle récurrente pour ${category} enregistrée`,
+      message: id
+        ? `Règle récurrente pour ${category} mise à jour`
+        : `Règle récurrente pour ${category} enregistrée`,
     };
   } catch (error: unknown) {
     console.error('Erreur upsertRecurringRuleAction :', error);
@@ -196,6 +230,19 @@ export async function upsertRecurringRuleAction(rawData: unknown): Promise<Actio
       error: getErrorMessage(error) || 'Impossible d’enregistrer la règle',
     };
   }
+}
+
+/**
+ * Met à jour une règle récurrente existante (action dédiée REC-04)
+ */
+export async function updateRecurringRuleAction(
+  id: string,
+  rawData: Record<string, unknown>
+): Promise<ActionResponse> {
+  if (!id) {
+    return { success: false, error: 'Identifiant de la règle récurrente manquant' };
+  }
+  return upsertRecurringRuleAction({ ...rawData, id });
 }
 
 /**
@@ -218,9 +265,7 @@ export async function toggleRecurringRuleStatusAction(id: string): Promise<Actio
       data: { isActive: !rule.isActive },
     });
 
-    revalidatePath('/');
-    revalidatePath('/app');
-    revalidatePath('/recurrences');
+    revalidateRecurringPaths();
 
     return {
       success: true,
@@ -251,9 +296,7 @@ export async function deleteRecurringRuleAction(id: string): Promise<ActionRespo
       return { success: false, error: 'Règle introuvable ou non autorisée' };
     }
 
-    revalidatePath('/');
-    revalidatePath('/app');
-    revalidatePath('/recurrences');
+    revalidateRecurringPaths();
 
     return {
       success: true,
@@ -276,8 +319,7 @@ export async function getDueRecurringRulesAction(): Promise<ActionResponse<Recur
   try {
     const user = await getAuthenticatedUser();
 
-    const now = new Date();
-    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const currentMonthStr = formatCurrentMonthISO();
 
     // Sécurité défensive : si le modèle prisma n'est pas encore instancié
     if (!prisma?.recurringRule?.findMany) {
@@ -343,48 +385,108 @@ export async function processRecurringRuleAction(
       return { success: false, error: 'Règle récurrente introuvable' };
     }
 
-    const now = new Date();
-    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-    if (mode === 'CONFIRM') {
-      // Calcul déterministe de la date d'échéance avec clamp fin de mois
-      const transactionDate = resolveDueDate(now.getFullYear(), now.getMonth(), rule.dayOfMonth);
-
-      // Création de la transaction correspondante
-      await prisma.transaction.create({
-        data: {
-          userId: user.id,
-          type: rule.type,
-          amount: rule.amount,
-          category: rule.category,
-          categoryId: rule.categoryId,
-          payment: rule.payment,
-          walletId: rule.walletId,
-          note: rule.note ? `${rule.note} [Échéance récurrente]` : 'Échéance récurrente confirmée',
-          date: transactionDate,
-        },
-      });
+    if (!rule.isActive) {
+      return {
+        success: false,
+        error: 'Cette règle récurrente est en pause et ne peut pas être traitée.',
+      };
     }
 
-    // Marquage de la règle comme traitée pour ce mois
-    await prisma.recurringRule.update({
-      where: { id: rule.id },
-      data: { lastProcessedMonth: currentMonthStr },
+    const today = getTodayInTimeZone();
+    const currentMonthStr = formatCurrentMonthISO(today);
+
+    // Garde d'idempotence mensuelle (REC-02)
+    if (rule.lastProcessedMonth === currentMonthStr) {
+      return {
+        success: false,
+        error: 'Cette échéance a déjà été enregistrée pour le mois en cours.',
+      };
+    }
+
+    let resolvedWalletId = rule.walletId;
+    let resolvedPaymentName = rule.payment;
+
+    if (mode === 'CONFIRM') {
+      if (resolvedWalletId) {
+        const targetWallet = await prisma.wallet.findFirst({
+          where: { id: resolvedWalletId, userId: user.id },
+        });
+        if (!targetWallet || targetWallet.deletedAt !== null) {
+          return {
+            success: false,
+            error:
+              'Le portefeuille associé à cette règle a été supprimé. Veuillez modifier la règle pour sélectionner un compte actif.',
+          };
+        }
+        if (targetWallet.isArchived) {
+          return {
+            success: false,
+            error:
+              'Le portefeuille associé à cette règle est archivé. Veuillez désarchiver ce compte ou modifier la règle.',
+          };
+        }
+        resolvedPaymentName = targetWallet.name;
+      } else if (rule.payment) {
+        const fallbackWallet = await prisma.wallet.findFirst({
+          where: {
+            userId: user.id,
+            deletedAt: null,
+            name: { equals: rule.payment, mode: 'insensitive' },
+          },
+        });
+        if (fallbackWallet) {
+          if (fallbackWallet.isArchived) {
+            return {
+              success: false,
+              error:
+                'Le portefeuille associé à cette règle est archivé. Veuillez désarchiver ce compte ou modifier la règle.',
+            };
+          }
+          resolvedWalletId = fallbackWallet.id;
+          resolvedPaymentName = fallbackWallet.name;
+        }
+      }
+    }
+
+    const transactionDate = resolveDueDate(
+      today.getFullYear(),
+      today.getMonth(),
+      rule.dayOfMonth
+    );
+
+    await prisma.$transaction(async (tx) => {
+      if (mode === 'CONFIRM') {
+        await tx.transaction.create({
+          data: {
+            userId: user.id,
+            type: rule.type,
+            amount: rule.amount,
+            category: rule.category,
+            categoryId: rule.categoryId,
+            payment: resolvedPaymentName,
+            walletId: resolvedWalletId,
+            note: rule.note
+              ? `${rule.note} [Échéance récurrente]`
+              : 'Échéance récurrente confirmée',
+            date: transactionDate,
+          },
+        });
+      }
+
+      await tx.recurringRule.update({
+        where: { id: rule.id },
+        data: { lastProcessedMonth: currentMonthStr },
+      });
     });
 
-    revalidatePath('/');
-    revalidatePath('/app');
-    revalidatePath('/historique');
-    revalidatePath('/budgets');
-    revalidatePath('/recurrences');
-    revalidatePath('/portefeuilles');
+    revalidateRecurringPaths();
 
     return {
       success: true,
       data: { ruleId, mode },
       message:
         mode === 'CONFIRM'
-          ? `Échéance "${rule.category}" confirmée et ajoutée aux transactions !`
+          ? `Échéance "${rule.category}" confirmée et ajoutée aux transactions.`
           : `Échéance "${rule.category}" ignorée pour ce mois.`,
     };
   } catch (error: unknown) {
