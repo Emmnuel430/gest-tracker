@@ -3,6 +3,23 @@
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.1] - 2026-11-02
+
+### Features
+- **recurrences** : Action serveur dédiée `updateRecurringRuleAction`, synchronisation complète du formulaire en mode édition dans `RecurringModal` et pré-sélection automatique du portefeuille principal par défaut à la création (`REC-04`).
+- **mailer** : Prise en charge et normalisation native de l'adresse d'expédition (`resolveSenderAddress`) pour **Gmail SMTP (`smtp.gmail.com:465`) avec mot de passe d'application**, génération conjointe d'un corps texte (`text`) et HTML (`html`), et affichage du portefeuille associé dans l'e-mail de rappel (`MAIL-03`).
+
+### Bug Fixes
+- **recurrences** : Restriction stricte de `RecurringRuleSchema` à la fréquence mensuelle (`MONTHLY`) prise en charge par le moteur de résolution calendaire (`REC-01`).
+- **recurrences** : Ajout d'un verrou d'idempotence mensuelle (`lastProcessedMonth === currentMonthStr`), vérification de l'état actif de la règle et contrôle d'intégrité du portefeuille cible (rejet si supprimé ou archivé) au sein d'une transaction atomique `prisma.$transaction` dans `processRecurringRuleAction` (`REC-02`).
+- **recurrences** : Persistance des montants de règles récurrentes via `Prisma.Decimal` et invalidation systématique des routes `/app`, `/recurrences`, `/gestion`, `/budgets`, `/portefeuilles` et `/historique` (`REC-03`, `REC-05`).
+- **recurrences-ui** : Affichage explicite des erreurs serveur dans `RecurringCard` et `RecurringAlertBanner` avec rafraîchissement réactif (`router.refresh()`).
+- **cron** : Normalisation explicite de la date d'exécution du planificateur `/api/cron/reminders` sur le fuseau horaire métier `Africa/Abidjan` (UTC+0) via `getTodayInTimeZone` (`MAIL-01`).
+- **cron** : Résolution ciblée des adresses e-mail des utilisateurs concernés sans limite de pagination à 50 inscrits et exclusion des règles liées à un portefeuille supprimé ou archivé (`MAIL-02`).
+- **security** : Échappement HTML systématique (`escapeHtml`) des champs utilisateur (`category`, `payment`, `note`, `dueDate`) dans le gabarit d'e-mail de rappel (`MAIL-04`).
+
+---
+
 ## [2.15.0] - 2026-11-01
 
 ### Features
