@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.17.0] - 2026-11-03
+
+### Features
+- **motion-design** : Fondations mécaniques « Snappy & Mechanical » via des transitions physiques percutantes (`cubic-bezier(0.2, 0, 0, 1)`, durée standard 150ms) et mécanique de bouton « Press-to-Floor » (`active:translate-x-[2px] active:translate-y-[2px]` avec micro-haptique physique 6ms).
+- **motion-ui** : Création du composant d'odomètre néobrutaliste `OdometerCounter.tsx` (défilement fluide sans décalage cumulé CLS grâce à `.tabular-nums` et easing mécanique) et intégration sur le Solde Total Disponible, les Entrées, les Sorties et le Flux Net du tableau de bord.
+- **motion-ui** : Création de la jauge à 10 segments physiques `SegmentedGauge.tsx` avec allumage séquentiel échelonné et seuils de couleur néobrutalistes (<75% accent, 75-99% `#F59E0B`, >=100% `#DC2626`), intégrée dans `BudgetCard`, `BudgetsView` (consommation globale) et `DebtCard` (remboursements partiels).
+- **public-vitrine** : Refonte totale de la vitrine publique (`/`) sous forme d'architecture modulaire Server Components hautement attractive :
+  - `LandingHero` : Mot tournant mécanique (`vos comptes`, `vos dépenses`, `vos budgets`, `vos dettes`), badge à haut contraste WCAG `#FFE600`, double CTA direct vers l'application et la démo.
+  - `HeroLiveCard` : Carte interactive avec commutateur physique 3 positions (`ENTRANT` / `SORTANT` / `VIREMENT`), affichage en direct des jauges et de l'odomètre, perspective 3D au survol et cycle de démonstration automatique.
+  - `LandingMarquee` : Bandeau de réassurance en défilement continu avec pause automatique au survol.
+  - `CapabilitiesGrid` : 8 cartes d'action axées sur des verbes clairs (« Noter », « Suivre », « Fixer », « Programmer », « Gérer », « Analyser », « Exporter », « Tester ») avec passerelles directes vers l'onglet correspondant de la démo interactive (`?tab=...`).
+  - `HowItWorks` : Parcours guidé en 3 étapes concrètes sans jargon financier.
+  - `ModulesShowcase` : Démonstrateur interactif à onglets physiques illustrant les 4 piliers de l'application (Budgets, Dettes, Récurrences, Historique).
+  - `TrustSection`, `LandingFaq` (accordéon natif accessible) et `FinalCta`.
+- **demo-bridge** : Mise à jour de `DemoView.tsx` pour écouter le paramètre d'URL `?tab=` (`dashboard`, `wallets`, `stats`, `history`) et synchroniser instantanément l'onglet actif dès l'arrivée depuis la vitrine.
+- **navigation-speed** : Création de `NavPendingIndicator.tsx` (barre supérieure mécanique jaune `#FFE600`) et intégration du hook `useLinkStatus` dans `BottomNav` et `HomeActions` pour un accusé de réception visuel immédiat (état pressé/chargement) dès le clic/tap.
+- **zero-cascades** : Élimination complète des cascades de requêtes client (waterfalls SSR -> client) dans `app/budgets`, `app/portefeuilles`, `app/dettes` et `app/recurrences` par préchargement parallèle sur le serveur (`Promise.all`) et hydratation immédiate via `initialData`.
+- **perceived-perf** : Création de 10 squelettes de chargement néobrutalistes `loading.tsx` aux dimensions physiques exactes des pages pour un rendu instantané sans Cumulative Layout Shift (CLS) (`/app`, `/historique`, `/gestion`, `/budgets`, `/portefeuilles`, `/dettes`, `/recurrences`, `/entrant`, `/sortant`, `/parametres`).
+
+### Performance & Accessibility
+- **performance** : Élimination intégrale et définitive de toutes les classes `backdrop-blur-*` (12 fichiers modifiés), remplacées par des bordures opaques néobrutalistes et ombres portées nettes pour maximiser le frame rate (60 FPS constants) sur les terminaux mobiles.
+- **accessibility** : Implémentation du hook `useReducedMotion.ts` et du garde global CSS `@media (prefers-reduced-motion: reduce)` désactivant instantanément animations et défilements pour les utilisateurs sensibles.
+- **accessibility** : Remplacement de l'anneau de focus par défaut par `:focus-visible` à double contour néobrutaliste (anneau 3px bleu électrique `#2563EB` avec décalage 2px) garantissant une navigation clavier impeccable.
+
+---
+
 ## [2.16.0] - 2026-11-03
 
 ### Features
