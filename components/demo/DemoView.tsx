@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -46,7 +47,19 @@ type PeriodFilter = 'today' | 'week' | 'month' | 'year' | 'all';
 type TypeFilter = 'all' | 'INCOME' | 'EXPENSE';
 
 export function DemoView() {
-  const [activeTab, setActiveTab] = useState<DemoTab>('dashboard');
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams?.get('tab');
+  const [activeTab, setActiveTab] = useState<DemoTab>(() => {
+    if (requestedTab === 'history' || requestedTab === 'stats' || requestedTab === 'wallets') {
+      return requestedTab;
+    }
+    return 'dashboard';
+  });
+  useEffect(() => {
+    if (requestedTab === 'history' || requestedTab === 'stats' || requestedTab === 'wallets' || requestedTab === 'dashboard') {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
   const [dashboardPeriod, setDashboardPeriod] = useState<'today' | 'week' | 'month' | 'year'>('month');
 
   // Filtres pour l'onglet Historique
