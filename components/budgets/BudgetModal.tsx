@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { X, Sparkles, Check, AlertTriangle, ArrowRight } from 'lucide-react';
+import { X, AlertTriangle, ArrowRight, Lock } from 'lucide-react';
 import { useCategories } from '@/components/providers/ReferenceDataProvider';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Button } from '@/components/ui/Button';
@@ -30,13 +30,11 @@ export function BudgetModal({
   const { categories: expenseCategories, refreshCategories } = useCategories('EXPENSE');
   const [isPending, startTransition] = useTransition();
 
-  const [category, setCategory] = useState<string>(
-    initialData?.category || ''
-  );
-  const [amount, setAmount] = useState<string>(
-    initialData?.amount ? initialData.amount.toString() : ''
-  );
+  const [category, setCategory] = useState<string>('');
+  const [amount, setAmount] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isEditMode = Boolean(initialData);
 
   useEffect(() => {
     if (isOpen && expenseCategories.length === 0) {
@@ -44,13 +42,39 @@ export function BudgetModal({
     }
   }, [isOpen, expenseCategories.length, refreshCategories]);
 
+  // Synchronisation systématique à chaque ouverture ou changement de cible ([BUD-02])
   useEffect(() => {
-    if (initialData?.category) {
+    if (!isOpen) return;
+    setErrorMessage(null);
+
+    if (initialData) {
       setCategory(initialData.category);
-    } else if (expenseCategories.length > 0 && !category) {
-      setCategory(expenseCategories[0].name);
+      setAmount(initialData.amount ? initialData.amount.toString() : '');
+    } else {
+      setAmount('');
+      setCategory((prev) => {
+        if (
+          prev &&
+          expenseCategories.some((c) => c.name.toLowerCase() === prev.toLowerCase())
+        ) {
+          return prev;
+        }
+        return expenseCategories[0]?.name || '';
+      });
     }
-  }, [initialData, expenseCategories, category]);
+  }, [isOpen, initialData, expenseCategories]);
+
+  // Fermeture au clavier via Escape ([BUD-06])
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isPending, onClose]);
 
   if (!isOpen) return null;
 
@@ -62,6 +86,11 @@ export function BudgetModal({
     e.preventDefault();
     setErrorMessage(null);
 
+    if (!category.trim()) {
+      setErrorMessage('Veuillez sélectionner une catégorie de dépense');
+      return;
+    }
+
     const numericAmount = parseAmountInput(amount);
     if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
       setErrorMessage('Veuillez entrer un montant supérieur à 0 FCFA');
@@ -70,7 +99,7 @@ export function BudgetModal({
 
     startTransition(async () => {
       const res = await upsertBudgetAction({
-        category,
+        category: isEditMode && initialData ? initialData.category : category,
         categoryId: selectedCatObj?.id || null,
         amount: numericAmount,
         month: currentMonth,
@@ -86,15 +115,24 @@ export function BudgetModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="budget-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150"
+    >
       <div className="w-full max-w-sm bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between pb-3 mb-4 border-b-2 border-neutral-200 dark:border-[#334155]">
-          <h3 className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
-            {initialData ? 'Modifier le budget' : 'Nouveau budget mensuel'}
+          <h3
+            id="budget-modal-title"
+            className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]"
+          >
+            {isEditMode ? 'Modifier le budget' : 'Nouveau budget mensuel'}
           </h3>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer la fenêtre"
             className="p-1 hover:bg-neutral-100 dark:hover:bg-[#131C31] border-2 border-transparent hover:border-[#111827] dark:hover:border-white rounded-lg transition-all cursor-pointer"
           >
             <X className="w-5 h-5 text-neutral-700 dark:text-neutral-300 stroke-2.5" />
@@ -102,35 +140,56 @@ export function BudgetModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. Sélection de la catégorie */}
+          {/* 1. Sélection de la catégorie (verrouillée en mode édition - [BUD-02]) */}
           <div>
-            <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC] mb-2">
-              Catégorie de dépense
-            </label>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A]">
-              {expenseCategories.map((cat) => {
-                const isSelected = category === cat.name;
-
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setCategory(cat.name)}
-                    className={`flex items-center gap-1.5 p-2 rounded-lg text-xs font-bold border-2 transition-all cursor-pointer text-left ${
-                      isSelected
-                        ? 'border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827] bg-white dark:bg-[#1E293B] -translate-y-0.5'
-                        : 'border-transparent hover:border-neutral-300 dark:hover:border-neutral-600 bg-transparent'
-                    }`}
-                  >
-                    <span
-                      className="w-3 h-3 rounded-full shrink-0 border border-[#111827] dark:border-white"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    <span className="truncate text-[#111827] dark:text-[#F8FAFC]">{cat.name}</span>
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
+                Catégorie de dépense
+              </label>
+              {isEditMode && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-neutral-500 dark:text-neutral-400">
+                  <Lock className="w-3 h-3" />
+                  Verrouillée
+                </span>
+              )}
             </div>
+
+            {isEditMode ? (
+              <div className="flex items-center gap-2 p-2.5 border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-neutral-100 dark:bg-[#0F172A]">
+                <span
+                  className="w-3.5 h-3.5 rounded-full shrink-0 border border-[#111827] dark:border-white"
+                  style={{ backgroundColor: selectedCatObj?.color || '#F59E0B' }}
+                />
+                <span className="text-xs font-black uppercase text-[#111827] dark:text-[#F8FAFC]">
+                  {category}
+                </span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 border-2 border-[#111827] dark:border-[#334155] rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A]">
+                {expenseCategories.map((cat) => {
+                  const isSelected = category === cat.name;
+
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCategory(cat.name)}
+                      className={`flex items-center gap-1.5 p-2 rounded-lg text-xs font-bold border-2 transition-all cursor-pointer text-left ${
+                        isSelected
+                          ? 'border-[#111827] dark:border-white shadow-[2px_2px_0px_0px_#111827] bg-white dark:bg-[#1E293B] -translate-y-0.5'
+                          : 'border-transparent hover:border-neutral-300 dark:hover:border-neutral-600 bg-transparent'
+                      }`}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full shrink-0 border border-[#111827] dark:border-white"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span className="truncate text-[#111827] dark:text-[#F8FAFC]">{cat.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* 2. Plafond mensuel en FCFA */}
@@ -171,7 +230,7 @@ export function BudgetModal({
             >
               {isPending ? (
                 'Enregistrement...'
-              ) : initialData ? (
+              ) : isEditMode ? (
                 'Mettre à jour'
               ) : (
                 <span className="inline-flex items-center justify-center gap-1.5">
