@@ -11,7 +11,15 @@ import { formatCurrency } from '@/constants/config';
 import { Button } from '@/components/ui/Button';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
-export function PortefeuillesView() {
+interface PortefeuillesViewProps {
+  initialWallets?: WalletItem[];
+  initialNetWorth?: NetWorthSummary | null;
+}
+
+export function PortefeuillesView({
+  initialWallets,
+  initialNetWorth = null,
+}: PortefeuillesViewProps = {}) {
   const [wallets, setWallets] = useState<WalletItem[]>([]);
   const [netWorthData, setNetWorthData] = useState<NetWorthSummary | null>(null);
   const [loading, setLoading] = useState(true);

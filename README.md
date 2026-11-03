@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.16.0)
+# GEST TRACKER — Documentation Complète (v2.17.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -132,7 +132,7 @@ my-app/
 │   └── manifest.json         # Manifeste PWA orienté mobile vers /app
 ├── scripts/                  # Scripts de maintenance
 │   └── backfill-user-transactions.ts # Rattachement des transactions orphelines
-└── tests/                    # 226 tests unitaires automatisés (node:test + tsx)
+└── tests/                    # 253 tests unitaires automatisés (node:test + tsx)
 ```
 
 ---
@@ -376,6 +376,26 @@ Accessible directement depuis la barre de navigation inférieure (`BottomNav`). 
   - Calcul instantané des totaux et des comparatifs N vs N-1 via des requêtes `groupBy` Prisma optimisées.
 - **Export & Impression PDF :**
   - Prise en compte immédiate des filtres actifs (période, type, catégorie, portefeuille, dates personnalisées) sur `/api/export/pdf`.
+
+
+### 4.11 Motion Design Néobrutaliste, Fluidité Cinétique & Performance (v2.17.0)
+
+- **Fondations mécaniques (« Snappy & Mechanical ») :**
+  - Transitions physiques percutantes basées sur la courbe mécanique `cubic-bezier(0.2, 0, 0, 1)` avec une durée standard de 150ms pour toutes les interactions clés.
+  - Comportement des boutons « Press-to-Floor » (`active:translate-x-[2px] active:translate-y-[2px]`) couplé à une micro-haptique physique tactile (6ms sur les terminaux compatibles).
+  - Élimination intégrale et définitive de l'ensemble des classes `backdrop-blur-*` pour préserver un framerate inaltéré de 60 FPS constants sur terminaux mobiles, avec bordures opaques nettes.
+  - Accessibilité et navigation clavier renforcée via `:focus-visible` à anneau bleu électrique néobrutaliste (`#2563EB`) et respect strict du garde global `@media (prefers-reduced-motion: reduce)`.
+
+- **Composants d'affichage cinétique :**
+  - **`OdometerCounter.tsx`** : Défilement fluide de l'ancienne vers la nouvelle valeur avec zéro Cumulative Layout Shift (CLS) grâce à l'alignement mécanique strict `.tabular-nums`. Intégré sur le Solde Total Disponible, les Entrées, les Sorties et le Flux Net.
+  - **`SegmentedGauge.tsx`** : Jauge à 10 segments néobrutalistes distincts avec allumage progressif échelonné et seuils de statut explicites (<75% couleur personnalisée, 75-99% alerte jaune `#F59E0B`, >=100% dépassement rouge `#DC2626`).
+  - **Animation d'urgence `.brutal-wiggle-stepped`** : Impulsion angulaire mécanique et discrète attirant l'attention sur les statuts critiques (budgets dépassés, dettes en retard).
+
+- **Performance de navigation & Zéro cascade SSR :**
+  - **Indicateur instantané de navigation (`NavPendingIndicator.tsx`)** : Barre mécanique jaune d'or (`#FFE600`) signalant immédiatement au visiteur la prise en compte de son interaction.
+  - **Accusé de réception `useLinkStatus`** : Intégration dans la barre de navigation inférieure (`BottomNav`) et les actions rapides (`HomeActions`) pour un état pressé instantané.
+  - **10 Squelettes Néobrutalistes (`loading.tsx`)** : Rendu structurel immédiat via Suspense sur l'ensemble des sous-pages (`/app`, `/historique`, `/gestion`, `/budgets`, `/portefeuilles`, `/dettes`, `/recurrences`, `/entrant`, `/sortant`, `/parametres`).
+  - **Élimination des cascades client** : Préchargement parallèle côté serveur (`Promise.all`) sur les pages `/budgets`, `/portefeuilles`, `/dettes` et `/recurrences`, éliminant le waterfall d'attente client.
 
 ### 4.10 Paramètres, Thèmes & Sécurité (`/parametres`)
 

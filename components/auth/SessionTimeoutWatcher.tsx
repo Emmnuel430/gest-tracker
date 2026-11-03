@@ -179,7 +179,7 @@ export function SessionTimeoutWatcher() {
   if (!showWarningModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60  animate-in fade-in duration-200">
       <div className="w-full max-w-sm bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl p-6 shadow-[8px_8px_0px_0px_#111827] dark:shadow-[8px_8px_0px_0px_#000000] text-center">
         <div className="w-14 h-14 bg-[#FEF3C7] dark:bg-[#78350F] border-3 border-[#111827] dark:border-[#334155] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[3px_3px_0px_0px_#111827] dark:shadow-[3px_3px_0px_0px_#000000]">
           <Clock className="w-7 h-7 text-[#D97706] dark:text-[#FDE68A] stroke-3 animate-pulse" />

@@ -14,6 +14,7 @@ import { formatCurrency } from "@/constants/config";
 import { FinancialSummary } from "@/types/statistics";
 import { getDateRangeForPeriod } from "@/lib/dates";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { OdometerCounter } from "@/components/ui/OdometerCounter";
 
 type HomePeriod = "today" | "week" | "month" | "year";
 
@@ -96,7 +97,7 @@ export function BalanceSummary({
                 : "text-[#DC2626]"
             }`}
           >
-            {formatCurrency(globalBalance)}
+            <OdometerCounter value={globalBalance} formatFn={formatCurrency} />
           </h2>
           <Link
             href="/portefeuilles"
@@ -128,7 +129,7 @@ export function BalanceSummary({
             </span>
           </div>
           <p className="text-lg sm:text-xl font-black text-[#16A34A] truncate">
-            +{formatCurrency(currentSummary.totalIncome)}
+            <OdometerCounter value={currentSummary.totalIncome} prefix="+" formatFn={formatCurrency} />
           </p>
         </div>
 
@@ -150,7 +151,7 @@ export function BalanceSummary({
             </span>
           </div>
           <p className="text-lg sm:text-xl font-black text-[#DC2626] truncate">
-            -{formatCurrency(currentSummary.totalExpense)}
+            <OdometerCounter value={currentSummary.totalExpense} prefix="-" formatFn={formatCurrency} />
           </p>
         </div>
       </div>
@@ -169,8 +170,7 @@ export function BalanceSummary({
             isNetPositive ? "text-[#16A34A]" : "text-[#DC2626]"
           }`}
         >
-          {isNetPositive ? "+" : ""}
-          {formatCurrency(currentSummary.balance)}
+          <OdometerCounter value={currentSummary.balance} formatFn={(v) => `${v >= 0 ? "+" : ""}${formatCurrency(v)}`} />
         </span>
       </div>
     </div>

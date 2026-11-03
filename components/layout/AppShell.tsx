@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ReferenceDataProvider } from '@/components/providers/ReferenceDataProvider';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SessionTimeoutWatcher } from '@/components/auth/SessionTimeoutWatcher';
+import { NavPendingIndicator } from '@/components/ui/NavPendingIndicator';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isPublicOrAuthPage) {
     return (
       <div className="w-full min-h-screen flex flex-col">
+        <NavPendingIndicator />
         {children}
       </div>
     );
@@ -31,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Layout applicatif authentifié avec ReferenceDataProvider et barre de navigation
   return (
     <div className="min-h-full flex flex-col flex-1 pb-24 sm:pb-28">
+      <NavPendingIndicator />
       <ReferenceDataProvider>
         <main className="flex-1 w-full max-w-xl mx-auto px-4 py-5 sm:py-6">
           {children}
