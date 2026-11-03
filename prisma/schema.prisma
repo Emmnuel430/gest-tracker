@@ -114,6 +114,8 @@ model Wallet {
   transactionsSource Transaction[]   @relation("SourceWallet")
   transactionsTarget Transaction[]   @relation("TargetWallet")
   recurringRules     RecurringRule[]
+  debts              Debt[]
+  debtRepayments     DebtRepayment[]
 
   @@index([userId])
   @@index([userId, isArchived])
@@ -204,20 +206,46 @@ enum DebtStatus {
 }
 
 model Debt {
-  id              String      @id @default(uuid())
-  userId          String      @map("user_id")
-  personName      String      @map("person_name")
+  id              String          @id @default(uuid())
+  userId          String          @map("user_id")
+  personName      String          @map("person_name")
   type            DebtType
-  initialAmount   Decimal     @map("initial_amount") @db.Decimal(12, 2)
-  remainingAmount Decimal     @map("remaining_amount") @db.Decimal(12, 2)
-  dueDate         DateTime?   @map("due_date")
-  status          DebtStatus  @default(PENDING)
+  initialAmount   Decimal         @map("initial_amount") @db.Decimal(12, 2)
+  remainingAmount Decimal         @map("remaining_amount") @db.Decimal(12, 2)
+  dueDate         DateTime?       @map("due_date")
+  status          DebtStatus      @default(PENDING)
   note            String?
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  walletId        String?         @map("wallet_id")
+  wallet          Wallet?         @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  transactionId   String?         @map("transaction_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  repayments      DebtRepayment[]
 
   @@index([userId, status])
+  @@index([walletId])
   @@map("debts")
+}
+
+model DebtRepayment {
+  id            String   @id @default(uuid())
+  debtId        String   @map("debt_id")
+  userId        String   @map("user_id")
+  amount        Decimal  @db.Decimal(12, 2)
+  paidAt        DateTime @default(now()) @map("paid_at")
+  walletId      String?  @map("wallet_id")
+  transactionId String?  @map("transaction_id")
+  note          String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  debt          Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  wallet        Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([debtId, paidAt(sort: Desc)])
+  @@index([userId])
+  @@index([walletId])
+  @@map("debt_repayments")
 }
 
 model UserProfile {
@@ -228,6 +256,3 @@ model UserProfile {
 
   @@map("user_profiles")
 }
-
-
-
