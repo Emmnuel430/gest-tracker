@@ -203,7 +203,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
         role="dialog"
         aria-modal="true"
         aria-labelledby="category-manager-modal-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#111827]/70  animate-in fade-in duration-150"
       >
         <div className="w-full max-w-lg bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] flex flex-col max-h-[90vh] overflow-hidden">
           {/* Header */}

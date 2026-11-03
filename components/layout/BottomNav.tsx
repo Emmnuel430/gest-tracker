@@ -69,7 +69,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-md border-t-3 border-[#111827] dark:border-white shadow-[0_-6px_0_0_#111827] dark:shadow-[0_-6px_0_0_#000000] px-2 sm:px-4 pt-2 sm:pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-colors"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0F172A]/95  border-t-3 border-[#111827] dark:border-white shadow-[0_-6px_0_0_#111827] dark:shadow-[0_-6px_0_0_#000000] px-2 sm:px-4 pt-2 sm:pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-colors"
     >
       <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5 sm:gap-2.5 items-center">
         {navItems.map((item) => {

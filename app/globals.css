@@ -15,6 +15,12 @@
   --entrant: #16A34A;
   --sortant: #DC2626;
   --warning: #F59E0B;
+
+  /* Motion Design Néobrutaliste ("Snappy & Mechanical") */
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --duration-snappy: 150ms;
+  --duration-counter: 380ms;
 }
 
 html.dark {
@@ -36,6 +42,17 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Anneau de focus clavier haute visibilité unifié (:focus-visible) - MOT-05 */
+:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Chiffres à largeur fixe (tabular-nums) pour neutraliser tout CLS lors des animations numériques */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Désactiver le changement de valeur au scroll molette sur les inputs number */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -46,20 +63,20 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Utilitaires Néobrutalistes basés sur la nouvelle palette V1.2 */
+/* Utilitaires Néobrutalistes basés sur la nouvelle palette V1.2 & physique Snappy */
 .brutal-card {
   background-color: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: 0.75rem;
   box-shadow: 4px 4px 0px 0px var(--card-shadow);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--duration-snappy) var(--ease-snappy);
 }
 
 .brutal-btn {
   border: 2px solid var(--card-border);
   border-radius: 0.5rem;
   box-shadow: 3px 3px 0px 0px var(--card-shadow);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--duration-snappy) var(--ease-snappy);
 }
 
 .brutal-btn:hover {
@@ -69,7 +86,84 @@ input[type="number"] {
 
 .brutal-btn:active {
   transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px 0px var(--card-shadow);
+  box-shadow: 1px 1px 0px 0px var(--card-shadow);
+}
+
+/* Animations Néobrutalistes Mécaniques (sans flou) - MOT-01, MOT-02 */
+@keyframes brutal-modal-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes brutal-overlay-enter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes brutal-wiggle-stepped {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+  75% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.brutal-modal-overlay {
+  animation: brutal-overlay-enter 140ms var(--ease-snappy) forwards;
+}
+
+.brutal-modal-content {
+  animation: brutal-modal-enter 160ms var(--ease-snappy) forwards;
+}
+
+.brutal-wiggle-stepped {
+  animation: brutal-wiggle-stepped 320ms steps(4) 1;
+}
+
+/* Marquee fluide et mécanique pour la vitrine */
+@keyframes brutal-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: brutal-marquee 24s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Garde-fou d'accessibilité globale : désactivation sous prefers-reduced-motion - MOT-05 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-marquee {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 /* Scrollbar stylisée */

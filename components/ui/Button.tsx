@@ -21,12 +21,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       isLoading = false,
       children,
+      onClick,
       ...props
     },
     ref
   ) => {
+    // Effet "Press-to-Floor" mécanique avec transition snappy - MOT-02
     const baseStyles =
-      'inline-flex items-center justify-center font-black uppercase tracking-wider transition-all duration-150 border-2 border-[#111827] dark:border-[#334155] rounded-lg cursor-pointer select-none active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
+      'inline-flex items-center justify-center font-black uppercase tracking-wider transition-all duration-150 border-2 border-[#111827] dark:border-[#334155] rounded-lg cursor-pointer select-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_0px_#111827] dark:active:shadow-[1px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
 
     const variants = {
       primary:
@@ -55,10 +57,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'text-base px-6 py-3.5 gap-2.5 shadow-[4px_4px_0px_0px_#111827] dark:shadow-[4px_4px_0px_0px_#000000]',
     };
 
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Haptique léger mécanique si supporté
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate?.(6);
+        } catch {
+          // Ignorer si non disponible
+        }
+      }
+      onClick?.(e);
+    };
+
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
+        onClick={handleClick}
         className={cn(
           baseStyles,
           variants[variant],
@@ -68,7 +83,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin stroke-3" />}
+        {isLoading && <Loader2 className="w-4 h-4 animate-spin shrink-0 mr-1.5" />}
         {children}
       </button>
     );
