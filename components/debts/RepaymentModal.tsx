@@ -39,7 +39,7 @@ export function RepaymentModal({
     const preferredWalletId = debt.walletId || defaultWallet?.id || wallets[0]?.id || '';
     setWalletId(preferredWalletId);
     setImpactWallet(Boolean(debt.walletId));
-  }, [isOpen, debt?.id, debt?.walletId, defaultWallet?.id, wallets]);
+  }, [isOpen, debt, defaultWallet?.id, wallets]);
 
   // Fermeture clavier via Escape
   useEffect(() => {
@@ -202,7 +202,7 @@ export function RepaymentModal({
                   >
                     {wallets.map((w) => (
                       <option key={w.id} value={w.id}>
-                        {w.name} ({formatCurrency(w.balance)})
+                        {w.name} ({formatCurrency(w.currentBalance)})
                       </option>
                     ))}
                   </select>

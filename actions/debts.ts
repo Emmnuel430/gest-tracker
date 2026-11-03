@@ -181,9 +181,9 @@ export async function createDebtAction(rawData: unknown): Promise<ActionResponse
     if (resolvedWalletId) {
       const wallet = await prisma.wallet.findFirst({
         where: { id: resolvedWalletId, userId: user.id },
-        select: { id: true, name: true, isArchived: true },
+        select: { id: true, name: true, isArchived: true, deletedAt: true },
       });
-      if (!wallet || wallet.isArchived) {
+      if (!wallet || wallet.isArchived || wallet.deletedAt !== null) {
         return {
           success: false,
           error: 'Portefeuille sélectionné introuvable ou archivé',
@@ -387,9 +387,9 @@ export async function recordDebtRepaymentAction(
     if (resolvedWalletId) {
       const wallet = await prisma.wallet.findFirst({
         where: { id: resolvedWalletId, userId: user.id },
-        select: { id: true, name: true, isArchived: true },
+        select: { id: true, name: true, isArchived: true, deletedAt: true },
       });
-      if (!wallet || wallet.isArchived) {
+      if (!wallet || wallet.isArchived || wallet.deletedAt !== null) {
         return {
           success: false,
           error: 'Portefeuille sélectionné introuvable ou archivé',

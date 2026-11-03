@@ -262,7 +262,7 @@ export function DebtModal({
                   >
                     {wallets.map((w) => (
                       <option key={w.id} value={w.id}>
-                        {w.name} ({formatCurrency(w.balance)})
+                        {w.name} ({formatCurrency(w.currentBalance)})
                       </option>
                     ))}
                   </select>

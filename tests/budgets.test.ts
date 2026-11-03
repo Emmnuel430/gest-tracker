@@ -1,6 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { BudgetSchema } from '../lib/validations';
+import {
+  computeMonthlyBudgetSummary,
+  doesExpenseMatchBudget,
+  normalizeCategoryName,
+} from '../lib/budgets';
 
 describe('BudgetSchema (Zod Validation V2)', () => {
   it('valide un budget mensuel conforme', () => {
@@ -48,44 +53,78 @@ describe('BudgetSchema (Zod Validation V2)', () => {
   });
 });
 
-describe('Budget Consumption & Status Calculations (V2 Specifications)', () => {
-  function computeBudgetStatus(amount: number, spent: number) {
-    const remaining = amount - spent;
-    const percentage = amount > 0 ? Math.round((spent / amount) * 100) : 0;
-    let status: 'NORMAL' | 'WARNING' | 'EXCEEDED' = 'NORMAL';
-    if (percentage >= 100) status = 'EXCEEDED';
-    else if (percentage >= 75) status = 'WARNING';
-    return { remaining, percentage, status };
-  }
+describe('Budget Consumption & Status Calculations (v2.16.0 - [BUD-01] & [BUD-03])', () => {
+  it('calcule les statuts NORMAL (<75%), WARNING (75%-99%) et EXCEEDED (>=100%)', () => {
+    const summary = computeMonthlyBudgetSummary(
+      '2026-11',
+      [
+        { id: 'b1', category: 'Alimentation', categoryId: 'cat-1', amount: 100000, month: '2026-11' },
+        { id: 'b2', category: 'Transport', categoryId: 'cat-2', amount: 100000, month: '2026-11' },
+        { id: 'b3', category: 'Loisirs', categoryId: 'cat-3', amount: 50000, month: '2026-11' },
+      ],
+      [
+        { category: 'Alimentation', categoryId: 'cat-1', amount: 50000 }, // 50% -> NORMAL
+        { category: 'Transport', categoryId: 'cat-2', amount: 80000 }, // 80% -> WARNING
+        { category: 'Loisirs', categoryId: 'cat-3', amount: 65000 }, // 130% -> EXCEEDED
+      ]
+    );
 
-  it('calcule le statut NORMAL pour une consommation inférieure à 75%', () => {
-    const res = computeBudgetStatus(100000, 50000); // 50%
-    assert.equal(res.percentage, 50);
-    assert.equal(res.remaining, 50000);
-    assert.equal(res.status, 'NORMAL');
+    assert.equal(summary.items[0].status, 'NORMAL');
+    assert.equal(summary.items[0].percentage, 50);
+    assert.equal(summary.items[1].status, 'WARNING');
+    assert.equal(summary.items[1].percentage, 80);
+    assert.equal(summary.items[2].status, 'EXCEEDED');
+    assert.equal(summary.items[2].percentage, 130);
+    assert.equal(summary.items[2].remaining, -15000);
   });
 
-  it('calcule le statut WARNING pour une consommation entre 75% et 99%', () => {
-    const res75 = computeBudgetStatus(100000, 75000); // 75%
-    assert.equal(res75.percentage, 75);
-    assert.equal(res75.remaining, 25000);
-    assert.equal(res75.status, 'WARNING');
+  it('[BUD-01] exclut les dépenses hors catégories budgétées du totalSpent global (cohérence /budgets et /gestion)', () => {
+    const summary = computeMonthlyBudgetSummary(
+      '2026-11',
+      [
+        { id: 'b-loisirs', category: 'Loisirs', categoryId: 'cat-loisirs', amount: 25000, month: '2026-11' },
+      ],
+      [
+        // Dépense de Loyer hors catégorie budgétée : ne doit PAS gonfler le ratio global de Loisirs
+        { category: 'Logement', categoryId: 'cat-logement', amount: 150000 },
+        { category: 'Loisirs', categoryId: 'cat-loisirs', amount: 5000 },
+      ]
+    );
 
-    const res90 = computeBudgetStatus(100000, 90000); // 90%
-    assert.equal(res90.percentage, 90);
-    assert.equal(res90.remaining, 10000);
-    assert.equal(res90.status, 'WARNING');
+    assert.equal(summary.totalBudget, 25000);
+    assert.equal(summary.totalSpent, 5000);
+    assert.equal(summary.totalRemaining, 20000);
+    assert.equal(summary.overallPercentage, 20);
   });
 
-  it('calcule le statut EXCEEDED pour une consommation supérieure ou égale à 100%', () => {
-    const res100 = computeBudgetStatus(60000, 60000); // 100%
-    assert.equal(res100.percentage, 100);
-    assert.equal(res100.remaining, 0);
-    assert.equal(res100.status, 'EXCEEDED');
+  it('[BUD-03] rapproche les dépenses par categoryId (même après renommage) et par libellé insensible à la casse en repli', () => {
+    assert.equal(normalizeCategoryName('  Alimentation  '), 'alimentation');
 
-    const res120 = computeBudgetStatus(50000, 65000); // 130%
-    assert.equal(res120.percentage, 130);
-    assert.equal(res120.remaining, -15000);
-    assert.equal(res120.status, 'EXCEEDED');
+    // Match par categoryId malgré un ancien nom de catégorie sur la transaction
+    assert.equal(
+      doesExpenseMatchBudget(
+        { category: 'Courses & Repas', categoryId: 'cat-food' },
+        { category: 'Alimentation', categoryId: 'cat-food' }
+      ),
+      true
+    );
+
+    // Match par nom insensible à la casse quand categoryId est absent (ex: import CSV)
+    assert.equal(
+      doesExpenseMatchBudget(
+        { category: 'Transport', categoryId: 'cat-trans' },
+        { category: '  transport ', categoryId: null }
+      ),
+      true
+    );
+
+    // Non-match
+    assert.equal(
+      doesExpenseMatchBudget(
+        { category: 'Transport', categoryId: 'cat-trans' },
+        { category: 'Santé', categoryId: 'cat-health' }
+      ),
+      false
+    );
   });
 });
