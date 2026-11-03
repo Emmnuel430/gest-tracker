@@ -11,7 +11,11 @@ import { formatCurrency } from '@/constants/config';
 import { Button } from '@/components/ui/Button';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
-export function DettesView() {
+interface DettesViewProps {
+  initialSummary?: DebtsSummary;
+}
+
+export function DettesView({ initialSummary }: DettesViewProps = {}) {
   const [summary, setSummary] = useState<DebtsSummary>({
     totalLentPending: 0,
     totalBorrowedPending: 0,

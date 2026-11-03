@@ -124,3 +124,4 @@ export const LANDING_FAQ: LandingFaqItem[] = [
     answer: 'Absolument. Le mode Démo Interactif vous permet d’explorer l’ensemble des fonctionnalités sans inscription préalable.',
   },
 ];
+

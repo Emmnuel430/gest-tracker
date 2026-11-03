@@ -32,7 +32,11 @@ import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { formatCurrency } from '@/constants/config';
 
-export function BudgetsView() {
+interface BudgetsViewProps {
+  initialData?: MonthlyBudgetSummary | null;
+}
+
+export function BudgetsView({ initialData = null }: BudgetsViewProps) {
   const [isPending, startTransition] = useTransition();
 
   // Mois courant format YYYY-MM dans le fuseau horaire métier Africa/Abidjan ([BUD-06])

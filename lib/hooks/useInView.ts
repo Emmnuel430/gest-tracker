@@ -48,3 +48,4 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
 
   return [ref, isInView];
 }
+

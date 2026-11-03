@@ -11,7 +11,11 @@ import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
-export function RecurrencesView() {
+interface RecurrencesViewProps {
+  initialRules?: RecurringRuleItem[];
+}
+
+export function RecurrencesView({ initialRules }: RecurrencesViewProps = {}) {
   const [rules, setRules] = useState<RecurringRuleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);

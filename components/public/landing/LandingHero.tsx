@@ -86,3 +86,4 @@ export function LandingHero() {
     </section>
   );
 }
+
