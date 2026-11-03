@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { getWalletBalancesForUser } from '@/lib/services/wallet-balances';
 import { ActionResponse } from '@/types/transaction';
 import { formatCurrency, getErrorMessage } from '@/lib/utils';
+import { formatCurrentMonthISO } from '@/lib/recurring';
+import { computeMonthlyBudgetSummary } from '@/lib/budgets';
 
 export interface GestionMetrics {
   budgets: {
@@ -40,8 +42,7 @@ export interface GestionMetrics {
 export async function getGestionMetricsAction(): Promise<ActionResponse<GestionMetrics>> {
   try {
     const user = await getAuthenticatedUser();
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const currentMonth = formatCurrentMonthISO();
 
     const [yearStr, monthStr] = currentMonth.split('-');
     const year = parseInt(yearStr, 10);
@@ -59,7 +60,7 @@ export async function getGestionMetricsAction(): Promise<ActionResponse<GestionM
           type: 'EXPENSE',
           date: { gte: startDate, lte: endDate },
         },
-        select: { category: true, amount: true },
+        select: { category: true, categoryId: true, amount: true },
       }),
       prisma.recurringRule.findMany({
         where: { userId: user.id },
@@ -70,11 +71,13 @@ export async function getGestionMetricsAction(): Promise<ActionResponse<GestionM
       getWalletBalancesForUser(user.id),
     ]);
 
-    // 1. Calculs Budgets
-    const totalBudget = budgets.reduce((acc, b) => acc + Number(b.amount), 0);
-    const totalSpent = expenses.reduce((acc, e) => acc + Number(e.amount), 0);
-    const overallPercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
-    const hasExceeded = overallPercentage >= 100;
+    // 1. Calculs Budgets (alignés avec getBudgetsWithProgressAction via computeMonthlyBudgetSummary - [BUD-01])
+    const budgetSummary = computeMonthlyBudgetSummary(currentMonth, budgets, expenses);
+    const overallPercentage = budgetSummary.overallPercentage;
+    const hasExceeded =
+      overallPercentage >= 100 || budgetSummary.items.some((item) => item.status === 'EXCEEDED');
+    const hasWarning =
+      overallPercentage >= 75 || budgetSummary.items.some((item) => item.status === 'WARNING');
 
     let budgetBadgeText = 'À configurer';
     let budgetVariant: 'neutral' | 'warning' | 'danger' | 'success' = 'neutral';
@@ -82,7 +85,7 @@ export async function getGestionMetricsAction(): Promise<ActionResponse<GestionM
       budgetBadgeText = `${budgets.length} actif(s) • ${overallPercentage}%`;
       if (hasExceeded) {
         budgetVariant = 'danger';
-      } else if (overallPercentage >= 75) {
+      } else if (hasWarning) {
         budgetVariant = 'warning';
       } else {
         budgetVariant = 'success';

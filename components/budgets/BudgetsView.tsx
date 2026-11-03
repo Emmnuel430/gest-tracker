@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useCallback, useTransition } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import Link from 'next/link';
 import {
   ArrowLeft,
   Plus,
@@ -10,40 +10,44 @@ import {
   PieChart,
   Calendar,
   Tag,
-} from "lucide-react";
+  CopyCheck,
+  AlertTriangle,
+  CheckCircle2,
+} from 'lucide-react';
 import {
   getBudgetsWithProgressAction,
   deleteBudgetAction,
+  copyPreviousMonthBudgetsAction,
   MonthlyBudgetSummary,
   BudgetProgressItem,
-} from "@/actions/budgets";
-import { BudgetCard } from "@/components/budgets/BudgetCard";
-import { BudgetModal } from "@/components/budgets/BudgetModal";
-import { CategoryManagerModal } from "@/components/budgets/CategoryManagerModal";
-import { InfoTooltip } from "@/components/ui/InfoTooltip";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { formatCurrency } from "@/constants/config";
+} from '@/actions/budgets';
+import { formatCurrentMonthISO } from '@/lib/recurring';
+import { BudgetCard } from '@/components/budgets/BudgetCard';
+import { BudgetModal } from '@/components/budgets/BudgetModal';
+import { CategoryManagerModal } from '@/components/budgets/CategoryManagerModal';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { formatCurrency } from '@/constants/config';
 
 export function BudgetsView() {
   const [isPending, startTransition] = useTransition();
 
-  // Mois courant format YYYY-MM
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  });
+  // Mois courant format YYYY-MM dans le fuseau horaire métier Africa/Abidjan ([BUD-06])
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => formatCurrentMonthISO());
 
   const [data, setData] = useState<MonthlyBudgetSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [carryoverFeedback, setCarryoverFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<BudgetProgressItem | null>(
-    null,
-  );
+  const [editingBudget, setEditingBudget] = useState<BudgetProgressItem | null>(null);
 
   // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -60,30 +64,50 @@ export function BudgetsView() {
   }, [selectedMonth]);
 
   useEffect(() => {
+    setCarryoverFeedback(null);
     loadBudgets();
   }, [loadBudgets]);
 
   // Navigation entre les mois (ex: 2026-10 -> 2026-09 ou 2026-11)
   const handlePrevMonth = () => {
-    const [y, m] = selectedMonth.split("-").map(Number);
+    const [y, m] = selectedMonth.split('-').map(Number);
     const date = new Date(y, m - 2, 1);
     setSelectedMonth(
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     );
   };
 
   const handleNextMonth = () => {
-    const [y, m] = selectedMonth.split("-").map(Number);
+    const [y, m] = selectedMonth.split('-').map(Number);
     const date = new Date(y, m, 1);
     setSelectedMonth(
-      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     );
   };
 
   const formatMonthLabel = (mStr: string) => {
-    const [y, m] = mStr.split("-").map(Number);
+    const [y, m] = mStr.split('-').map(Number);
     const date = new Date(y, m - 1, 1);
-    return date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  };
+
+  const handleCopyPreviousMonth = () => {
+    setCarryoverFeedback(null);
+    startTransition(async () => {
+      const res = await copyPreviousMonthBudgetsAction(selectedMonth);
+      if (res.success) {
+        setCarryoverFeedback({
+          type: 'success',
+          text: res.message || 'Plafonds reconduits avec succès',
+        });
+        loadBudgets();
+      } else {
+        setCarryoverFeedback({
+          type: 'error',
+          text: res.error || 'Aucun budget antérieur trouvé à reconduire',
+        });
+      }
+    });
   };
 
   const handleDeleteConfirm = () => {
@@ -177,6 +201,23 @@ export function BudgetsView() {
         </button>
       </div>
 
+      {carryoverFeedback && (
+        <div
+          className={`flex items-center gap-2 p-3 border-2 border-[#111827] dark:border-[#334155] rounded-xl shadow-[2px_2px_0px_0px_#111827] text-xs font-bold ${
+            carryoverFeedback.type === 'success'
+              ? 'bg-[#DCFCE7] dark:bg-[#064E3B] text-[#166534] dark:text-[#A7F3D0]'
+              : 'bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626] dark:text-[#FCA5A5]'
+          }`}
+        >
+          {carryoverFeedback.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{carryoverFeedback.text}</span>
+        </div>
+      )}
+
       {/* 3. Synthèse globale du mois */}
       {data && data.items.length > 0 && (
         <Card className="p-5 bg-linear-to-br from-white to-[#F8FAFC] dark:from-[#1E293B] dark:to-[#0F172A]">
@@ -187,16 +228,16 @@ export function BudgetsView() {
               </h3>
               <InfoTooltip
                 title="Consommation Globale"
-                content="Proportion totale des dépenses réelles par rapport au cumul de vos budgets mensuels."
+                content="Proportion totale des dépenses réelles sur les catégories budgétées par rapport au cumul de vos plafonds mensuels."
               />
             </div>
             <span
               className={`text-xs font-black px-2 py-0.5 rounded border-2 border-[#111827] dark:border-white shadow-[1px_1px_0px_0px_#111827] ${
                 data.overallPercentage >= 100
-                  ? "bg-[#DC2626] text-white"
+                  ? 'bg-[#DC2626] text-white'
                   : data.overallPercentage >= 75
-                    ? "bg-[#F59E0B] text-black"
-                    : "bg-[#10B981] text-white"
+                    ? 'bg-[#F59E0B] text-black'
+                    : 'bg-[#10B981] text-white'
               }`}
             >
               {data.overallPercentage}% Consommé
@@ -207,10 +248,10 @@ export function BudgetsView() {
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 data.overallPercentage >= 100
-                  ? "bg-[#DC2626]"
+                  ? 'bg-[#DC2626]'
                   : data.overallPercentage >= 75
-                    ? "bg-[#F59E0B]"
-                    : "bg-[#10B981]"
+                    ? 'bg-[#F59E0B]'
+                    : 'bg-[#10B981]'
               }`}
               style={{ width: `${Math.min(data.overallPercentage, 100)}%` }}
             />
@@ -235,15 +276,15 @@ export function BudgetsView() {
             </div>
             <div>
               <span className="block text-[10px] font-bold text-neutral-500 uppercase">
-                {data.totalRemaining < 0 ? "Dépassement" : "Reste"}
+                {data.totalRemaining < 0 ? 'Dépassement' : 'Reste'}
               </span>
               <span
                 className={`font-black text-sm ${
                   data.totalRemaining < 0
-                    ? "text-[#DC2626]"
+                    ? 'text-[#DC2626]'
                     : data.overallPercentage >= 75
-                      ? "text-[#D97706]"
-                      : "text-[#10B981]"
+                      ? 'text-[#D97706]'
+                      : 'text-[#10B981]'
                 }`}
               >
                 {formatCurrency(Math.abs(data.totalRemaining))}
@@ -273,7 +314,7 @@ export function BudgetsView() {
           ))}
         </div>
       ) : (
-        /* Empty State */
+        /* Empty State avec reconduction mensuelle ([BUD-04]) */
         <div className="p-8 bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[5px_5px_0px_0px_#111827] dark:shadow-[5px_5px_0px_0px_#000000] text-center">
           <div className="w-12 h-12 bg-[#FEF3C7] dark:bg-[#78350F] text-[#D97706] border-2 border-[#111827] rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[2px_2px_0px_0px_#111827]">
             <PieChart className="w-6 h-6 stroke-3" />
@@ -283,19 +324,33 @@ export function BudgetsView() {
           </h3>
           <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-300 mt-1 max-w-sm mx-auto leading-relaxed">
             Fixez un premier plafond de dépense (ex: Alimentation à 60 000 FCFA)
-            pour suivre sa consommation en direct.
+            ou reconduisez vos plafonds du mois précédent en un clic.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+            <Button
+              type="button"
+              variant="neutral"
+              size="md"
+              disabled={isPending}
+              onClick={handleCopyPreviousMonth}
+              className="inline-flex items-center gap-1.5"
+            >
+              <CopyCheck className="w-4 h-4 stroke-2.5" />
+              <span>Reconduire le mois précédent</span>
+            </Button>
             <Button
               type="button"
               variant="primary"
               size="md"
+              disabled={isPending}
               onClick={() => {
                 setEditingBudget(null);
                 setIsModalOpen(true);
               }}
+              className="inline-flex items-center gap-1.5"
             >
-              + Créer mon premier budget
+              <Plus className="w-4 h-4 stroke-3" />
+              <span>Créer mon premier budget</span>
             </Button>
           </div>
         </div>

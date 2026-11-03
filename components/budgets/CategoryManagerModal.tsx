@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useMemo } from 'react';
+import React, { useState, useTransition, useMemo, useEffect } from 'react';
 import {
   X,
   Plus,
@@ -51,10 +51,11 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
   const [color, setColor] = useState('#FF5964');
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Dictionnaire des couleurs déjà utilisées par d'autres catégories (insensible à la casse)
+  // Dictionnaire des couleurs déjà utilisées par les catégories actives uniquement ([BUD-06])
   const usedCategoryColorsMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const cat of allCategories) {
+      if (cat.isArchived) continue;
       if (editingId && cat.id === editingId) continue;
       if (cat.color) {
         map.set(cat.color.toLowerCase(), cat.name);
@@ -66,6 +67,22 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
   // Suppression dialog state
   const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+
+  // Fermeture au clavier via Escape ([BUD-06])
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPending && !deleteTarget) {
+        if (viewMode === 'FORM') {
+          setViewMode('LIST');
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isPending, deleteTarget, viewMode, onClose]);
 
   // Filtrage de la liste
   const displayedCategories = useMemo(() => {
@@ -84,9 +101,12 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
     setEditingId(null);
     setName('');
     setKind('EXPENSE');
-    // Choisir une couleur parmi celles non encore attribuées
+    // Choisir une couleur parmi celles non encore attribuées aux catégories actives ([BUD-06])
     const available = CONTROLLED_PALETTE.filter(
-      (c) => !allCategories.some((cat) => cat.color?.toLowerCase() === c.toLowerCase())
+      (c) =>
+        !allCategories.some(
+          (cat) => !cat.isArchived && cat.color?.toLowerCase() === c.toLowerCase()
+        )
     );
     const chosenColor = available.length > 0
       ? available[Math.floor(Math.random() * available.length)]
@@ -179,7 +199,12 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="category-manager-modal-title"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#111827]/70 backdrop-blur-xs animate-in fade-in duration-150"
+      >
         <div className="w-full max-w-lg bg-white dark:bg-[#1E293B] border-3 border-[#111827] dark:border-[#334155] rounded-2xl shadow-[6px_6px_0px_0px_#111827] dark:shadow-[6px_6px_0px_0px_#000000] flex flex-col max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b-2 border-neutral-200 dark:border-[#334155] bg-neutral-50 dark:bg-[#131C31]">
@@ -187,7 +212,10 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
               <div className="p-1.5 bg-[#FFE600] text-[#111827] border-2 border-[#111827] rounded-lg shadow-[1px_1px_0px_0px_#111827]">
                 <Tag className="w-4 h-4 stroke-2.5" />
               </div>
-              <h2 className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]">
+              <h2
+                id="category-manager-modal-title"
+                className="text-base font-black uppercase tracking-tight text-[#111827] dark:text-[#F8FAFC]"
+              >
                 {viewMode === 'FORM'
                   ? editingId
                     ? 'Modifier la catégorie'

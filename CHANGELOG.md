@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.16.0] - 2026-11-03
+
+### Features
+- **budgets** : Reconduction en 1 clic des plafonds du mois précédent (`copyPreviousMonthBudgetsAction` et bouton « Reconduire le mois précédent » dans l'état vide de `BudgetsView`), avec exclusion automatique des catégories archivées ou de type revenu (`BUD-04`).
+- **debts** : Pont comptable optionnel et atomique (`prisma.$transaction`) entre « Dettes & Créances », les Portefeuilles (`Wallet`) et les Opérations (`Transaction`) : débiter/créditer un portefeuille à la création d'un prêt ou d'un emprunt (`createDebtAction`) ainsi qu'à l'enregistrement d'un remboursement (`recordDebtRepaymentAction`) (`DEBT-01`).
+- **debts** : Historique complet des versements partiels via la nouvelle table `debt_repayments` (protégée par politiques RLS) et accordéon pliable des versements sur chaque `DebtCard` (`DEBT-03`).
+- **debts** : Action serveur `updateDebtAction` et mode édition complet dans `DebtModal` permettant de corriger le nom, le type, le montant initial, l'échéance et la note d'un dossier avec recalcul automatique du reste dû et du statut (`DEBT-03`).
+- **debts-ui** : Détection automatique des échéances dépassées (`isDebtOverdue`) et affichage d'un badge explicite « En retard » (`AlertTriangle`) sur `DebtCard` (`DEBT-05`).
+- **export** : Enrichissement de l'export JSON de sauvegarde complète (`/api/user/export`) incluant désormais `wallets`, `categories`, `budgets`, `debts` (avec `repayments`) et `recurringRules` en plus des `transactions` (`INT-01`).
+
+### Bug Fixes
+- **budgets** : Alignement strict du calcul de consommation budgétaire entre `/gestion` (`getGestionMetricsAction`) et `/budgets` (`getBudgetsWithProgressAction`) via `computeMonthlyBudgetSummary` (`lib/budgets.ts`), excluant les dépenses des catégories non budgétées du ratio global (`BUD-01`).
+- **budgets** : Rapprochement des dépenses aux budgets par `categoryId` en priorité avec repli insensible à la casse (`normalizeCategoryName`), blocage des catégories `INCOME` et `isArchived` dans toutes les branches de `upsertBudgetAction`, persistance via `Prisma.Decimal` et invalidation complète du cache (`/gestion`, `/budgets`, `/app`) (`BUD-03`, `BUD-05`).
+- **budgets-ui** : Synchronisation réactive de `BudgetModal` à l'ouverture (`useEffect`), verrouillage de la catégorie en mode édition pour empêcher la création involontaire de doublons, libération des couleurs des catégories archivées dans `CategoryManagerModal`, initialisation du mois sur `Africa/Abidjan` et support clavier `Escape` + `aria-modal` (`BUD-02`, `BUD-06`).
+- **debts** : Validation stricte Zod (`DebtRepaymentSchema`, `UpdateDebtSchema`), rejet des remboursements excédant le reste dû ou ciblant un dossier déjà `SETTLED`, réinitialisation systématique des modales `DebtModal` et `RepaymentModal` à l'ouverture, persistance `Prisma.Decimal` et invalidation de `/gestion`, `/portefeuilles`, `/historique` et `/app` (`DEBT-02`, `DEBT-04`, `DEBT-05`).
+
+---
+
 Toutes les modifications notables apportées à ce projet sont documentées dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et ce projet adhère à [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

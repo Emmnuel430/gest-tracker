@@ -332,20 +332,58 @@ export type TransferFormValues = z.infer<typeof TransferSchema>;
 
 export const DebtSchema = z.object({
   id: z.string().optional(),
-  personName: z.string().min(1, { message: 'Veuillez indiquer le nom de la personne concernée' }),
+  personName: z.string().trim().min(1, { message: 'Veuillez indiquer le nom de la personne concernée' }),
   type: z.enum(['LENT', 'BORROWED'] as const, {
     message: 'Le type doit être LENT (prêté) ou BORROWED (emprunté)',
   }),
   initialAmount: z.coerce
     .number({ message: 'Le montant doit être un nombre valide' })
+    .finite({ message: 'Le montant doit être un nombre fini' })
     .positive({ message: 'Le montant doit être supérieur à 0' }),
   remainingAmount: z.coerce.number().min(0).optional(),
   dueDate: z.coerce.date().optional().nullable(),
   status: z.enum(['PENDING', 'PARTIAL', 'SETTLED'] as const).default('PENDING'),
   note: z.string().max(250).optional().nullable(),
+  walletId: z.string().optional().nullable(),
 });
 
 export type DebtFormValues = z.infer<typeof DebtSchema>;
+
+export const UpdateDebtSchema = z.object({
+  id: z.string().min(1, { message: 'Identifiant du dossier requis' }),
+  personName: z.string().trim().min(1, { message: 'Veuillez indiquer le nom de la personne concernée' }),
+  type: z.enum(['LENT', 'BORROWED'] as const, {
+    message: 'Le type doit être LENT (prêté) ou BORROWED (emprunté)',
+  }),
+  initialAmount: z.coerce
+    .number({ message: 'Le montant doit être un nombre valide' })
+    .finite({ message: 'Le montant doit être un nombre fini' })
+    .positive({ message: 'Le montant doit être supérieur à 0' }),
+  dueDate: z.coerce.date().optional().nullable(),
+  note: z
+    .string()
+    .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
+    .optional()
+    .nullable(),
+});
+
+export type UpdateDebtFormValues = z.infer<typeof UpdateDebtSchema>;
+
+export const DebtRepaymentSchema = z.object({
+  debtId: z.string().min(1, { message: 'Identifiant du dossier requis' }),
+  amount: z.coerce
+    .number({ message: 'Le montant remboursé doit être un nombre valide' })
+    .finite({ message: 'Le montant remboursé doit être un nombre fini' })
+    .positive({ message: 'Le montant remboursé doit être supérieur à 0' }),
+  walletId: z.string().optional().nullable(),
+  note: z
+    .string()
+    .max(250, { message: 'La note ne peut pas dépasser 250 caractères' })
+    .optional()
+    .nullable(),
+});
+
+export type DebtRepaymentFormValues = z.infer<typeof DebtRepaymentSchema>;
 
 export const OnboardingWalletSchema = z.object({
   name: z.string().trim().min(1, { message: 'Le nom du compte est requis' }).max(40, { message: 'Le nom ne peut pas dépasser 40 caractères' }),
@@ -436,4 +474,3 @@ export const OnboardingSchema = z.object({
 export type OnboardingWalletValues = z.infer<typeof OnboardingWalletSchema>;
 export type OnboardingCategoryValues = z.infer<typeof OnboardingCategorySchema>;
 export type OnboardingFormValues = z.infer<typeof OnboardingSchema>;
-

@@ -5,6 +5,8 @@ import { getAuthenticatedUser } from '@/lib/auth';
 import { ActionResponse } from '@/types/transaction';
 import { computeFinancialInsights, FinancialInsight, BudgetInsightData } from '@/lib/insights';
 import { getErrorMessage } from '@/lib/utils';
+import { formatCurrentMonthISO } from '@/lib/recurring';
+import { computeMonthlyBudgetSummary } from '@/lib/budgets';
 
 /**
  * Récupère les insights financiers déterministes de l'utilisateur pour le mois en cours
@@ -15,9 +17,7 @@ export async function getFinancialInsightsAction(
   try {
     const user = await getAuthenticatedUser();
 
-    const now = new Date();
-    const currentMonthStr =
-      targetMonth || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const currentMonthStr = targetMonth || formatCurrentMonthISO();
 
     const [yearStr, monthStr] = currentMonthStr.split('-');
     const year = parseInt(yearStr, 10);
@@ -30,7 +30,6 @@ export async function getFinancialInsightsAction(
     // Bornes du mois précédent
     const startPrevious = new Date(year, m - 2, 1, 0, 0, 0, 0);
     const endPrevious = new Date(year, m - 1, 0, 23, 59, 59, 999);
-    const previousMonthStr = `${startPrevious.getFullYear()}-${String(startPrevious.getMonth() + 1).padStart(2, '0')}`;
 
     // 1. Transactions du mois en cours
     const currentTransactions = await prisma.transaction.findMany({
@@ -62,6 +61,11 @@ export async function getFinancialInsightsAction(
     let currentIncome = 0;
     let currentExpense = 0;
     const categoryExpensesCurrent: Record<string, number> = {};
+    const currentExpensesList: Array<{
+      category: string;
+      categoryId?: string | null;
+      amount: number;
+    }> = [];
 
     for (const tx of currentTransactions) {
       const amount = Number(tx.amount);
@@ -70,6 +74,11 @@ export async function getFinancialInsightsAction(
       } else if (tx.type === 'EXPENSE') {
         currentExpense += amount;
         categoryExpensesCurrent[tx.category] = (categoryExpensesCurrent[tx.category] || 0) + amount;
+        currentExpensesList.push({
+          category: tx.category,
+          categoryId: tx.categoryId ?? null,
+          amount,
+        });
       }
     }
 
@@ -83,23 +92,20 @@ export async function getFinancialInsightsAction(
       }
     }
 
-    // Calculs de consommation budget
-    const budgetData: BudgetInsightData[] = budgets.map((b) => {
-      const budgetAmount = Number(b.amount);
-      const spent = categoryExpensesCurrent[b.category] || 0;
-      const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
-      let status: 'NORMAL' | 'WARNING' | 'EXCEEDED' = 'NORMAL';
-      if (percentage >= 100) status = 'EXCEEDED';
-      else if (percentage >= 75) status = 'WARNING';
+    // Calculs de consommation budget (via categoryId et repli insensible à la casse - [BUD-03])
+    const budgetSummary = computeMonthlyBudgetSummary(
+      currentMonthStr,
+      budgets,
+      currentExpensesList
+    );
 
-      return {
-        category: b.category,
-        amount: budgetAmount,
-        spent,
-        percentage,
-        status,
-      };
-    });
+    const budgetData: BudgetInsightData[] = budgetSummary.items.map((item) => ({
+      category: item.category,
+      amount: item.amount,
+      spent: item.spent,
+      percentage: item.percentage,
+      status: item.status,
+    }));
 
     const insights = computeFinancialInsights({
       currentIncome,
