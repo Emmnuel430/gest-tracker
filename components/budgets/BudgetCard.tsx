@@ -5,6 +5,7 @@ import { Edit2, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { BudgetProgressItem } from '@/actions/budgets';
 import { formatCurrency } from '@/constants/config';
 import { useReferenceData } from '@/components/providers/ReferenceDataProvider';
+import { SegmentedGauge } from '@/components/ui/SegmentedGauge';
 
 interface BudgetCardProps {
   budget: BudgetProgressItem;
@@ -44,12 +45,12 @@ export function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
         <div className="flex items-center gap-1.5">
           {/* Badge de statut */}
           {isExceeded ? (
-            <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626] border-2 border-[#111827] dark:border-[#334155] rounded shadow-[1.5px_1.5px_0px_0px_#111827] flex items-center gap-1">
+            <span className="brutal-wiggle-stepped text-[10px] font-black uppercase px-2 py-0.5 bg-[#FEF2F2] dark:bg-[#2C0B0E] text-[#DC2626] border-2 border-[#111827] dark:border-[#334155] rounded shadow-[1.5px_1.5px_0px_0px_#111827] flex items-center gap-1">
               <AlertCircle className="w-3 h-3 stroke-3" />
               <span>DÉPASSÉ ({budget.percentage}%)</span>
             </span>
           ) : isWarning ? (
-            <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#FFFBEB] dark:bg-[#78350F] text-[#D97706] dark:text-[#FCD34D] border-2 border-[#111827] dark:border-[#334155] rounded shadow-[1.5px_1.5px_0px_0px_#111827] flex items-center gap-1">
+            <span className="brutal-wiggle-stepped text-[10px] font-black uppercase px-2 py-0.5 bg-[#FFFBEB] dark:bg-[#78350F] text-[#D97706] dark:text-[#FCD34D] border-2 border-[#111827] dark:border-[#334155] rounded shadow-[1.5px_1.5px_0px_0px_#111827] flex items-center gap-1">
               <AlertCircle className="w-3 h-3 stroke-3" />
               <span>{budget.percentage}%</span>
             </span>
@@ -82,11 +83,12 @@ export function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
         </div>
       </div>
 
-      {/* Jauge de progression néobrutaliste (barre épaisse avec bordure noire) */}
-      <div className="w-full h-4 bg-[#F3F4F6] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-full overflow-hidden mb-3 p-0.5 shadow-inner">
-        <div
-          className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
-          style={{ width: `${visualPercentage}%` }}
+      {/* Jauge de progression néobrutaliste à 10 segments mécaniques */}
+      <div className="mb-3">
+        <SegmentedGauge
+          percentage={budget.percentage}
+          status={budget.status}
+          activeColor={catColor}
         />
       </div>
 

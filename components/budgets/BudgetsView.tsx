@@ -23,6 +23,7 @@ import {
 } from '@/actions/budgets';
 import { formatCurrentMonthISO } from '@/lib/recurring';
 import { BudgetCard } from '@/components/budgets/BudgetCard';
+import { SegmentedGauge } from '@/components/ui/SegmentedGauge';
 import { BudgetModal } from '@/components/budgets/BudgetModal';
 import { CategoryManagerModal } from '@/components/budgets/CategoryManagerModal';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
@@ -244,16 +245,16 @@ export function BudgetsView() {
             </span>
           </div>
 
-          <div className="w-full h-5 bg-[#F3F4F6] dark:bg-[#0F172A] border-2 border-[#111827] dark:border-[#334155] rounded-full overflow-hidden mb-4 p-0.5">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
+          <div className="mb-4">
+            <SegmentedGauge
+              percentage={data.overallPercentage}
+              status={
                 data.overallPercentage >= 100
-                  ? 'bg-[#DC2626]'
+                  ? 'EXCEEDED'
                   : data.overallPercentage >= 75
-                    ? 'bg-[#F59E0B]'
-                    : 'bg-[#10B981]'
-              }`}
-              style={{ width: `${Math.min(data.overallPercentage, 100)}%` }}
+                    ? 'WARNING'
+                    : 'NORMAL'
+              }
             />
           </div>
 

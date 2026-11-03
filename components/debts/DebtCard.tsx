@@ -18,6 +18,7 @@ import { formatCurrency } from '@/constants/config';
 import { DebtItem, deleteDebtAction } from '@/actions/debts';
 import { isDebtOverdue } from '@/lib/debts';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SegmentedGauge } from '@/components/ui/SegmentedGauge';
 
 interface DebtCardProps {
   debt: DebtItem;
@@ -161,12 +162,11 @@ export function DebtCard({ debt, onRepay, onEdit, onRefresh }: DebtCardProps) {
             <span>Remboursé : {formatCurrency(repaidAmount)}</span>
             <span>{progressPercent}%</span>
           </div>
-          <div className="w-full h-2.5 bg-neutral-200 dark:bg-[#0F172A] border border-[#111827] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#00DF81] transition-all"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <SegmentedGauge
+            percentage={progressPercent}
+            status="NORMAL"
+            activeColor={isLent ? '#00DF81' : '#FF3366'}
+          />
         </div>
       )}
 
@@ -189,7 +189,7 @@ export function DebtCard({ debt, onRepay, onEdit, onRefresh }: DebtCardProps) {
 
         <div className="flex items-center gap-1 shrink-0">
           {isOverdue && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase border border-[#111827] bg-[#FEE2E2] text-[#991B1B]">
+            <span className="brutal-wiggle-stepped inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase border border-[#111827] bg-[#FEE2E2] text-[#991B1B]">
               <AlertTriangle className="w-2.5 h-2.5 stroke-2.5" />
               En retard
             </span>
