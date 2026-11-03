@@ -1,4 +1,4 @@
-# GEST TRACKER — Documentation Complète (v2.15.1)
+# GEST TRACKER — Documentation Complète (v2.16.0)
 
 Bienvenue sur la documentation technique et fonctionnelle de **GEST TRACKER**, l'application moderne de gestion financière personnelle et professionnelle, conçue avec une architecture full-stack Next.js, Supabase et Prisma.
 
@@ -249,7 +249,11 @@ Accessible directement depuis la barre de navigation inférieure (`BottomNav`). 
 - **Navigation & Continuité de flux :** Les 4 sous-pages de gestion (`/budgets`, `/recurrences`, `/portefeuilles`, `/dettes`) disposent de boutons retour contextuels vers `/gestion` garantissant une navigation cohérente.
 - **Barre de Navigation 4 Onglets (`BottomNav`) :** Disposition mobile ergonomique équilibrée en 4 piliers majeurs : **Accueil**, **Historique**, **Gestion** et **Profil**.
 
-### 4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`)
+### 4.5 Budgets Mensuels & Gestion des Catégories (`/budgets`) (v2.16.0)
+
+- **Reconduction mensuelle en 1 clic (`copyPreviousMonthBudgetsAction`) :** Bouton d'action directe dans l'état vide permettant de reconduire instantanément les plafonds du dernier mois configuré tout en excluant les catégories archivées.
+- **Alignement strict `/budgets` et `/gestion` (`computeMonthlyBudgetSummary`) :** Seules les dépenses appartenant aux catégories budgétées du mois entrent dans le calcul du taux global d'exécution budgétaire, avec rapprochement par `categoryId` en priorité et repli insensible à la casse.
+- **Verrouillage de la catégorie en édition (`BudgetModal`) :** Synchronisation réactive du formulaire à l'ouverture et verrouillage de la catégorie lors de la modification d'un plafond existant pour prévenir tout doublon involontaire.
 
 - **Budgets mensuels par catégorie :** Définition d'un montant plafond pour un mois donné (ex: _Alimentation : 60 000 FCFA pour 2026-10_).
 - **Jauge visuelle dynamique tricolore :**
@@ -338,7 +342,11 @@ Accessible directement depuis la barre de navigation inférieure (`BottomNav`). 
   - Pré-remplissage complet garanti de `WalletModal` en modification (`name`, `type`, `balanceInput`, `color`, `isDefault`).
   - Unicité de la couleur des portefeuilles par utilisateur avec pastilles indisponibles marquées dans la palette.
 
-### 4.8 Dettes & Créances (`/dettes`)
+### 4.8 Dettes & Créances (`/dettes`) (v2.16.0)
+
+- **Pont comptable optionnel et atomique avec les Portefeuilles (`Wallet` & `Transaction`) :** Possibilité de débiter ou créditer un portefeuille actif lors de la création d'un prêt (`EXPENSE`) ou d'un emprunt (`INCOME`), ainsi que lors d'un remboursement reçu (`INCOME`) ou payé (`EXPENSE`) au sein d'une transaction atomique `prisma.$transaction`.
+- **Historique complet des versements (`DebtRepayment`) :** Journalisation horodatée de chaque remboursement partiel ou total avec accordéon pliable sur chaque `DebtCard` affichant le montant, la date, le compte impacté et la note.
+- **Édition de dossier (`updateDebtAction`) & Garde-fous (`DebtRepaymentSchema`) :** Modification complète d'un dossier avec recalcul automatique du reste dû et du statut, interdiction des remboursements excédant le reste dû ou ciblant un dossier déjà soldé, et badge visuel « En retard » (`AlertTriangle`) lorsque l'échéance est dépassée.
 
 - **Argent prêté (LENT) :** Créances à récupérer auprès d'autrui.
 - **Argent emprunté (BORROWED) :** Dettes à rembourser.
